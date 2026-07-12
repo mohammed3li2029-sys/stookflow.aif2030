@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>StockFlow — Smart Warehouse &amp; Inventory Management</title>
+<meta name="description" content="StockFlow — Bilingual (Arabic/English) warehouse and inventory management system.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/chart.umd.min.js"></script>
+</head>
+<body data-theme="light">
+<!-- ============ LOGIN SCREEN ============ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-bg"><div class="login-grid"></div></div>
+  <div class="login-card">
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:20px;">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAZC0lEQVR4nO2cabAdx3Xff6d75m5vwfoAECQAggBFMBJImhRXiLQompZN2REjuxSJJVfJdiLbKVfixOVUKimX/CHxl5Q+JE7iyIllhklpsRyJirXYNGVRFEVS4iJS4gKA4AICxPbw9vfuOtMnH7p7Zu4j6eBhEaEKG3Xx7p3bM9Pn32f5n9M9V5xzytvttJt5qwfwk97OEwB/co3grQNQq6DJWzaMM21vHYByvoK2Mms4T0z4fGorm9i3ATzD9jaAZ9iSc3FR1eBJFBTlTIKELHujGtznCi4rnDuXe9YAVEAdIGCH9Nos6/XWtdz5v+YsgnlWAHQKVgj/wUJXOTbrmFpUlvqQOa8FiiBooQ6FIgkIAuJ7EI5FJSu0J/aLx1SDFkqhjVXlTC2M1JS1I7BhVKgl5XgrwzijdsYAOgVrhEGmfGd/xrefH3DguDLbUbLcgwZ4GUX8CzBGvAACRgRjIjhaHIu4iICE/hK/o8QOtPguTkEEx6DUU1jTgh0TcMN2Yfdmf17uzlwb5XRz4XiSEeGhfRl3P9jjwHGHEajXhJr1oEQgjETAIhCCMR4wI4T3UQspAJGAYnFO7AZDKhT7+/dhKhRc+Jvl0MsUY4S/dwF8+GrhkvVnDuJpARhPEIT/dF+HP3+0T5oII/XKSKK2DQkeNMf4z8X3y455E9TwvZbaWD1H4ggovytu7T/oMskkjLzdFxILH70Wbt8lZwTiigGMEVZE+HdfbvOXT/RZPy7F8CIIGMFQeV9KF8xXCg0rTDOaccV0wyn+u4rpivHvZBl4sYMUAEbYtNBKa8CpsNiHj1wj/P0rTl8TV8wDFe/zPn1/l6880WP9uJ9BF6bbaRi4+vfxcxQGKp8VVBWniqoW13Gucm7o75TyeHENLc53qoVlaOhb7ROvAULuPPBjdfjc48p3X4ygnmMAnfM3euyljHu+02XtiDDIq0J6IbywFcFUAyBBGKeoc+XxAIw6DUIMC1320QL84rgKLg/fu+EJKyfONylUQHHOX6uVKPc86phc8Bq4UhBPGUDFm03u4NP3d4KQceBaguggVyVXeb0QVS1SyF0FqKgxQTAY1jqNYFUA1WKihrW9/BwnjKDt5Vj8RCuJhfkufPlpPS1ac8oAOued+fdfzHj6YEYrDQAUQOoQUKgbFsqVs149luelhuYFsP4V+6vGz2GCnL93AToM9Su01HnQC6uo3NdPlu/fSuH7r8Dkgrew5cHnNAB8oyv46fnmMwPyoOelH2NYC6j6qRK80j8qzrnCn5Xmq+TqNTjGNkULYF047vvKEOj+sjo0UcVcVjTbhclSV4JsxJP/Jw/5k1Zixm8C4LAuqyrWQJYrP3p1QGpL8ysGVLyiHyuTV/+9DPnG4UBC0adILoDFrtLu+Q5Dvi+YZAGmgzxfpn1aAleY+XKthUI7AfYd1zeQ/u9uw5mIvtHZ/qAInFxwHJ/NsVLmlUU2EXuq95XOlfRCUByABtrh/ImCzxSK2zrFWKHTh1yFn9oidPrK88eUkQbUEvHgUUZ90UBZBIz6vyDF8dgqLCrMa7irBAURODYnONVA6k8HwDc8TwoKMrukLHWV1EaABFXvfNUE4iUhlAUJVEDUE+Iiv9WQcQTBRSAx4Jww11G2Txg+/p6E9+4yDDL42g8df/5YznTbMd4QVAR1w6kbqt4Wg82GJKeaJi8j15FT+gNGYKkPvQE0a15b5RSiyopy4XbPMRg4EmP8eE0YRzBTXypQTGCypTlWJNHKZ0rCPN9RGjX42I0pH7khYayhdPs+NbzzasONO4R7Hs751l6HNdCqeSuoFh208Jtlnh1x9R38xPlxaXGyC4S+n8Egh2YF4LMKYF7hayreEZuQaeBAcYgRb66uzDJMjGwu5rnBfAV6GXQHyo2XWj7x3pTLLjAMMqWfCY2ad9G9gWPDGPzezye89zLH3Q/l7DuhjNWFNPEBxd/Sz5CIp1HRjHPA4K1AXcyj/TyqiHcjGv3jyrjMigCUguD6gCACGPU+jZByFVxLiRUYb9nRZAUrXmPnFpUt6y2/dkuNO660CEq752jVLf1BzjcePMD4aIM9V29DgU4/59pLDLu3GL78RM5fPJ4z24bxptdupxqLM96FFOMuFT8GDp8JeqepxfdRVc8RgEN8Ck8xcMG/ARgJsxjKS4YiRJiojSgLHain8JEba3z85pS1o0K760hTS6sOe1+a5BsP7uPgkVlEhOdeOMEHbt3F5g1j9AaKQfnoDZabdhrufijnoQOOeirBd5UaHsdswjut5OsKnkOJD3Ax01lpWxmAy2iISPAfQdO8JgbNQ5A8OEEjWKv0BtDpw/U7E37r9jpXbrX0B46lLow0LLPzXe5/5AD7Xj7JqvERrt69DeeUk1MLfOYvHuP6Ky7ilut2UKtZ2r2creuET96Z8OA+x/94KOPlKWW8aUhsiGPLZl9C3dAhGH29bBrHvwItXHFBtchlAR+hy2JmWaejOGZDpJ5ahM1rDf/ijjp3vruGNcp829FqWBoWHn3qVR59+hBpmrJ710WMjtSxxqCqbN4wzszsEk/vP87+V07yM3su5bLtEwxyGGQ5t1xmuHpbjS8+lvPlJx3zPcd4UwoSXZTRpEKz4li1lMO9udRvCurKACwYfTQHLX0cwUcS3I/xRdKFriOxwodvaPCJ2xpsXCUsdhzGCOMty6tH57j/u/uZnu+xfesEm9aP02wk1NIEY/y1syxn9ViDiXVjvHZshq988zl2XLSW2266lNXjDdo9R83Cr95sufkdhs98J+PRlxyNVGjWArej9HUmEvgC20i230zz3lwjT9MHDgNV8IXgW6w19DNYWnJctzPln93R4vqdCf2BMr/kGG1Zur2Mbzz4Aj94/ggb1q/m3VdcwKqxJs16QppabKgZ+rKYI8tTWs0aY606G9aN8+Krk/zZ/36MPddczLW7t6DAUidn5wbhD38p5a+fybnn4ZwjcxqCjEcs1gmjdsZiryvUdWXtlAB83WW10PyCe0XHLCK0eznjTcs//8AId+1pUEthfimnXrOMjxie2X+cbz5ygBzDlZdvZeP6cVrNlEY9IU1MILCVQKCCtYY0sdTThGazxurxFq8dn+Xbj7/CcweO87N73sHmjeN0+w6njvfvtlx3ieVzj2Z87Yc5uQiJDaX+SvFUdbiOeE4ALBVYixTIU5ogaEFOhV7m2LjG8JnfWsX2DZalrqM3gPGRhOm5Lvc+tJ+9r5zk4ovWs3PbBOOjjaB1BmMieF4aP0klmMZArZZgrCGxhlq6jrWrWhw4OMk99z7Jtbsv4uZrL6Fesyx2ckZqwj+5LeGqrYZ/+5cDcokVc6BS4Y7Kt/JM+HSDiLqCEpSlc/++3XPsuiBl+wbL9ELOWCvBGh8kvvW9F2k0Grzvxl1snBhjtFWjXkuwRopFpYKzFaJJmLQCV+9CnJLljnVrRtg0Mc6hY7P84LlD7H9lktv3vIOd29bR7SvtrnLFFmFVC6YXlXoqBf3yQU893VJQV8n/ziaAVc2ONTePWFVUAefIs4wss4Cwdizh6OQCX39gL6+dWODynRdwydYJjhydZmZmnjS1YcGoNNchBGO2UAwipmqxkuMtoj/IqNVq3HrjZTz3whG++Fc/4p07N3LbTTsYadbo9JR8kOOckDuDEUFNcREcJX9daVuRCcdylWfvioip5J/+X90qP3hhib99eoFnX5rjuedf5OpLW+x596Vsu3ANn/qT+/lvn/0u9XqKW1ZN84FDi3tFslksJhlDnrsy01EHmiM4XJbz+7/zC/zDD17HvpdOcPDQcf7Vp5/j/Xt20s0tJ2Yz6vXE1xlD6ShSrrKqLawUwlPUwFKtNVahEdS5UmGCaVlRJmf7fOQPDzA1Ncsn75rghqs20mg0QB1f/du9pM1RGiMjqFgQW2jgfNuROS+VsZBYCyiDQUaskY2NWNKEsKaSQT7AkDEzPcP/ue8p/vFdN7P9orVs3TTCk1+b4zf++CibJsYYG20WRaJImqMLMhFEV1WXswjgUBgpiptBU6pOX51fZzAw2hAGLcuWTeNsWjeKE0O/n9McGcV2LCQtxKRgEkSELHd89DbDjs1+kWhuapbpE5PYxHDhJVswRshV+NIjcHTGUUsdzuVo3oe8h0k7NJp1RpqWQdagmdbZvN4x2uox1rSIaChReWmcCWsgKkX13Et6Dnxg9XJaATHwmILpR6tzwSHnDkabKaMjNfoZuNyhkkDSRNImKgnGWHIVWk34j/8oZ/W6ASRNjjwxzXe/9TjrJtbwvl++EJIURpSFXsp/+SvD+tEMl+WImJB310EsiRUadct4y5DWUpAcFYOqX6eOVRdTGXN0h6fBYlZuwkUZHX/XInGv8qrKYNLUUksNWe48zjZFrEFMAib13CQHm8BiO2M0ARLHXDdh9YUXgxXa84pJIMkcYlPEiqch1gT3kXtXgAfGGs8bk8QixnpfjRRLBiqVJYUweOdKsz7rAMYYGfNg5zyNKeu5RXmmOMPXXWLdTwqARaynDcYWmhuTUmsgSSDP+ly26yIu370VMocDcudILGHSAl8MLy2uUW4l8ffyJSEVU/SL2RTRcFTRUDVyQzKcRQBff82yWOSjZQCoMO14VpEkU0GQUKuhMjWV+pIL3yqunxfpnK/gxumK1EfCJPnSuCxfywjgVSszMW/XEP0KEMOS6UrbKQaRSGgJy40VQSK8KhTbKOI/LZSr5FhK0S8WWL2wioagkGeeutggnKgGbJfR7JIQFnl4hS6WGUaYH3GKtZGz+qq6KTSzOvlnGcBqedI5R+7K2kuZerlCKI0V1wD6UFwrzNmDbDTqoK9UTx4+xmtHFzFGuOSSDYyOtXBZ7i+cgeY5UAvXrXjnInpFn03wexR9JZb58ZsEJIxVV7iYvmIAi2FqcQAXNawwUYIphEVx1ULrJAJHJOKKEUXEIQaMCuJyknyRJDF0lpbYfvEEY6MJZB0sinEKeY4lQ3AYcgyOPGq9llszItE2wUZdrDyLX34wRgqQwa8GajnEsw9g0aS6eSegV41mWm4A8sfdUF5bmpyj08npZIBRFEu/KRw9MssFzXk2rx9Bsi6LJybp9PNwXWF0lTI5tYbB0ggn84w8c7SSPg2bI8DiUoelzoBOX6l1cmYWBswtZqwbtSGQaLF+7UQqq3WUbvhcAFiYcFD5IgqX65YFkdYAnIRdQXFLRdxKITh6nYxbr0n52G0WUcvc9CyHX3iZ7z1+gl1X7aLWbHDi+AJf+Jtj/PovbqbeSGm3Bxz6zo94V73Lf/3NFqMjKf3M8UdfUfa/0mPQ7XD17t3UailT00cYqa3mQzetZqbb5qG9PRp1qFtLppBoWfw1zvhS3GkSwRUFkcJ3qQ7fq4jAJVIxmFD875vBMejm3HmN8it3DKALMwemuP/ID2mOTbDn6s3QtHTn1/LUyxk/ffM2EKEztcDJvTk7W4f44PUXk25YD+mAh5/q8vQzPe759x/krtsvYnbqZfbt3Ud70wTXXbqJ6361xd88v4rf/8IC/YGjXjOeSJsKAwi6cM6icBWsQuGGuEGAKUbYwiaqW+BiGcqBy+l2c7JZ0A60BylbL38nQk5nYZ563qC72CfRLm5hAcTSay9x8Y4LUVXmlpSxqQ6J7TN5Yo5P/cGH+JWfVQ4feJZ9h+eYXcpoz09jB/OsTpa4/cpbqKfj/PafzVNLPN2JgZ0QXArvci4ArCIZM5AIp/d/FfCKaFju/avuEi0qKHmXxEGvJ1ywYYQLL7wU1JEPcsygA3mOyx0m75FlyljTct11O0EdWW9A1ltkdm6an7l2O7/x0Xcys/cBjoxvQy9XLj05Qy/PyEY3gx6iPbvELbvG+YWfSrn38Yy1Y6YIcA5Pb1RjSescAui5bpkHD9XPCqD8XxnihMFxq+JcDurQrA+9DMktqjDolpREDLheDvkA7bWDlEK/p7g8R50jyx0nj53gF9/7fh+lxTLTneU1UcbzHHVKs1FDugYJW1HuuLLGvY8PApf1NUGj4EzYqxgeFDoHAJZBxDmHqin30ElUwGFtizZR7MOL0TpQfs0GuE6H6cmMxAr1uiW1gbcZJevkaNaj315gfnGAAmki1BJDniudbo/OYoe1azaShclsJjXWiiCyxOo0oz57EGuX8GklbFlnWNWEfu53plLJfXOtyHn2AazwFGJWEZYzVdHSMZaEOvR1qmE3qd+NGq+XD/p0p2d45tkZjCg7tq1h/ZoWgyzHGui1c1w2oL3Y5vl9k/QHGZsnRti8cZRuN6PX7dNeWCLLo/9SssGAJRzdxQ7dpe/x1fEmHzKO8e17AkA+23FqijGLUCnlr9wJnsbTmnH/SYi2Fc0jROf4HpR6zZBag7VCs5FgrQEMCX1Mb5FUMtaNCWtbOYOlOegtQm8B+kuQ96G3QMKAsQZsWm0YtBegt4DrLaLdGTrThwDF5RkDUXq9DvX2FKODPqtnpxjptqHtJ+nIdM7MYub35gxtN65UZ84lgKn18b7cQ6JDrzDJISL7Pk+/MMexqQ4z832e2jfFdNtiRsZ59kiN47OO1eMjWFvj4JEuhycHHD7R5/DxHq8e6zI5m3H4RI9Ws0693uDgsR6HTmQcmsw5OqOcaLf47F8fxCD0B30aNFk3P8XxdD/PjDf4ucmDfN02eOSZL2HdEt94qkOnmy8DLjIFL8NKnxVZEZEeaxlqFlyu5ZbUoYJCSelzp4w0Uz71+Rf5k3tf8JuK2gNyO8HYBHx+/xq+/soOJGYrGjck+fQgzx2DXPjiF+L93VA+LTicCifnBlx96wluu2g1o08+zCZ1PGuFPoZ2cyMLixmrLxjhB3s7fO6BOcabLbLcYY0ppFPxAaSZQiNdGYCn9KSSqieeU/MZN/7Oi0wvDEjiM61SqQuqguaoG+Dyvo+iLmMwGIB63yaRHxJ9YiWPkuX1PNBQd1qepwoOozmDfoexpuHuT97C+96V0hkoNUkRdWRpjUaS89hzi/zmn04z3W0yOjaGSVKMLR8ts0Zo95Xrdyb890+MFtuTT6WdmgaGRZe14wk7N9f49o/6rGpRbsapmnQoYookqBWMsdSTWggurnjARlSxiSvOGdKu8sPrttnGvSyoQ11GUqux1O3y4X/9be76+cv40G0Xs2VDA8RwdKrDV783xRcemMLZFmPj9bCwFBaQQk3WitLPYOdGrxR+cezUEDxlHpg7JTXC+64a5b4nFwq8yggdMRRELFhADULihVW/FC8mLsxXylBD1WQKyYRYVS5vU3x2udf2PKOZNnD5gM98/SD/876DrBmrY2zCfNcwoM7atatotlphDSbsFiyVHlUP4k2XJmHaTr2d8sOGTv267YtH+rzndw+QZa585tdX2EKCXqE6nudUfGOpqbE+F3PR0nRLtOLzxSzTyKoW+snJEc2xxkfXzIEYS71eI0nrkNSxSQ1jE8TYYtxixFOmDHZutHz+n47RqJmyTHcK7ZQ10IjXwh2ba9x162r+w5dOsHFtSpbHHgEUiTNbFl2Lan5wm14bgz+sLkpJLPUX6lb6RSj8bamp8dbOTxS+XNUQwVgDJkHFYmwSlk995PMAlTy224ePvadOs27I87B5/hTbCvdIe+F/75cnuO+JeQ4e6zPasuWTS/G/QiupKJQUF4laW3383+Mjxd84CaZq0pUAUz7LIcXExWPFw9wSNyz5NZNoAHGzeZooM0vKre+qcee19RUFj9hWxAOjv9i0NuU///aFNOpCu+uja2m6pcWWvq36Mn5lTgSM9WopfukRsX65s+jjjxFW4SSsrokx+AWj8J2xoX+CmASRpLxmhSFo8MXqILHKXFu5eMLwB7/UIk3KyH/OAIw3yJ1yy+4x7v7drYw2DbOLGYkBE8workFU6X2FLQ69K1CPx4vy9vKeQXW1srhVrUsWKw5SjiES5lAEds4hYeXv5IKybcLwRx8fZctEWjxzsmI8/u4gsizCVppzYC08vq/Nv/zTozz87CK1RGjWbVhzqEgW4Qu7CCiKs8u3s4lXSGSoX7muHK4l5SYkCY61eAq+su/PX0/KXfqKX0YQ4eeuqvNv/sEo2zamP95H/qvNOcVaYXYh57MPzPC/vjnNcwd7dPr+ebPEeAFKLExYQq4ECHgDKhODhZQ+swqKR7nwoXFpMvq+uNdQw6Xj3pexpnDFtpS73tPkA9c0aNTtW/OjE9UWZRcDJ2czvr+/zSPPt9l3uMfx2Yx215HlZVQtfgaFCI6ENG44+pbsRSoSBm5oyuc9lmuz10JPTxIrjDaETasTLrvQct3OGldtTxkfsTh3ej5veTtjAGNzWvnBCZRe34XtvZUtE1IC/mY3FWBos3ylY1XYMqK+cRXF/5QK1BOhVTfU60ErIz09Q+CKMZ3t31AtGD6Flb6l7XVlqiovPwvtrP/4mCwb4JAAyzWrYrXFsaGLvcENlp/3ZnEuegMqk3hWVSUM8bz8Fd8zsrE3Zw7nop2fvx94RvL/eH3G+QngjxmEM2nnKYA/Oe1tAM+wvQ3gGbb/rwA8F3Tj9AE8/8gP/69BnYvQdPoAntNAebqz8+OP3uepCf/k0Jj/C3aPEwmM3QHKAAAAAElFTkSuQmCC" alt="StockFlow" style="width:72px;height:72px;border-radius:20px;object-fit:cover;box-shadow:0 8px 28px rgba(10,102,255,.35);">
+      <div style="text-align:center;">
+        <div class="login-title" id="loginTitle" style="font-size:24px;font-weight:800;letter-spacing:-.4px;margin-bottom:2px;">StockFlow</div>
+        <div class="login-sub" id="loginSub">Smart Warehouse &amp; Inventory Management</div>
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label id="lblUsername">Username</label>
+      <div class="login-input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input class="login-input" id="loginUsername" type="text" autocomplete="username" style="padding-inline-end:14px;">
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label id="lblPassword">Password</label>
+      <div class="login-input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input class="login-input" id="loginPassword" type="password" autocomplete="current-password">
+        <button class="toggle-pw" id="togglePw" tabindex="-1">
+          <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="login-remember">
+      <label class="remember-label">
+        <input type="checkbox" id="rememberMe">
+        <span class="checkmark"></span>
+        <span id="lblRemember">Remember me</span>
+      </label>
+    </div>
+
+    <div class="login-error" id="loginError">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span id="loginErrorMsg">Invalid username or password</span>
+    </div>
+
+    <button class="login-btn" id="loginBtn">
+      <span class="btn-text" id="loginBtnText">Sign In</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="login-footer">
+      <button class="login-lang" id="loginLangBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+        <span id="loginLangLabel">العربية</span>
+      </button>
+      <button class="login-theme-btn" id="loginThemeBtn">
+        <svg id="loginThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Screen -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loader-ring">
+    <div class="loader-ring-inner"></div>
+  </div>
+</div>
+
+<div class="app" id="mainApp" style="display:none;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand" style="padding:0 0 16px;border-bottom:1px solid var(--border);margin-bottom:8px;display:flex;align-items:center;gap:10px;min-height:60px;">
+      <img class="brand-logo" src="data:image/png;base64,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" alt="StockFlow" style="width:42px;height:42px;border-radius:12px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 12px rgba(10,102,255,.25);">
+      <div class="brand-text">
+        <div style="font-size:16px;font-weight:800;letter-spacing:-.3px;line-height:1.1;">StockFlow</div>
+        <div style="font-size:10px;color:var(--text-2);font-weight:500;" data-i18n="brand.tagline">Smart Warehouse &amp; Inventory</div>
+      </div>
+    </div>
+    <nav class="nav" id="navList"></nav>
+    <div style="display:flex;justify-content:flex-end;padding-bottom:8px;">
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <button class="sidebar-close-btn" id="sidebarCloseBtn" title="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="sidebar-foot">
+      <button class="nav-item" id="logoutBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span data-i18n="nav.logout">Logout</span>
+      </button>
+      <div class="nav-sep"></div>
+      <button class="nav-item" id="helpBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
+        <span data-i18n="nav.help">Help</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="sidebar-mobile-btn" id="sidebarMobileBtn" title="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+        <div class="page-sub" id="pageSub">Overview</div>
+      </div>
+      <div class="search" id="globalSearchWrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="globalSearch" data-i18n-ph="topbar.search" placeholder="Search items, suppliers, orders...">
+        <button class="search-close-btn" id="searchCloseBtn" title="Close">✕</button>
+      </div>
+      <button class="icon-btn mobile-search-btn" id="mobileSearchBtn" title="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <div class="topbar-actions">
+        <button class="lang-toggle" id="langToggle">EN / AR</button>
+        <button class="icon-btn" id="layoutBtn" title="Customize Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button class="icon-btn" id="themeToggle" title="Toggle theme">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+        </button>
+        <button class="icon-btn" id="calendarBtn" title="Calendar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+        </button>
+        <button class="icon-btn" id="notifBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="badge-dot"></span>
+        </button>
+        <div class="notif-dropdown" id="notifDropdown">
+          <div class="notif-dropdown-header">
+            <span id="notifDropTitle">Notifications</span>
+            <span class="notif-dropdown-count" id="notifDropCount">4</span>
+          </div>
+          <div class="notif-dropdown-body" id="notifDropBody">
+            <div class="alert-row"><div class="alert-icon" style="background:var(--red-soft);color:var(--red);">${ICONS.flag}</div><div class="alert-mid"><div class="alert-name">Loading...</div></div><div class="activity-time">—</div></div>
+          </div>
+          <div class="notif-dropdown-footer">
+            <button class="btn-mini" id="notifDropViewAll">View All</button>
+          </div>
+        </div>
+        <div class="cal-dropdown" id="calDropdown">
+          <div class="cal-header">
+            <button class="cal-arrow" id="calPrev">◀</button>
+            <span class="cal-title" id="calTitle">January 2026</span>
+            <button class="cal-arrow" id="calNext">▶</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-events">
+            <div class="cal-events-header">
+              <span id="calEventsTitle">Today</span>
+              <button class="cal-add-btn" id="calAddBtn">+</button>
+            </div>
+            <div class="cal-events-body" id="calEventsBody">
+              <div class="cal-no-events" id="calNoEvents">No events</div>
+            </div>
+          </div>
+          <div class="cal-add-form" id="calAddForm">
+            <input class="cal-input" id="calEventName" placeholder="Event Name" />
+            <input class="cal-input cal-input-half" id="calEventDate" type="date" />
+            <input class="cal-input cal-input-half" id="calEventTime" type="time" />
+            <div class="cal-form-actions">
+              <button class="cal-form-btn cal-form-cancel" id="calCancelBtn">Cancel</button>
+              <button class="cal-form-btn cal-form-save" id="calSaveBtn">Add Event</button>
+            </div>
+          </div>
+        </div>
+        <div class="user-chip">
+          <div class="avatar">SC</div>
+          <div>
+            <div class="user-name" id="userName">Sarah Chen</div>
+            <div class="user-role" data-i18n="topbar.role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+
+<!-- Transfer Stock Modal -->
+<div class="modal-overlay" id="transferModalOverlay">
+  <div class="modal modal-lg">
+    <h3 id="transferModalTitle">Transfer Stock Between Warehouses</h3>
+    <div class="field-row">
+      <div class="field">
+        <label id="transferLblFrom">From Warehouse</label>
+        <select id="transferFrom"></select>
+      </div>
+      <div class="field">
+        <label id="transferLblTo">To Warehouse</label>
+        <select id="transferTo"></select>
+      </div>
+    </div>
+    <div class="field">
+      <label id="transferLblItem">Item</label>
+      <select id="transferItem"></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label id="transferLblQty">Quantity</label>
+        <input type="number" id="transferQty" placeholder="0" min="1">
+      </div>
+      <div class="field">
+        <label id="transferLblNote">Notes (optional)</label>
+        <input type="text" id="transferNote" placeholder="...">
+      </div>
+    </div>
+    <div style="background:var(--surface-2);border-radius:11px;padding:12px;margin-top:4px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-2);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span id="transferInfo">Select source and destination warehouses to review the transfer.</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="transferCancel">Cancel</button>
+      <button class="btn btn-primary" id="transferSubmit">Execute Transfer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Warehouse Confirm Modal -->
+<div class="modal-overlay" id="whDeleteModalOverlay">
+  <div class="modal" style="max-width:380px;width:90%;">
+    <h3 id="whDeleteTitle">Delete this warehouse?</h3>
+    <p id="whDeleteBody" style="font-size:13px;color:var(--text-2);margin:0 0 6px;"></p>
+    <div class="modal-actions">
+      <button class="btn" id="whDeleteCancel">Cancel</button>
+      <button class="btn" id="whDeleteConfirm" style="background:var(--red);border-color:var(--red);color:#fff;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Purchase Order Modal -->
+<!-- ── Enhanced PO Modal ── -->
+<div class="modal-overlay" id="poModalOverlay">
+  <div class="modal modal-xl">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <h3 style="margin:0;" id="poModalTitle">New Purchase Order</h3>
+      <span id="poModalBadge" style="font-size:12px;font-weight:700;color:var(--blue);background:var(--blue-soft);padding:4px 12px;border-radius:999px;"></span>
+    </div>
+    <div class="field-row">
+      <div class="field"><label id="poLblSupplier">Supplier</label>
+        <select id="poSupplier">
+          <option value="Al-Bina Steel Co.">Al-Bina Steel Co.</option>
+          <option value="Gulf Hydraulics Ltd.">Gulf Hydraulics Ltd.</option>
+          <option value="Falcon Automation">Falcon Automation</option>
+          <option value="Eastern Polymers">Eastern Polymers</option>
+          <option value="__custom__">+ Custom Supplier</option>
+        </select>
+      </div>
+      <div class="field" id="poCustomSupplierWrap" style="display:none;"><label>Supplier Name</label><input id="poCustomSupplier" placeholder="Enter supplier name..."></div>
+      <div class="field"><label id="poLblDate">Expected Delivery Date</label><input type="date" id="poDate"></div>
+    </div>
+    <!-- Line items -->
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;" id="poLblItems">Items</label>
+        <button class="btn-mini" id="poAddLineBtn" style="font-size:11px;padding:5px 12px;">+ Add Item</button>
+      </div>
+      <table class="po-items-table">
+        <thead><tr>
+          <th style="width:36%;" id="poThItem">Item / Description</th>
+          <th style="width:14%;" id="poThQty">Qty</th>
+          <th style="width:14%;" id="poThUnit">Unit</th>
+          <th style="width:18%;" id="poThPrice">Unit Price</th>
+          <th style="width:14%;" id="poThTotal">Total</th>
+          <th style="width:4%;"></th>
+        </tr></thead>
+        <tbody id="poLinesBody"></tbody>
+      </table>
+    </div>
+    <div class="field"><label id="poLblNotes">Notes</label><input id="poNotes" placeholder="..."></div>
+    <div class="po-totals">
+      <div class="po-totals-row"><span id="poLblSubtotal" style="color:var(--text-2);">Subtotal</span><span id="poSubtotal">SAR 0.00</span></div>
+      <div class="po-totals-row"><span id="poLblVat" style="color:var(--text-2);">VAT (15%)</span><span id="poVat">SAR 0.00</span></div>
+      <div class="po-totals-row"><span id="poLblTotal">Total</span><span id="poGrandTotal">SAR 0.00</span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="poCancel">Cancel</button>
+      <button class="btn btn-primary" id="poSave">Submit Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── View PO Document Modal ── -->
+<div class="modal-overlay" id="poViewModalOverlay">
+  <div class="modal modal-xl">
+    <div class="po-print-actions" style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:16px;">
+      <button class="btn" id="poViewClose">✕ Close</button>
+      <button class="btn" id="poPrintBtn">🖨 Print</button>
+      <button class="btn btn-primary" id="poSavePdfBtn">⬇ Save PDF</button>
+    </div>
+    <div class="po-doc" id="poDocContent"></div>
+  </div>
+</div>
+
+<!-- ── Delete PO Modal ── -->
+<div class="modal-overlay" id="poDeleteModalOverlay">
+  <div class="modal" style="max-width:380px;width:90%;">
+    <h3 id="poDeleteTitle">Delete Purchase Order?</h3>
+    <p id="poDeleteBody" style="font-size:13px;color:var(--text-2);margin:0 0 6px;"></p>
+    <div class="modal-actions">
+      <button class="btn" id="poDeleteCancel">Cancel</button>
+      <button class="btn" id="poDeleteConfirm" style="background:var(--red);border-color:var(--red);color:#fff;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Issue Request Modal -->
+<div class="modal-overlay" id="issueModalOverlay">
+  <div class="modal modal-lg">
+    <h3 id="issueModalTitle">New Material Request</h3>
+    <div class="field-row">
+      <div class="field"><label id="issueLblDept">Department</label>
+        <select id="issueDept">
+          <option>Production Line 1</option>
+          <option>Production Line 2</option>
+          <option>Assembly Line 1</option>
+          <option>Assembly Line 2</option>
+          <option>Maintenance</option>
+          <option>Quality Control</option>
+        </select>
+      </div>
+      <div class="field"><label id="issueLblPriority">Priority</label>
+        <select id="issuePriority">
+          <option value="normal">Normal</option>
+          <option value="urgent">Urgent</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label id="issueLblItem">Material / Item</label>
+      <select id="issueItem"></select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label id="issueLblQty">Required Quantity</label><input type="number" id="issueQty" placeholder="0" min="1"></div>
+      <div class="field"><label id="issueLblDate">Required Date</label><input type="date" id="issueDate"></div>
+    </div>
+    <div class="field"><label id="issueLblReason">Reason / Purpose</label><input id="issueReason" placeholder="Describe the purpose..."></div>
+    <div class="modal-actions">
+      <button class="btn" id="issueCancel">Cancel</button>
+      <button class="btn btn-primary" id="issueSave">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Warehouse Add / Edit Modal -->
+<div class="modal-overlay" id="whModalOverlay">
+  <div class="modal modal-lg">
+    <h3 id="whModalTitle">Add Warehouse</h3>
+    <div class="field-row">
+      <div class="field"><label id="whLblName">Warehouse Name (EN)</label><input id="whName" placeholder="e.g. Warehouse G — Spare Parts"></div>
+      <div class="field"><label id="whLblNameAr">Warehouse Name (AR)</label><input id="whNameAr" placeholder="مستودع ز — قطع الغيار"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label id="whLblSections">Sections</label><input type="number" id="whSections" placeholder="0" min="1"></div>
+      <div class="field"><label id="whLblOcc">Current Occupancy (%)</label><input type="number" id="whOcc" placeholder="0" min="0" max="100"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label id="whLblCapacity">Capacity (items)</label><input id="whCapacity" placeholder="e.g. 20,000"></div>
+      <div class="field"><label id="whLblCurrent">Current Items</label><input id="whCurrent" placeholder="e.g. 5,000"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="whCancel">Cancel</button>
+      <button class="btn btn-primary" id="whSave">Save Warehouse</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Edit Modal -->
+<div class="modal-overlay" id="profileModalOverlay">
+  <div class="modal profile-modal">
+    <h3 id="profileModalTitle">Edit Profile</h3>
+    <div class="profile-upload-row">
+      <div class="avatar-lg" id="profileAvatarPreview"></div>
+      <div class="img-upload-actions">
+        <input type="file" id="profileImgFile" accept="image/*" style="display:none;">
+        <button type="button" class="btn" id="profileImgUploadBtn">Change Photo</button>
+        <button type="button" class="btn" id="profileImgRemoveBtn" style="display:none;">Remove Photo</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label id="profileLblName">Full Name</label><input id="profileName" placeholder="e.g. Sarah Chen"></div>
+      <div class="field"><label id="profileLblRole">Role</label><input id="profileRole" placeholder="e.g. Administrator" readonly style="opacity:.6;cursor:not-allowed;"></div>
+    </div>
+    <div class="field"><label id="profileLblEmail">Email</label><input id="profileEmail" placeholder="e.g. sarah@factorylogix.com" type="email"></div>
+    <div class="modal-actions">
+      <button class="btn" id="profileCancel">Cancel</button>
+      <button class="btn btn-primary" id="profileSave">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Add/Edit Modal -->
+<div class="modal-overlay" id="userModalOverlay">
+  <div class="modal">
+    <h3 id="userModalTitle">Add User</h3>
+    <div class="field">
+      <label id="userLblName">Full Name</label>
+      <input id="userInputName" placeholder="e.g. John Doe">
+    </div>
+    <div class="field">
+      <label id="userLblEmail">Email</label>
+      <input id="userInputEmail" type="email" placeholder="e.g. john@stockflow.com">
+    </div>
+    <div class="field">
+      <label id="userLblPassword">Password</label>
+      <input id="userInputPassword" type="password" placeholder="********">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label id="userLblRole">Role</label>
+        <select id="userRole">
+          <option value="admin">Administrator</option>
+          <option value="manager">Warehouse Manager</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="employee">Employee</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="userLblDept">Department</label>
+        <input id="userDept" placeholder="e.g. IT / Systems">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="userCancel">Cancel</button>
+      <button class="btn btn-primary" id="userSave">Save User</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitleEl">Add New Item</h3>
+    <div class="img-upload-row">
+      <div class="img-preview" id="mImgPreview"></div>
+      <div class="img-upload-actions">
+        <input type="file" id="mImgFile" accept="image/*" style="display:none;">
+        <button type="button" class="btn" id="mImgUploadBtn" data-i18n="modal.uploadImage">Upload Image</button>
+        <button type="button" class="btn" id="mImgRemoveBtn" data-i18n="modal.removeImage" style="display:none;">Remove Image</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label data-i18n="modal.itemName">Item Name</label><input id="mItemName" placeholder="e.g. Heavy-Duty Hydraulic Pump"></div>
+      <div class="field"><label data-i18n="modal.sku">SKU</label><input id="mSku" placeholder="SKU-XXXXXX"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label data-i18n="modal.category">Category</label>
+        <select id="mCategory"><option>Pumps &amp; Motors</option><option>Automation</option><option>Tools</option><option>Bearings</option><option>Raw Materials</option></select>
+      </div>
+      <div class="field"><label data-i18n="modal.unit">Unit</label>
+        <select id="mUnit"><option>pcs</option><option>kg</option><option>box</option><option>roll</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label data-i18n="modal.qty">Stock Qty</label><input id="mQty" type="number" placeholder="0"></div>
+      <div class="field"><label data-i18n="modal.minLevel">Min Stock Level</label><input id="mMin" type="number" placeholder="0"></div>
+    </div>
+    <div class="field"><label data-i18n="modal.location">Warehouse / Location</label><select id="mLoc"></select></div>
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel" data-i18n="modal.cancel">Cancel</button>
+      <button class="btn btn-primary" id="modalSave" data-i18n="modal.save">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="viewModalOverlay">
+  <div class="modal">
+    <h3 id="viewModalTitle">Item Details</h3>
+    <div id="viewModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="viewModalClose" data-i18n="modal.close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteModalOverlay">
+  <div class="modal" style="max-width:380px;width:90%;">
+    <h3 id="deleteModalTitle">Delete item?</h3>
+    <p id="deleteModalBody" style="font-size:13px;color:var(--text-2);margin:0 0 6px;"></p>
+    <div class="modal-actions">
+      <button class="btn" id="deleteCancel" data-i18n="modal.cancel">Cancel</button>
+      <button class="btn" id="deleteConfirm" style="background:var(--red);border-color:var(--red);color:#fff;" data-i18n="modal.delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="js/supabase-config.js" onerror="console.error('[StockFlow] js/supabase-config.js failed to load — check that the file exists at that exact path in your deployed site (not in the repo root). The app will run in demo mode until this is fixed.')"></script>
+<script type="module" src="js/supabase-init.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

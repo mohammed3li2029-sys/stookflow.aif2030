@@ -1,0 +1,94 @@
+# StockFlow — دليل النشر والتشغيل
+
+## بنية المشروع
+
+```
+stockflow-project/
+├── index.html               الصفحة الرئيسية
+├── css/style.css             التنسيقات
+├── js/app.js                 منطق التطبيق
+├── js/chart.umd.min.js       مكتبة الرسوم البيانية (مستضافة محليًا)
+├── js/supabase-config.js     ⚠️ يجب تعديل هذا الملف (انظر أدناه)
+├── js/supabase-init.js       طبقة الاتصال بـ Supabase (Auth + Database)
+├── supabase-schema.sql       أوامر SQL لإنشاء الجداول وصلاحيات الأمان
+├── _headers                  رؤوس أمان HTTP لـ Cloudflare Pages
+└── README.md                 هذا الملف
+```
+
+> **مهم جدًا بخصوص مكان الملفات:** لما ترفع المشروع، تأكد إن `js/supabase-config.js`
+> يطلع فعليًا داخل مجلد `js/` وليس في جذر المستودع — نفس المشكلة اللي صارت
+> سابقًا مع Firebase بسبب رفع ملف مكانه غلط. أسهل طريقة: اسحب مجلد
+> `stockflow-project` بالكامل دفعة وحدة بدل رفع الملفات وحدة وحدة.
+
+## 1) النشر (Cloudflare Pages أو GitHub Pages)
+
+المشروع جاهز للرفع مباشرة بدون أي تعديل مسبق. بعد الرفع مباشرة يعمل في
+**وضع العرض التجريبي (Demo Mode)**: بيانات تجريبية جاهزة، وتسجيل دخول بالحساب
+`admin` / `123456` — هذا يعمل فورًا حتى قبل ربطه بـ Supabase.
+
+## 2) ربط المشروع بـ Supabase (Authentication + Database)
+
+هذه الخطوة **يجب أن تنفذها أنت**، لأنها تتطلب مشروع Supabase الخاص بك.
+
+### الخطوات:
+
+1. من [supabase.com/dashboard](https://supabase.com/dashboard) افتح مشروعك.
+2. **Project Settings → API**، انسخ:
+   - **Project URL**
+   - **anon public key** (⚠️ وليس `service_role` — ذاك السري لا يُستخدم في المتصفح أبدًا)
+3. افتح `js/supabase-config.js` واستبدل قيمتي `REPLACE_ME` بالقيمتين أعلاه.
+4. من **SQL Editor** في لوحة Supabase، افتح ملف `supabase-schema.sql` المرفق،
+   انسخ محتواه بالكامل، الصقه، واضغط **Run**. هذا ينشئ جدولي `inventory` و
+   `warehouses` مع قواعد الأمان (RLS) اللي تسمح فقط للمستخدمين المسجّلين
+   بالقراءة/الكتابة.
+5. من **Authentication → Providers**، تأكد إن **Email** مفعّل.
+6. من **Authentication → Users → Add user**، أضف مستخدمًا (بريد إلكتروني + كلمة مرور).
+7. ارفع `js/supabase-config.js` المحدّث لمستودع GitHub.
+
+بعد ذلك:
+- تسجيل الدخول بأي **بريد إلكتروني** مسجّل في Supabase سيستخدم Supabase Auth الحقيقي.
+- تسجيل الدخول باسم المستخدم التجريبي `admin` يستمر بالعمل محليًا فقط (لن يلمس Supabase).
+- بيانات **المخزون** و**المستودعات** ستُقرأ وتُكتب مباشرة من/إلى Supabase تلقائيًا.
+
+## 3) نطاق الربط الحالي — مهم
+
+تم ربط **المخزون** و**المستودعات** بشكل كامل مع Supabase. الوحدات التالية لا
+تزال تعمل ببيانات تجريبية محلية فقط: المبيعات، المشتريات، طلبات الصرف،
+المشاريع، المستخدمون، الإشعارات. يمكن ربطها لاحقًا بنفس النمط
+(`js/supabase-init.js` + `withFirestoreSync` في `js/app.js`؛ الاسم قديم من
+مرحلة Firebase لكنه يعمل بنفس الطريقة مع Supabase الآن) — أخبرني بأي وحدة تريد البدء بها.
+
+## 4) ملاحظات أمان
+
+- كلمات مرور وضع العرض التجريبي (`admin/123456`) مجرد ترميز Base64 وليست
+  مشفّرة — مقبول للعرض فقط. مع Supabase Auth الحقيقي، كلمات المرور تُدار
+  وتُشفّر بالكامل من طرف Supabase.
+- جداول Supabase محمية بـ Row Level Security: لا قراءة ولا كتابة إلا
+  لمستخدم مسجّل دخول (`auth.role() = 'authenticated'`).
+- تأكد أنك نسخت مفتاح **anon public** وليس **service_role** في
+  `js/supabase-config.js` — المفتاح السري لا يجب أن يظهر في كود المتصفح إطلاقًا.
+
+## 5) التحقق بعد الرفع
+
+افتح: `<رابط موقعك>/js/supabase-config.js` مباشرة في المتصفح.
+يجب أن تشوف رابط مشروعك الحقيقي، وليس `REPLACE_ME`.
+لو ظهرت رسالة 404، فالملف في المكان الخطأ — راجع الملاحظة أعلى الصفحة.
+
+## 6) رفع المشروع على GitHub
+
+```bash
+git remote add origin https://github.com/USERNAME/REPO_NAME.git
+git branch -M main
+git push -u origin main
+```
+
+## 7) ما تم إصلاحه في هذه المراجعة (تاريخ التحسينات)
+
+- إصلاح خطأ HTML: سمة `class` مكررة على عنصر الشعار.
+- إصلاح خطأ HTML: عنصر `<div>` داخل `<button>` (غير مسموح في HTML5).
+- إصلاح ترميز `&` غير المهرّب في رابط خطوط Google.
+- فصل CSS وJavaScript عن ملف HTML الواحد إلى ملفات منظمة.
+- استضافة مكتبة Chart.js محليًا بدل الاعتماد على CDN خارجي.
+- إضافة رؤوس أمان HTTP لـ Cloudflare Pages.
+- إضافة تكامل حقيقي مع Supabase Authentication وDatabase (المخزون والمستودعات)
+  بعد التحويل من Firebase Realtime Database بناءً على طلبك.

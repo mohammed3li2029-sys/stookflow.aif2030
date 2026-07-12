@@ -1,0 +1,11 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Firebase local emulator/cache (if you later use the Firebase CLI)
+.firebase/
+firebase-debug.log
