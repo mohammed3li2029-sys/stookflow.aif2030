@@ -2,6 +2,7 @@
 -- StockFlow — Supabase Schema
 -- ============================================================================
 -- Run this once in: Supabase Dashboard → SQL Editor → New query → Run.
+-- Safe to re-run any time (uses IF NOT EXISTS / OR REPLACE / DROP IF EXISTS).
 --
 -- Each table stores one row per item, with the full item as a JSONB blob
 -- in the `data` column. This mirrors the original in-app data shape
@@ -20,7 +21,38 @@ create table if not exists warehouses (
   updated_at timestamptz not null default now()
 );
 
--- Keep updated_at current on every write.
+create table if not exists material_requests (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists projects (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists quotations (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists purchase_orders (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+-- Single-row table: always exactly one row with id = 'profile'.
+create table if not exists profile (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+-- Keep updated_at current on every write, for every table above.
 create or replace function set_updated_at()
 returns trigger as $$
 begin
@@ -29,15 +61,16 @@ begin
 end;
 $$ language plpgsql;
 
-drop trigger if exists trg_inventory_updated_at on inventory;
-create trigger trg_inventory_updated_at
-  before update on inventory
-  for each row execute function set_updated_at();
-
-drop trigger if exists trg_warehouses_updated_at on warehouses;
-create trigger trg_warehouses_updated_at
-  before update on warehouses
-  for each row execute function set_updated_at();
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile']
+  loop
+    execute format('drop trigger if exists trg_%I_updated_at on %I;', t, t);
+    execute format('create trigger trg_%I_updated_at before update on %I for each row execute function set_updated_at();', t, t);
+  end loop;
+end $$;
 
 -- ----------------------------------------------------------------------------
 -- Row Level Security: only signed-in users (via Supabase Auth) may read
@@ -45,17 +78,17 @@ create trigger trg_warehouses_updated_at
 -- staff share full access). Tighten later with a `role` column if needed.
 -- ----------------------------------------------------------------------------
 
-alter table inventory enable row level security;
-alter table warehouses enable row level security;
-
-drop policy if exists "Authenticated read/write inventory" on inventory;
-create policy "Authenticated read/write inventory"
-  on inventory for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
-
-drop policy if exists "Authenticated read/write warehouses" on warehouses;
-create policy "Authenticated read/write warehouses"
-  on warehouses for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile']
+  loop
+    execute format('alter table %I enable row level security;', t);
+    execute format('drop policy if exists "Authenticated read/write %s" on %I;', t, t);
+    execute format(
+      'create policy "Authenticated read/write %s" on %I for all using (auth.role() = %L) with check (auth.role() = %L);',
+      t, t, 'authenticated', 'authenticated'
+    );
+  end loop;
+end $$;

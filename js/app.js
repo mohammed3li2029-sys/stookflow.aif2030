@@ -43,6 +43,35 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
       wh.forEach(item => warehouseData.push(item));
       if(typeof renderWarehouses === 'function') renderWarehouses();
     }
+    const reqs = await window.StockFlowBackend.loadCollection('material_requests');
+    if(reqs && reqs.length){
+      reqsData.length = 0;
+      reqs.forEach(item => reqsData.push(item));
+      if(typeof renderIssues === 'function') renderIssues();
+    }
+    const projs = await window.StockFlowBackend.loadCollection('projects');
+    if(projs && projs.length){
+      projects.length = 0;
+      projs.forEach(item => projects.push(item));
+      if(typeof renderProjects === 'function') renderProjects();
+    }
+    const quotes = await window.StockFlowBackend.loadCollection('quotations');
+    if(quotes && quotes.length){
+      quotations.length = 0;
+      quotes.forEach(item => quotations.push(item));
+      if(typeof renderQuoteRows === 'function') renderQuoteRows();
+    }
+    const pos = await window.StockFlowBackend.loadCollection('purchase_orders');
+    if(pos && pos.length){
+      purchaseOrders.length = 0;
+      pos.forEach(item => purchaseOrders.push(item));
+      if(typeof renderPurchasing === 'function') renderPurchasing();
+    }
+    const profiles = await window.StockFlowBackend.loadCollection('profile');
+    if(profiles && profiles.length){
+      Object.assign(profileData, profiles[0]);
+      if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
+    }
   }catch(err){
     console.error('[StockFlow] Supabase initial load failed:', err);
   }
@@ -194,11 +223,11 @@ function t(path){
 /* ===================================================================
    MOCK DATA
 =================================================================== */
-const reqsData = [
+const reqsData = withFirestoreSync([
   {id:'REQ-551', dept:'Production Line 1', deptAr:'خط الإنتاج 1', item:'Bearing Kit (BK-900)', itemAr:'طقم محامل (BK-900)', qty:20, status:'pending', priority:'normal', date:'2025-06-10', reason:'Schedule maintenance'},
   {id:'REQ-552', dept:'Maintenance', deptAr:'الصيانة', item:'Pneumatic Drill (PD-75)', itemAr:'مثقاب هوائي (PD-75)', qty:2, status:'approved', priority:'urgent', date:'2025-06-08', reason:'Production line B repair'},
   {id:'REQ-553', dept:'Assembly Line 2', deptAr:'خط التجميع 2', item:'Gear Assembly Unit', itemAr:'وحدة تجميع التروس', qty:6, status:'pending', priority:'normal', date:'2025-06-12', reason:'New order fulfillment'},
-];
+], 'material_requests', 'id');
 
 const inventoryData = withFirestoreSync([
   {name:'Heavy-Duty Hydraulic Pump (AP-500)', nameAr:'مضخة هيدروليكية ثقيلة (AP-500)', sku:'SKU-880012', cat:'Pumps & Motors', catAr:'مضخات ومحركات', stock:74, min:30, loc:'WH-A / Shelf 12'},
@@ -239,7 +268,7 @@ const defaultPhases = [
 const PROJECT_STATUSES = ['active','completed','onHold','cancelled'];
 const PROJECT_PRIORITIES = ['high','medium','low'];
 let projCounter = 5;
-const projects = [
+const projects = withFirestoreSync([
   {id:'PRJ-001',name:'Factory Automation Line A',nameAr:'خط الأتمتة أ',client:'Saudi Manufacturing Co.',clientAr:'شركة التصنيع السعودية',type:'Industrial',typeAr:'صناعي',location:'Dammam 2nd Industrial City',locationAr:'الدمام المدينة الصناعية الثانية',coords:'26.4207°N, 50.0888°E',manager:'Ahmed Al-Faraj',engineer:'Khalid Nasser',contractNo:'CON-2026-001',contractFile:'',contractValue:2850000,contractDate:'2026-01-15',startDate:'2026-02-01',duration:150,progress:65,status:'active',priority:'high',notes:'Second phase expansion project',notesAr:'مشروع التوسعة المرحلة الثانية',
     phases:[
       {id:'P1',status:'completed',start:'2026-01-15',end:'2026-01-20',resp:'Sarah Chen',notes:'Signed on time',notesAr:'تم التوقيع',progress:100},
@@ -331,7 +360,7 @@ const projects = [
     risks:[{name:'Raw material price fluctuation',nameAr:'تقلب أسعار المواد الخام',level:'high',status:'active',date:'2026-05-01'}],
     issueOrders:[],poRefs:[],
   },
-];
+], 'projects', 'id');
 
 const activity = [
   {type:'received', name:'Sarah Chen', sub:'SKU-880012 · Hydraulic Pump', time:5},
@@ -662,7 +691,7 @@ function mountDashCal(){
 /* ===================================================================
    PAGE RENDER: SALES (QUOTATIONS)
 =================================================================== */
-let quotations = [
+let quotations = withFirestoreSync([
   {id:'AIF-F25-19', customer:'شركة الاوسط العربية للمقاولات', date:'2024-05-12', status:'sent', total:101890.00, 
    terms:'الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.',
    payments:'يدفع 50% عند التعاقد والباقي عند الاستلام.',
@@ -688,7 +717,7 @@ let quotations = [
     {name:'صاج حديد', desc:'صاج حديد سماكة 2 مم', qty:6, unit:'طن', price:3100.00},
     {name:'كمر H', desc:'كمر حديد H-Beam 200', qty:4, unit:'طن', price:5400.00}
   ]}
-];
+], 'quotations', 'id');
 
 function getQuoteStatusText(status){
   if(status==='review') return lang==='en'?'Under Review':'تحت المراجعة';
@@ -1502,7 +1531,7 @@ function renderWarehouses(){
    PAGE RENDER: PURCHASING
 =================================================================== */
 /* Purchase Orders Store */
-const purchaseOrders = [
+const purchaseOrders = withFirestoreSync([
   { id:'PO-2291', supplier:'Al-Bina Steel Co.', date:'2026-06-12', deliveryDate:'2026-06-28',
     items:[{name:'Steel Coil — Grade A',sku:'SKU-S4109',qty:200,unit:'kg',price:92.10,total:18420}],
     notes:'Urgent delivery required', status:'approved', subtotal:18420, vat:2763, grandTotal:21183 },
@@ -1512,7 +1541,7 @@ const purchaseOrders = [
   { id:'PO-2293', supplier:'Falcon Automation', date:'2026-06-18', deliveryDate:'2026-07-02',
     items:[{name:'Industrial Control Panel (X-340)',sku:'SKU-654001',qty:3,unit:'pcs',price:8300,total:24900}],
     notes:'Include installation manual', status:'approved', subtotal:24900, vat:3735, grandTotal:28635 },
-];
+], 'purchase_orders', 'id');
 let poCounter = 2294;
 function nextPOId(){ return 'PO-'+(poCounter++); }
 
@@ -4070,8 +4099,9 @@ document.getElementById('whSave').addEventListener('click',()=>{
   if(editingWhIndex===null||editingWhIndex===undefined){
     warehouseData.push({name,nameAr:nameAr||name,occ,items:cur+' / '+cap,sections,color:occColor});
   } else {
-    const w=warehouseData[editingWhIndex];
+    const w={...warehouseData[editingWhIndex]};
     w.name=name; w.nameAr=nameAr||name; w.occ=occ; w.items=cur+' / '+cap; w.sections=sections; w.color=occColor;
+    warehouseData[editingWhIndex]=w;
   }
   closeWhModal();
   showToast(lang==='en'?'Warehouse saved!':'تم حفظ المستودع بنجاح!');
@@ -4081,7 +4111,7 @@ document.getElementById('whSave').addEventListener('click',()=>{
 /* ===================================================================
    PROFILE MODAL
 =================================================================== */
-const profileData={name:'Sarah Chen',role:'Administrator',roleAr:'مدير النظام',email:'sarah@factorylogix.com',image:null,initials:'SC'};
+const profileData={id:'profile',name:'Sarah Chen',role:'Administrator',roleAr:'مدير النظام',email:'sarah@factorylogix.com',image:null,initials:'SC'};
 let profileImgData=null;
 
 function getInitials(name){
@@ -4155,6 +4185,9 @@ document.getElementById('profileSave').addEventListener('click',()=>{
   profileData.email=document.getElementById('profileEmail').value.trim();
   profileData.image=profileImgData;
   profileData.initials=getInitials(name);
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('profile', [profileData], 'id');
+  }
   closeProfileModal();
   refreshTopbarProfile();
   showToast(lang==='en'?'Profile updated successfully!':'تم تحديث الملف الشخصي بنجاح!');
