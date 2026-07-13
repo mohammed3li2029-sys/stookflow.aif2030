@@ -32,45 +32,34 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
     const inv = await window.StockFlowBackend.loadCollection('inventory');
-    if(inv && inv.length){
-      inventoryData.length = 0;
-      inv.forEach(item => inventoryData.push(item));
-      if(typeof renderInventory === 'function') renderInventory();
-    }
+    if(inv && inv.length){ inventoryData.length = 0; inv.forEach(item => inventoryData.push(item)); }
+
     const wh = await window.StockFlowBackend.loadCollection('warehouses');
-    if(wh && wh.length){
-      warehouseData.length = 0;
-      wh.forEach(item => warehouseData.push(item));
-      if(typeof renderWarehouses === 'function') renderWarehouses();
-    }
+    if(wh && wh.length){ warehouseData.length = 0; wh.forEach(item => warehouseData.push(item)); }
+
     const reqs = await window.StockFlowBackend.loadCollection('material_requests');
-    if(reqs && reqs.length){
-      reqsData.length = 0;
-      reqs.forEach(item => reqsData.push(item));
-      if(typeof renderIssues === 'function') renderIssues();
-    }
+    if(reqs && reqs.length){ reqsData.length = 0; reqs.forEach(item => reqsData.push(item)); }
+
     const projs = await window.StockFlowBackend.loadCollection('projects');
-    if(projs && projs.length){
-      projects.length = 0;
-      projs.forEach(item => projects.push(item));
-      if(typeof renderProjects === 'function') renderProjects();
-    }
+    if(projs && projs.length){ projects.length = 0; projs.forEach(item => projects.push(item)); }
+
     const quotes = await window.StockFlowBackend.loadCollection('quotations');
-    if(quotes && quotes.length){
-      quotations.length = 0;
-      quotes.forEach(item => quotations.push(item));
-      if(typeof renderQuoteRows === 'function') renderQuoteRows();
-    }
+    if(quotes && quotes.length){ quotations.length = 0; quotes.forEach(item => quotations.push(item)); }
+
     const pos = await window.StockFlowBackend.loadCollection('purchase_orders');
-    if(pos && pos.length){
-      purchaseOrders.length = 0;
-      pos.forEach(item => purchaseOrders.push(item));
-      if(typeof renderPurchasing === 'function') renderPurchasing();
-    }
+    if(pos && pos.length){ purchaseOrders.length = 0; pos.forEach(item => purchaseOrders.push(item)); }
+
     const profiles = await window.StockFlowBackend.loadCollection('profile');
     if(profiles && profiles.length){
       Object.assign(profileData, profiles[0]);
       if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
+    }
+
+    // Re-render whichever page is currently on screen so freshly-loaded
+    // data (inventory, warehouses, requests, projects, quotations, POs)
+    // is reflected immediately, regardless of load timing.
+    if(typeof navigate === 'function' && typeof currentPage !== 'undefined'){
+      navigate(currentPage);
     }
   }catch(err){
     console.error('[StockFlow] Supabase initial load failed:', err);
