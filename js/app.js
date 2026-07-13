@@ -55,6 +55,15 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
       if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
     }
 
+    const users = await window.StockFlowBackend.loadCollection('users');
+    if(users && users.length){
+      usersData.length = 0;
+      // Password isn't stored server-side (see syncUsers()); restore with
+      // a local placeholder so the edit form still has a value to show.
+      users.forEach(u => usersData.push({...u, password: encodePW('')}));
+      if(typeof syncLoginUsers === 'function') syncLoginUsers();
+    }
+
     // Re-render whichever page is currently on screen so freshly-loaded
     // data (inventory, warehouses, requests, projects, quotations, POs)
     // is reflected immediately, regardless of load timing.
@@ -2186,6 +2195,19 @@ function closeUserModal(){
   document.getElementById('userModalOverlay').style.display = 'none';
 }
 
+function syncUsers(){
+  // Sync users to Supabase WITHOUT the password field — even though it's
+  // only base64-encoded locally (not real encryption), storing it in a
+  // shared database table that every logged-in staff member can read
+  // (per our current RLS policy) would be a real exposure. Real
+  // authentication should go through Supabase Auth (real email login),
+  // not this legacy demo password field.
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    const sanitized = usersData.map(({password, ...rest}) => rest);
+    window.StockFlowBackend.syncCollection('users', sanitized, 'email');
+  }
+}
+
 function saveUser(){
   const name = document.getElementById('userInputName').value.trim();
   const email = document.getElementById('userInputEmail').value.trim();
@@ -2206,6 +2228,7 @@ function saveUser(){
     usersData.unshift({name, email, password:encodePW(password), role, dept, deptAr:dept, init});
   }
   syncLoginUsers();
+  syncUsers();
   closeUserModal();
   renderUsersRows();
   showToast(lang==='en'?'User saved!':'تم حفظ المستخدم!');
@@ -2217,6 +2240,7 @@ async function deleteUser(idx){
   if(!ok) return;
   usersData.splice(idx, 1);
   syncLoginUsers();
+  syncUsers();
   renderUsersRows();
   showToast(lang==='en'?'User deleted!':'تم حذف المستخدم!');
 }

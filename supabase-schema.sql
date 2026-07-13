@@ -52,6 +52,14 @@ create table if not exists profile (
   updated_at timestamptz not null default now()
 );
 
+-- Staff directory. Deliberately does NOT store passwords — see
+-- js/app.js's syncUsers() for why.
+create table if not exists users (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Keep updated_at current on every write, for every table above.
 create or replace function set_updated_at()
 returns trigger as $$
@@ -65,7 +73,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users']
   loop
     execute format('drop trigger if exists trg_%I_updated_at on %I;', t, t);
     execute format('create trigger trg_%I_updated_at before update on %I for each row execute function set_updated_at();', t, t);
@@ -82,7 +90,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users']
   loop
     execute format('alter table %I enable row level security;', t);
     execute format('drop policy if exists "Authenticated read/write %s" on %I;', t, t);
