@@ -257,6 +257,17 @@ const defaultPhases = [
 const PROJECT_STATUSES = ['active','completed','onHold','cancelled'];
 const PROJECT_PRIORITIES = ['high','medium','low'];
 let projCounter = 5;
+function nextProjectId(){
+  // Same fix as nextPOId(): derive from the highest existing project
+  // number currently in memory (including data restored from Supabase),
+  // not a stale page-load-time counter, to avoid id collisions.
+  const maxExisting = projects.reduce((max, p) => {
+    const n = parseInt(String(p.id||'').replace('PRJ-',''), 10);
+    return Number.isFinite(n) && n > max ? n : max;
+  }, projCounter - 1);
+  projCounter = maxExisting + 2;
+  return 'PRJ-'+String(maxExisting+1).padStart(3,'0');
+}
 const projects = withFirestoreSync([
   {id:'PRJ-001',name:'Factory Automation Line A',nameAr:'خط الأتمتة أ',client:'Saudi Manufacturing Co.',clientAr:'شركة التصنيع السعودية',type:'Industrial',typeAr:'صناعي',location:'Dammam 2nd Industrial City',locationAr:'الدمام المدينة الصناعية الثانية',coords:'26.4207°N, 50.0888°E',manager:'Ahmed Al-Faraj',engineer:'Khalid Nasser',contractNo:'CON-2026-001',contractFile:'',contractValue:2850000,contractDate:'2026-01-15',startDate:'2026-02-01',duration:150,progress:65,status:'active',priority:'high',notes:'Second phase expansion project',notesAr:'مشروع التوسعة المرحلة الثانية',
     phases:[
@@ -1532,7 +1543,19 @@ const purchaseOrders = withFirestoreSync([
     notes:'Include installation manual', status:'approved', subtotal:24900, vat:3735, grandTotal:28635 },
 ], 'purchase_orders', 'id');
 let poCounter = 2294;
-function nextPOId(){ return 'PO-'+(poCounter++); }
+function nextPOId(){
+  // Derive the next id from the highest existing PO number currently in
+  // memory (which, once Supabase is connected, includes restored data —
+  // not just the stale in-page counter). This prevents id collisions
+  // after a reload when purchaseOrders has been repopulated from the
+  // database with numbers higher than the original hardcoded counter.
+  const maxExisting = purchaseOrders.reduce((max, po) => {
+    const n = parseInt(String(po.id||'').replace('PO-',''), 10);
+    return Number.isFinite(n) && n > max ? n : max;
+  }, poCounter - 1);
+  poCounter = maxExisting + 2;
+  return 'PO-'+(maxExisting+1);
+}
 
 function poStatusCfg(status){
   const map = {
@@ -2692,7 +2715,7 @@ function saveProject(idx){
     p.notes = get('pmNotes')||p.notes; p.notesAr = get('pmNotesAr')||p.notesAr;
   } else {
     projects.push({
-      id: pid || 'PRJ-'+String(projCounter++).padStart(3,'0'),
+      id: pid || nextProjectId(),
       name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'),
       type:get('pmType'), typeAr:get('pmTypeAr'), location:get('pmLoc'), locationAr:get('pmLocAr'),
       coords:get('pmCoords'), manager:get('pmManager'), engineer:get('pmEngineer'),

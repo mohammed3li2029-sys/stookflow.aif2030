@@ -83,9 +83,16 @@ function syncCollection(table, items, idField) {
         id: safeKey(item[idField] ?? i),
         data: item
       }));
-      const ids = rows.map(r => r.id);
+      // Guard against duplicate ids within the same batch (Postgres
+      // rejects an upsert where two rows in one command share an id).
+      // If a duplicate slips through, keep the last occurrence, which
+      // reflects the most recent state of that item.
+      const deduped = Array.from(
+        rows.reduce((map, row) => map.set(row.id, row), new Map()).values()
+      );
+      const ids = deduped.map(r => r.id);
       // Upsert current rows, then remove any rows no longer present.
-      const { error: upsertErr } = await supabase.from(table).upsert(rows);
+      const { error: upsertErr } = await supabase.from(table).upsert(deduped);
       if (upsertErr) throw upsertErr;
       const { error: deleteErr } = await supabase
         .from(table)
