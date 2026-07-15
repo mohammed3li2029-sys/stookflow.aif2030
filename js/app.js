@@ -1150,8 +1150,8 @@ function openQuoteView(idx){
   const flexEnd = isAr ? 'flex-end' : 'flex-start';
   
   const viewHTML = `
-  <div class="modal-overlay show" id="quoteViewOverlay" style="background:rgba(0,0,0,0.85);">
-    <div class="modal modal-xl" style="padding:0; overflow:auto; background:#fff; border-radius:0; width:95%; max-width:210mm; min-height:auto; height:auto; margin:10px auto; position:relative; box-shadow:0 0 50px rgba(0,0,0,0.5); transform-origin:top center;">
+  <div class="modal-overlay show" id="quoteViewOverlay" data-theme="light" style="background:rgba(0,0,0,0.85);">
+    <div class="modal modal-xl" style="padding:0; overflow:auto; background:#fff; color:#1a1a1a; border-radius:0; width:95%; max-width:210mm; min-height:auto; height:auto; margin:10px auto; position:relative; box-shadow:0 0 50px rgba(0,0,0,0.5); transform-origin:top center;">
       <!-- Actions Bar (Hidden during print) -->
       <div class="po-print-actions" style="position:fixed; top:20px; inset-inline-end:20px; z-index:1000; display:flex; gap:10px;">
         <button class="btn" onclick="document.getElementById('quoteViewOverlay').remove()" style="background:#fff;">✕ ${L.notif.viewAll||(isAr?'إغلاق':'Close')}</button>
