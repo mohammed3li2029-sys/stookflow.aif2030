@@ -3110,13 +3110,16 @@ function buildNav(){
 function navigate(page){
   currentPage = page;
   const L = STR[lang];
+  const contentEl = document.getElementById('content');
   document.getElementById('pageTitle').textContent = L.page[page][0];
   document.getElementById('pageSub').textContent = L.page[page][1];
-  document.getElementById('content').innerHTML = RENDERERS[page]();
+  contentEl.classList.remove('page-enter');
+  void contentEl.offsetWidth;
+  contentEl.innerHTML = RENDERERS[page]();
+  contentEl.classList.add('page-enter');
   buildNav();
   postRenderHooks(page);
-  document.getElementById('content').scrollTop = 0;
-  // Close sidebar on mobile after navigation
+  contentEl.scrollTop = 0;
   if(window.innerWidth <= 900){
     document.getElementById('sidebar')?.classList.remove('open');
     document.querySelector('.app')?.classList.remove('has-sidebar-open');

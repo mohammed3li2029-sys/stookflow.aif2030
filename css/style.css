@@ -806,3 +806,124 @@ html[dir="rtl"] .toast{transform:translateX(50%);}
 }
 .table-card.has-scroll::after{opacity:.7;}
 @keyframes scrollHintPulse{0%,100%{opacity:.3}50%{opacity:.9}}
+
+/* ─── Page Transition Animations ─── */
+.content{transition:opacity .18s ease;}
+
+@keyframes contentFadeIn{
+  from{opacity:0;transform:translateY(14px) scale(.985);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.content.page-enter{animation:contentFadeIn .4s var(--ease) both;}
+
+@keyframes staggerCardIn{
+  from{opacity:0;transform:translateY(18px) scale(.97);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.content.page-enter .grid-stats > *,
+.content.page-enter .card,
+.content.page-enter .table-card,
+.content.page-enter .section-card,
+.content.page-enter .proj-card,
+.content.page-enter .report-section,
+.content.page-enter .settings-group,
+.content.page-enter .notif-item{
+  opacity:0;
+  animation:staggerCardIn .42s var(--ease) both;
+}
+.content.page-enter .grid-stats > *:nth-child(1),
+.content.page-enter .card:nth-child(1),
+.content.page-enter .table-card:nth-child(1),
+.content.page-enter .section-card:nth-child(1),
+.content.page-enter .proj-card:nth-child(1),
+.content.page-enter .report-section:nth-child(1),
+.content.page-enter .settings-group:nth-child(1),
+.content.page-enter .notif-item:nth-child(1){animation-delay:.06s;}
+.content.page-enter .grid-stats > *:nth-child(2),
+.content.page-enter .card:nth-child(2),
+.content.page-enter .table-card:nth-child(2),
+.content.page-enter .section-card:nth-child(2),
+.content.page-enter .proj-card:nth-child(2),
+.content.page-enter .report-section:nth-child(2),
+.content.page-enter .settings-group:nth-child(2),
+.content.page-enter .notif-item:nth-child(2){animation-delay:.12s;}
+.content.page-enter .grid-stats > *:nth-child(3),
+.content.page-enter .card:nth-child(3),
+.content.page-enter .table-card:nth-child(3),
+.content.page-enter .section-card:nth-child(3),
+.content.page-enter .proj-card:nth-child(3),
+.content.page-enter .report-section:nth-child(3),
+.content.page-enter .settings-group:nth-child(3),
+.content.page-enter .notif-item:nth-child(3){animation-delay:.18s;}
+.content.page-enter .grid-stats > *:nth-child(4),
+.content.page-enter .card:nth-child(4),
+.content.page-enter .table-card:nth-child(4),
+.content.page-enter .section-card:nth-child(4),
+.content.page-enter .proj-card:nth-child(4),
+.content.page-enter .report-section:nth-child(4),
+.content.page-enter .settings-group:nth-child(4),
+.content.page-enter .notif-item:nth-child(4){animation-delay:.24s;}
+.content.page-enter .grid-stats > *:nth-child(5),
+.content.page-enter .card:nth-child(5),
+.content.page-enter .table-card:nth-child(5),
+.content.page-enter .section-card:nth-child(5),
+.content.page-enter .proj-card:nth-child(5),
+.content.page-enter .report-section:nth-child(5),
+.content.page-enter .settings-group:nth-child(5),
+.content.page-enter .notif-item:nth-child(5){animation-delay:.30s;}
+.content.page-enter .grid-stats > *:nth-child(6),
+.content.page-enter .card:nth-child(6),
+.content.page-enter .table-card:nth-child(6),
+.content.page-enter .section-card:nth-child(6),
+.content.page-enter .proj-card:nth-child(6),
+.content.page-enter .report-section:nth-child(6),
+.content.page-enter .settings-group:nth-child(6),
+.content.page-enter .notif-item:nth-child(6){animation-delay:.36s;}
+
+@keyframes staggerRowIn{
+  from{opacity:0;transform:translateX(-8px);}
+  to{opacity:1;transform:translateX(0);}
+}
+html[dir="rtl"] @keyframes staggerRowIn{
+  from{opacity:0;transform:translateX(8px);}
+  to{opacity:1;transform:translateX(0);}
+}
+.content.page-enter table tbody tr{
+  opacity:0;
+  animation:staggerRowIn .32s var(--ease) both;
+}
+.content.page-enter table tbody tr:nth-child(1){animation-delay:.12s;}
+.content.page-enter table tbody tr:nth-child(2){animation-delay:.16s;}
+.content.page-enter table tbody tr:nth-child(3){animation-delay:.20s;}
+.content.page-enter table tbody tr:nth-child(4){animation-delay:.24s;}
+.content.page-enter table tbody tr:nth-child(5){animation-delay:.28s;}
+.content.page-enter table tbody tr:nth-child(6){animation-delay:.32s;}
+.content.page-enter table tbody tr:nth-child(7){animation-delay:.36s;}
+.content.page-enter table tbody tr:nth-child(8){animation-delay:.40s;}
+.content.page-enter table tbody tr:nth-child(n+9){animation-delay:.44s;}
+
+@keyframes fadeSlideIn{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.content.page-enter .dash-filter-row,
+.content.page-enter .filter-row,
+.content.page-enter .inv-top,
+.content.page-enter .wh-top,
+.content.page-enter .sales-top,
+.content.page-enter .po-top,
+.content.page-enter .issue-top,
+.content.page-enter .mov-top,
+.content.page-enter .proj-top,
+.content.page-enter .users-top,
+.content.page-enter .notif-top,
+.content.page-enter .settings-top{
+  opacity:0;
+  animation:fadeSlideIn .35s var(--ease) .04s both;
+}
+.content.page-enter .page-header,
+.content.page-enter h3,
+.content.page-enter h2{
+  opacity:0;
+  animation:fadeSlideIn .35s var(--ease) .02s both;
+}
