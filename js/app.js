@@ -3120,6 +3120,7 @@ function navigate(page){
   buildNav();
   postRenderHooks(page);
   contentEl.scrollTop = 0;
+  // Close sidebar on mobile after navigation
   if(window.innerWidth <= 900){
     document.getElementById('sidebar')?.classList.remove('open');
     document.querySelector('.app')?.classList.remove('has-sidebar-open');

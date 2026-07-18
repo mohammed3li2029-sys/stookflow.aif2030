@@ -905,13 +905,16 @@ html[dir="rtl"] .toast{transform:translateX(50%);}
   from{opacity:0;transform:translateX(-8px);}
   to{opacity:1;transform:translateX(0);}
 }
-html[dir="rtl"] @keyframes staggerRowIn{
+@keyframes staggerRowInRTL{
   from{opacity:0;transform:translateX(8px);}
   to{opacity:1;transform:translateX(0);}
 }
 .content.page-enter table tbody tr{
   opacity:0;
   animation:staggerRowIn .32s var(--ease) both;
+}
+html[dir="rtl"] .content.page-enter table tbody tr{
+  animation-name:staggerRowInRTL;
 }
 .content.page-enter table tbody tr:nth-child(1){animation-delay:.12s;}
 .content.page-enter table tbody tr:nth-child(2){animation-delay:.16s;}
@@ -948,3 +951,4 @@ html[dir="rtl"] @keyframes staggerRowIn{
   opacity:0;
   animation:fadeSlideIn .35s var(--ease) .02s both;
 }
+
