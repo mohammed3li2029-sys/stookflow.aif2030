@@ -28,41 +28,8 @@ function withFirestoreSync(arr, collectionName, idField){
    from Supabase. If the tables are empty/unavailable, the built-in demo
    data (already on screen) is left untouched — so the app always works,
    with or without Supabase configured. */
-window.addEventListener('stockflow-backend-ready', async ()=>{
+async function loadAllStockFlowData(){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
-
-  // If the browser already has a valid, non-expired Supabase session
-  // (from a previous login), skip the login screen entirely instead of
-  // making the person sign in again on every page refresh.
-  try{
-    const session = await window.StockFlowBackend.getSession();
-    if(session && session.user){
-      const email = session.user.email || '';
-      profileData.name = session.user.user_metadata?.full_name || email.split('@')[0];
-      profileData.email = email;
-      profileData.initials = getInitials(profileData.name);
-      const loginScreenEl = document.getElementById('loginScreen');
-      const loadingEl = document.getElementById('loadingScreen');
-      const mainEl = document.getElementById('mainApp');
-      if(loginScreenEl) loginScreenEl.style.display = 'none';
-      if(loadingEl) loadingEl.style.display = 'flex';
-      setTimeout(()=>{
-        if(loadingEl) loadingEl.style.display = 'none';
-        if(mainEl) mainEl.style.display = 'flex';
-        buildNav(); applyStaticI18n();
-        let lastPage = 'dashboard';
-        try{
-          const saved = localStorage.getItem('stockflow_last_page');
-          if(saved && typeof PAGES !== 'undefined' && PAGES.includes(saved)) lastPage = saved;
-        }catch(e){}
-        navigate(lastPage);
-        refreshTopbarProfile();
-      }, 600);
-    }
-  }catch(err){
-    console.error('[StockFlow] Session auto-restore failed:', err);
-  }
-
   try{
     const inv = await window.StockFlowBackend.loadCollection('inventory');
     if(inv && inv.length){ inventoryData.length = 0; inv.forEach(item => inventoryData.push(item)); }
@@ -104,7 +71,71 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
       navigate(currentPage);
     }
   }catch(err){
-    console.error('[StockFlow] Supabase initial load failed:', err);
+    console.error('[StockFlow] Supabase data load failed:', err);
+  }
+}
+
+function revealMainApp(){
+  const loadingEl = document.getElementById('loadingScreen');
+  const mainEl = document.getElementById('mainApp');
+  if(loadingEl) loadingEl.style.display = 'none';
+  if(mainEl) mainEl.style.display = 'flex';
+  buildNav(); applyStaticI18n();
+  let lastPage = 'dashboard';
+  try{
+    const saved = localStorage.getItem('stockflow_last_page');
+    if(saved && typeof PAGES !== 'undefined' && PAGES.includes(saved)) lastPage = saved;
+  }catch(e){}
+  navigate(lastPage);
+  refreshTopbarProfile();
+}
+
+function revealLoginScreen(){
+  const loadingEl = document.getElementById('loadingScreen');
+  const loginScreenEl = document.getElementById('loginScreen');
+  if(loadingEl) loadingEl.style.display = 'none';
+  if(loginScreenEl){
+    loginScreenEl.style.display = '';
+    loginScreenEl.style.opacity = '1';
+    loginScreenEl.style.transform = '';
+  }
+}
+
+// Safety net: if something goes wrong with Supabase (network blocked,
+// script failed, etc.) and we never hear back, don't leave the person
+// stuck on the loading screen forever — fall back to the login screen.
+let _sessionCheckSettled = false;
+setTimeout(()=>{ if(!_sessionCheckSettled) revealLoginScreen(); }, 6000);
+
+window.addEventListener('stockflow-backend-ready', async ()=>{
+  if(!window.StockFlowBackend || !window.StockFlowBackend.enabled){
+    _sessionCheckSettled = true;
+    revealLoginScreen();
+    return;
+  }
+
+  // If the browser already has a valid, non-expired Supabase session
+  // (from a previous login), skip the login screen entirely instead of
+  // making the person sign in again on every page refresh — and load
+  // this same session's ends now, before revealing anything, so there
+  // is no flash of the login screen and no flash of empty/demo data.
+  let session = null;
+  try{
+    session = await window.StockFlowBackend.getSession();
+  }catch(err){
+    console.error('[StockFlow] Session check failed:', err);
+  }
+  _sessionCheckSettled = true;
+
+  if(session && session.user){
+    const email = session.user.email || '';
+    profileData.name = session.user.user_metadata?.full_name || email.split('@')[0];
+    profileData.email = email;
+    profileData.initials = getInitials(profileData.name);
+    await loadAllStockFlowData();
+    revealMainApp();
+  } else {
+    revealLoginScreen();
   }
 });
 
@@ -4931,6 +4962,10 @@ function doLogin(){
       } else {
         localStorage.removeItem('stockflow_remember');
       }
+      // For a real Supabase login (not the local demo account), load this
+      // account's saved data now — a page refresh already does this via
+      // the session-restore flow, but a fresh manual login needs it too.
+      if(fbUser){ loadAllStockFlowData(); }
       // update profile with logged-in user
       profileData.name = user.name;
       profileData.role = user.role;
