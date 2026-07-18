@@ -31,31 +31,29 @@ function withFirestoreSync(arr, collectionName, idField){
 async function loadAllStockFlowData(){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
-    const inv = await window.StockFlowBackend.loadCollection('inventory');
+    const [inv, wh, reqs, projs, quotes, pos, profiles, users] = await Promise.all([
+      window.StockFlowBackend.loadCollection('inventory'),
+      window.StockFlowBackend.loadCollection('warehouses'),
+      window.StockFlowBackend.loadCollection('material_requests'),
+      window.StockFlowBackend.loadCollection('projects'),
+      window.StockFlowBackend.loadCollection('quotations'),
+      window.StockFlowBackend.loadCollection('purchase_orders'),
+      window.StockFlowBackend.loadCollection('profile'),
+      window.StockFlowBackend.loadCollection('users'),
+    ]);
+
     if(inv && inv.length){ inventoryData.length = 0; inv.forEach(item => inventoryData.push(item)); }
-
-    const wh = await window.StockFlowBackend.loadCollection('warehouses');
     if(wh && wh.length){ warehouseData.length = 0; wh.forEach(item => warehouseData.push(item)); }
-
-    const reqs = await window.StockFlowBackend.loadCollection('material_requests');
     if(reqs && reqs.length){ reqsData.length = 0; reqs.forEach(item => reqsData.push(item)); }
-
-    const projs = await window.StockFlowBackend.loadCollection('projects');
     if(projs && projs.length){ projects.length = 0; projs.forEach(item => projects.push(item)); }
-
-    const quotes = await window.StockFlowBackend.loadCollection('quotations');
     if(quotes && quotes.length){ quotations.length = 0; quotes.forEach(item => quotations.push(item)); }
-
-    const pos = await window.StockFlowBackend.loadCollection('purchase_orders');
     if(pos && pos.length){ purchaseOrders.length = 0; pos.forEach(item => purchaseOrders.push(item)); }
 
-    const profiles = await window.StockFlowBackend.loadCollection('profile');
     if(profiles && profiles.length){
       Object.assign(profileData, profiles[0]);
       if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
     }
 
-    const users = await window.StockFlowBackend.loadCollection('users');
     if(users && users.length){
       usersData.length = 0;
       // Password isn't stored server-side (see syncUsers()); restore with
@@ -105,7 +103,7 @@ function revealLoginScreen(){
 // script failed, etc.) and we never hear back, don't leave the person
 // stuck on the loading screen forever — fall back to the login screen.
 let _sessionCheckSettled = false;
-setTimeout(()=>{ if(!_sessionCheckSettled) revealLoginScreen(); }, 6000);
+setTimeout(()=>{ if(!_sessionCheckSettled) revealLoginScreen(); }, 4000);
 
 window.addEventListener('stockflow-backend-ready', async ()=>{
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled){
@@ -132,8 +130,8 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
     profileData.name = session.user.user_metadata?.full_name || email.split('@')[0];
     profileData.email = email;
     profileData.initials = getInitials(profileData.name);
-    await loadAllStockFlowData();
     revealMainApp();
+    loadAllStockFlowData(); // runs in the background; not awaited
   } else {
     revealLoginScreen();
   }
@@ -275,7 +273,13 @@ ar:{
   profile:{title:'تعديل الملف الشخصي',name:'الاسم الكامل',role:'الدور الوظيفي',email:'البريد الإلكتروني',changePhoto:'تغيير الصورة',removePhoto:'إزالة الصورة',saved:'تم تحديث الملف الشخصي بنجاح'},
 }};
 
-let lang = 'en';
+let lang = (function(){
+  try{
+    const saved = localStorage.getItem('stockflow_lang');
+    if(saved === 'en' || saved === 'ar') return saved;
+  }catch(e){}
+  return 'en';
+})();
 let theme = 'light';
 
 function t(path){
@@ -4827,6 +4831,7 @@ function applyLang(){
 
 document.getElementById('langToggle').addEventListener('click', ()=>{
   lang = lang==='en' ? 'ar' : 'en';
+  try{ localStorage.setItem('stockflow_lang', lang); }catch(e){}
   applyLang();
 });
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
@@ -5023,6 +5028,7 @@ document.getElementById('togglePw').addEventListener('click', ()=>{
 // lang toggle on login screen
 document.getElementById('loginLangBtn').addEventListener('click', ()=>{
   lang = lang==='en' ? 'ar' : 'en';
+  try{ localStorage.setItem('stockflow_lang', lang); }catch(e){}
   applyLoginLang();
   // sync theme icon
   syncLoginThemeIcon();
