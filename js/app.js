@@ -130,8 +130,8 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
     profileData.name = session.user.user_metadata?.full_name || email.split('@')[0];
     profileData.email = email;
     profileData.initials = getInitials(profileData.name);
+    await loadAllStockFlowData();
     revealMainApp();
-    loadAllStockFlowData(); // runs in the background; not awaited
   } else {
     revealLoginScreen();
   }
