@@ -50,6 +50,15 @@ function onAuthChange(cb) {
   return () => sub.subscription.unsubscribe();
 }
 
+/** Returns the current session (if the browser already has a valid,
+    non-expired Supabase login), or null if there isn't one / not configured. */
+async function getSession() {
+  if (!supabase) return null;
+  const { data, error } = await supabase.auth.getSession();
+  if (error) { console.error('[StockFlow] getSession failed:', error); return null; }
+  return data.session || null;
+}
+
 function safeKey(raw) {
   return String(raw).trim();
 }
@@ -110,6 +119,7 @@ window.StockFlowBackend = {
   signInWithEmail,
   signOutUser,
   onAuthChange,
+  getSession,
   loadCollection,
   syncCollection
 };

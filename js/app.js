@@ -30,6 +30,39 @@ function withFirestoreSync(arr, collectionName, idField){
    with or without Supabase configured. */
 window.addEventListener('stockflow-backend-ready', async ()=>{
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
+
+  // If the browser already has a valid, non-expired Supabase session
+  // (from a previous login), skip the login screen entirely instead of
+  // making the person sign in again on every page refresh.
+  try{
+    const session = await window.StockFlowBackend.getSession();
+    if(session && session.user){
+      const email = session.user.email || '';
+      profileData.name = session.user.user_metadata?.full_name || email.split('@')[0];
+      profileData.email = email;
+      profileData.initials = getInitials(profileData.name);
+      const loginScreenEl = document.getElementById('loginScreen');
+      const loadingEl = document.getElementById('loadingScreen');
+      const mainEl = document.getElementById('mainApp');
+      if(loginScreenEl) loginScreenEl.style.display = 'none';
+      if(loadingEl) loadingEl.style.display = 'flex';
+      setTimeout(()=>{
+        if(loadingEl) loadingEl.style.display = 'none';
+        if(mainEl) mainEl.style.display = 'flex';
+        buildNav(); applyStaticI18n();
+        let lastPage = 'dashboard';
+        try{
+          const saved = localStorage.getItem('stockflow_last_page');
+          if(saved && typeof PAGES !== 'undefined' && PAGES.includes(saved)) lastPage = saved;
+        }catch(e){}
+        navigate(lastPage);
+        refreshTopbarProfile();
+      }, 600);
+    }
+  }catch(err){
+    console.error('[StockFlow] Session auto-restore failed:', err);
+  }
+
   try{
     const inv = await window.StockFlowBackend.loadCollection('inventory');
     if(inv && inv.length){ inventoryData.length = 0; inv.forEach(item => inventoryData.push(item)); }
@@ -3109,6 +3142,7 @@ function buildNav(){
 
 function navigate(page){
   currentPage = page;
+  try{ localStorage.setItem('stockflow_last_page', page); }catch(e){}
   const L = STR[lang];
   const contentEl = document.getElementById('content');
   document.getElementById('pageTitle').textContent = L.page[page][0];
