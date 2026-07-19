@@ -28,7 +28,7 @@ function withFirestoreSync(arr, collectionName, idField){
    from Supabase. If the tables are empty/unavailable, the built-in demo
    data (already on screen) is left untouched — so the app always works,
    with or without Supabase configured. */
-async function loadAllStockFlowData(){
+async function loadAllStockFlowData(skipRender){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
     const [inv, wh, reqs, projs, quotes, pos, profiles, users] = await Promise.all([
@@ -64,8 +64,12 @@ async function loadAllStockFlowData(){
 
     // Re-render whichever page is currently on screen so freshly-loaded
     // data (inventory, warehouses, requests, projects, quotations, POs)
-    // is reflected immediately, regardless of load timing.
-    if(typeof navigate === 'function' && typeof currentPage !== 'undefined'){
+    // is reflected immediately, regardless of load timing. Skipped during
+    // initial session-restore, where revealMainApp() handles navigation
+    // itself (using the actual last-visited page) right after this call
+    // resolves — calling navigate() here too would prematurely overwrite
+    // that saved page with whatever the default page happens to be.
+    if(!skipRender && typeof navigate === 'function' && typeof currentPage !== 'undefined'){
       navigate(currentPage);
     }
   }catch(err){
@@ -130,7 +134,7 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
     profileData.name = session.user.user_metadata?.full_name || email.split('@')[0];
     profileData.email = email;
     profileData.initials = getInitials(profileData.name);
-    await loadAllStockFlowData();
+    await loadAllStockFlowData(true);
     revealMainApp();
   } else {
     revealLoginScreen();
