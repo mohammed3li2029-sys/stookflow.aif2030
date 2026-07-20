@@ -279,6 +279,8 @@ const ICONS = {
   inbox:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg>',
   chevronUp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>',
   chevronDown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>',
+  checkSquare:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
 };
 const RYAL = '<svg viewBox="0 0 204 192" width="1em" height="0.94em" style="vertical-align:-0.15em;display:inline-block;"><g transform="translate(0,192) scale(0.1,-0.1)" fill="currentColor"><path d="M864 1789 c-21 -16 -48 -45 -60 -62 -22 -32 -22 -39 -28 -507 -3 -261 -6 -487 -6 -501 0 -32 12 -28 -235 -79 -104 -22 -196 -47 -204 -54 -22 -22 -51 -150 -35 -154 24 -6 449 85 486 104 32 16 100 99 129 155 18 36 19 65 19 584 0 453 -2 545 -14 545 -7 0 -31 -14 -52 -31z"/><path d="M1205 1752 c-16 -11 -47 -38 -67 -60 l-38 -42 0 -245 c0 -164 3 -245 10 -245 6 0 40 7 75 16 l65 16 0 289 c0 159 -3 289 -7 289 -5 0 -21 -8 -38 -18z"/><path d="M1610 1238 c-25 -5 -171 -36 -325 -69 -154 -32 -290 -61 -302 -64 -22 -5 -23 -11 -23 -86 0 -72 2 -80 18 -75 9 2 62 14 117 25 89 18 326 69 472 101 44 10 54 16 68 46 14 31 33 136 24 133 -2 -1 -24 -5 -49 -11z"/><path d="M555 1017 c-139 -32 -140 -32 -157 -68 -25 -50 -35 -129 -17 -129 8 0 90 16 182 35 93 19 173 35 178 35 5 0 9 36 9 80 l0 80 -27 -1 c-16 0 -91 -15 -168 -32z"/><path d="M1195 963 c-11 -2 -37 -9 -57 -14 l-38 -10 0 -134 c0 -122 2 -135 18 -135 9 0 71 12 137 25 66 14 165 35 220 47 139 29 141 29 158 85 17 54 29 113 22 113 -2 0 -82 -16 -177 -36 -95 -20 -185 -39 -200 -42 -28 -4 -28 -4 -28 52 0 59 -2 61 -55 49z"/><path d="M1545 565 c-55 -12 -161 -35 -235 -50 -74 -15 -143 -32 -153 -37 -10 -5 -25 -24 -32 -41 -13 -31 -31 -127 -24 -127 2 1 116 25 254 54 242 51 250 53 267 82 18 31 39 132 29 138 -3 1 -51 -7 -106 -19z"/></g></svg>';
 const spanBig = s => '<span style="font-size:1.25em;display:inline-block;">'+s+'</span>';
@@ -320,6 +322,7 @@ en:{
   activity:{title:'Recent Warehouse Activity',received:'Received',shipped:'Shipped',moved:'Moved',ago:'ago'},
   toolbar:{addItem:'Add New Item',filter:'Filter',export:'Export',search:'Search items by name, SKU, category...',filterStatus:'Status',filterCat:'Category',filterAll:'All',applyFilter:'Apply',resetFilter:'Reset',sort:'Sort'},
   sort:{label:'Sort',default:'Default Order',nameAZ:'Name (A→Z)',nameZA:'Name (Z→A)',name:'By Name',dateOld:'Date (Oldest)',dateNew:'Date (Newest)',id:'By Number',customer:'By Customer',supplier:'By Supplier',total:'By Amount',stock:'By Stock',category:'By Category',dept:'By Department',priority:'By Priority',value:'By Value'},
+  sel:{selected:'selected',selectAll:'Select All',deselectAll:'Deselect All',bulkDelete:'Delete',items:'items',selectMode:'Select',cancelSelect:'Cancel'},
   table:{item:'Item',sku:'SKU / ID',category:'Category',stock:'Stock',location:'Location',status:'Status',actions:'Actions',inStock:'In Stock',lowStock:'Low Stock',critical:'Critical'},
   wh:{occupancy:'Occupancy',items:'Items',sections:'Sections',transfer:'Transfer Stock',addWarehouse:'Add Warehouse',editWarehouse:'Edit Warehouse',whNameEn:'Warehouse Name (EN)',whNameAr:'Warehouse Name (AR)',capacity:'Capacity (items)',current:'Current Items',whSaved:'Warehouse saved successfully',deleteWh:'Delete Warehouse',deleteWhTitle:'Delete this warehouse?',deleteWhBody:'This will permanently remove "{name}" from the system.',transferTitle:'Transfer Stock Between Warehouses',transferFrom:'From Warehouse',transferTo:'To Warehouse',transferItem:'Item',transferQty:'Quantity',transferNote:'Notes (optional)',transferSubmit:'Execute Transfer',transferDone:'Stock transfer completed successfully',transferErr:'Please fill all required fields'},
   modal:{addItem:'Add New Item',editItem:'Edit Item',viewItem:'Item Details',itemName:'Item Name',sku:'SKU',category:'Category',unit:'Unit',qty:'Stock Qty',minLevel:'Min Stock Level',location:'Warehouse / Location',cancel:'Cancel',save:'Save Item',saveChanges:'Save Changes',close:'Close',delete:'Delete',deleteTitle:'Delete this item?',deleteBody:'This will permanently remove "{name}" from inventory. This can\'t be undone.',deletedToast:'Item deleted',uploadImage:'Upload Image',removeImage:'Remove Image',image:'Item Image'},
@@ -362,6 +365,7 @@ ar:{
   activity:{title:'أحدث أنشطة المستودع',received:'تم الاستلام',shipped:'تم الشحن',moved:'تم النقل',ago:'مضت'},
   toolbar:{addItem:'إضافة صنف جديد',filter:'تصفية',export:'تصدير',search:'ابحث بالاسم أو الرمز أو الفئة...',filterStatus:'الحالة',filterCat:'الفئة',filterAll:'الكل',applyFilter:'تطبيق',resetFilter:'إعادة',sort:'ترتيب'},
   sort:{label:'ترتيب',default:'الترتيب الأصلي',nameAZ:'الاسم (أ→ي)',nameZA:'الاسم (ي→أ)',name:'حسب الاسم',dateOld:'التاريخ (الأقدم)',dateNew:'التاريخ (الأحدث)',id:'حسب الرقم',customer:'حسب العميل',supplier:'حسب المورد',total:'حسب المبلغ',stock:'حسب الكمية',category:'حسب الفئة',dept:'حسب القسم',priority:'حسب الأولوية',value:'حسب القيمة'},
+  sel:{selected:'محدد',selectAll:'تحديد الكل',deselectAll:'إلغاء التحديد',bulkDelete:'حذف',items:'عناصر',selectMode:'تحديد',cancelSelect:'إلغاء'},
   table:{item:'الصنف',sku:'الرمز',category:'الفئة',stock:'الكمية',location:'الموقع',status:'الحالة',actions:'إجراءات',inStock:'متوفر',lowStock:'منخفض',critical:'حرج'},
   wh:{occupancy:'الإشغال',items:'الأصناف',sections:'الأقسام',transfer:'تحويل المخزون',addWarehouse:'إضافة مستودع',editWarehouse:'تعديل المستودع',whNameEn:'اسم المستودع (EN)',whNameAr:'اسم المستودع (AR)',capacity:'السعة (أصناف)',current:'الأصناف الحالية',whSaved:'تم حفظ المستودع بنجاح',deleteWh:'حذف المستودع',deleteWhTitle:'هل تريد حذف هذا المستودع؟',deleteWhBody:'سيتم حذف "{name}" نهائياً من النظام.',transferTitle:'تحويل المخزون بين المستودعات',transferFrom:'من المستودع',transferTo:'إلى المستودع',transferItem:'الصنف',transferQty:'الكمية',transferNote:'ملاحظات (اختياري)',transferSubmit:'تنفيذ التحويل',transferDone:'تم تنفيذ التحويل بنجاح',transferErr:'يرجى تعبئة جميع الحقول المطلوبة'},
   modal:{addItem:'إضافة صنف جديد',editItem:'تعديل الصنف',viewItem:'تفاصيل الصنف',itemName:'اسم الصنف',sku:'رمز الصنف',category:'الفئة',unit:'الوحدة',qty:'الكمية',minLevel:'الحد الأدنى للمخزون',location:'المستودع / الموقع',cancel:'إلغاء',save:'حفظ الصنف',saveChanges:'حفظ التعديلات',close:'إغلاق',delete:'حذف',deleteTitle:'هل تريد حذف هذا الصنف؟',deleteBody:'سيتم حذف "{name}" نهائيًا من المخزون. لا يمكن التراجع عن هذا الإجراء.',deletedToast:'تم حذف الصنف',uploadImage:'تحميل صورة',removeImage:'إزالة الصورة',image:'صورة الصنف'},
@@ -389,6 +393,103 @@ let lang = (function(){
 })();
 let theme = 'light';
 const sortState = {inv:'default', quote:'default', po:'default', req:'default', proj:'default'};
+const selMode = {inv:false, quote:false, po:false, req:false, proj:false};
+const selState = {inv:new Set(), quote:new Set(), po:new Set(), req:new Set(), proj:new Set()};
+
+function toggleSelMode(page){
+  selMode[page] = !selMode[page];
+  if(!selMode[page]){
+    selState[page].clear();
+    document.querySelectorAll(`[data-page="${page}"] tr.selected-row`).forEach(r=>r.classList.remove('selected-row'));
+    document.querySelectorAll(`[data-page="${page}"] .alert-row`).forEach(r=>r.style.background='');
+  }
+  document.querySelectorAll(`[data-page="${page}"] .sel-check-col, [data-page="${page}"] .sel-check-card`).forEach(el=>{
+    el.style.display = selMode[page] ? '' : 'none';
+    if(!selMode[page] && el.querySelector) el.querySelector('input').checked = false;
+  });
+  const tbl = document.querySelector(`[data-page="${page}"] .table-card, [data-page="${page}"] .inv-table-wrap, [data-page="${page}"] .card`);
+  if(tbl) tbl.classList.toggle('sel-active', selMode[page]);
+  const btn = document.getElementById(page+'-selModeBtn');
+  if(btn){
+    btn.classList.toggle('btn-primary', selMode[page]);
+    btn.classList.toggle('btn-sel-active', selMode[page]);
+    const sp = btn.querySelector('.sel-btn-text');
+    if(sp) sp.textContent = selMode[page] ? STR[lang].sel.cancelSelect : STR[lang].sel.selectMode;
+  }
+  updateBulkBar(page);
+  updateCheckAll(page);
+}
+
+function toggleSel(page, idx, el){
+  const s=selState[page];
+  s.has(idx)?s.delete(idx):s.add(idx);
+  if(el){
+    const tr = el.closest('tr');
+    if(tr) tr.classList.toggle('selected-row', s.has(idx));
+    const card = el.closest('.alert-row');
+    if(card) card.style.background = s.has(idx) ? 'var(--blue-soft)' : '';
+  }
+  updateBulkBar(page);
+  updateCheckAll(page);
+}
+
+function toggleAllSel(page){
+  const s=selState[page];
+  const visible = getVisibleIds(page);
+  const allSelected = visible.length>0 && visible.every(i=>s.has(i));
+  visible.forEach(i=>allSelected?s.delete(i):s.add(i));
+  document.querySelectorAll(`[data-page="${page}"] .sel-check-col input.row-check`).forEach(cb=>{
+    const idx = parseInt(cb.dataset.idx,10);
+    cb.checked = s.has(idx);
+    const tr = cb.closest('tr');
+    if(tr) tr.classList.toggle('selected-row', s.has(idx));
+  });
+  const cardChecks = document.querySelectorAll(`[data-page="${page}"] .sel-check-card input.row-check`);
+  cardChecks.forEach(cb=>{
+    const idx = parseInt(cb.dataset.idx,10);
+    cb.checked = s.has(idx);
+    const row = cb.closest('.alert-row');
+    if(row) row.style.background = s.has(idx) ? 'var(--blue-soft)' : '';
+  });
+  updateBulkBar(page);
+  updateCheckAll(page);
+}
+
+function getVisibleIds(page){
+  if(page==='inv') return [...document.querySelectorAll('[data-page="inv"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
+  if(page==='quote') return [...document.querySelectorAll('[data-page="quote"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
+  if(page==='po') return [...document.querySelectorAll('[data-page="po"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
+  if(page==='req') return [...document.querySelectorAll('[data-page="req"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
+  if(page==='proj') return [...document.querySelectorAll('[data-page="proj"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
+  return [];
+}
+
+function updateCheckAll(page){
+  const ids = getVisibleIds(page);
+  const s = selState[page];
+  const allChecked = ids.length>0 && ids.every(i=>s.has(i));
+  const el = document.getElementById(page==='quote'?'quoteCheckAll':page==='po'?'poCheckAll':page==='proj'?'projCheckAll':'');
+  if(el) el.checked = allChecked;
+}
+
+function updateBulkBar(page){
+  const bar=document.getElementById('bulkBar-'+page);
+  if(!bar) return;
+  const n=selState[page].size;
+  if(n>0){bar.classList.add('show');bar.querySelector('.bulk-count').textContent=n+' '+STR[lang].sel.items;}
+  else{bar.classList.remove('show');}
+}
+
+function bulkDeleteItems(page){
+  const s=selState[page]; if(s.size===0) return;
+  if(!confirm(lang==='en'?'Delete '+s.size+' selected items?':'هل تريد حذف '+s.size+' عناصر محددة؟')) return;
+  if(page==='inv'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>inventoryData.splice(i,1));}
+  else if(page==='quote'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>quotations.splice(i,1));}
+  else if(page==='po'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>purchaseOrders.splice(i,1));}
+  else if(page==='req'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>reqsData.splice(i,1));}
+  else if(page==='proj'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>projects.splice(i,1));}
+  s.clear(); navigate(page==='inv'?'inventory':page==='quote'?'sales':page==='po'?'purchasing':page==='req'?'issues':'projects');
+}
 
 function t(path){
   return path.split('.').reduce((o,k)=>(o&&o[k]!==undefined)?o[k]:null, STR[lang]);
@@ -960,11 +1061,12 @@ function renderQuoteRows(filter='', statusF=''){
     });
   }
   if(rows.length===0){
-    tbody.innerHTML = '    <tr><td colspan="7"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
+    tbody.innerHTML = '    <tr><td colspan="8"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(({q, idx})=>`
-    <tr>
+    <tr class="${selState.quote.has(idx)?'selected-row':''}" data-page-idx="${idx}">
+      <td class="sel-check-col" style="display:${selMode.quote?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.quote.has(idx)?'checked':''} onchange="toggleSel('quote',${idx},this)"></td>
       <td><b>${q.id}</b></td>
       <td>${q.customer}</td>
       <td>${q.date}</td>
@@ -996,7 +1098,7 @@ function renderSales(){
   const totalQuotes = quotations.length;
   const approvedQuotes = quotations.filter(q=>q.status==='approved').length;
   const reviewQuotes = quotations.filter(q=>q.status==='review').length;
-  return `
+  return `<div data-page="quote">
   <div class="kpi-strip">
     ${statCard(ICONS.sales,'var(--blue)','var(--blue-soft)',lang==='en'?'Total Quotations':'إجمالي عروض الأسعار',String(totalQuotes),'+0', true)}
     ${statCard(ICONS.flag,'var(--green)','var(--green-soft)',lang==='en'?'Approved':'معتمد',String(approvedQuotes),'+0', true)}
@@ -1005,6 +1107,7 @@ function renderSales(){
   <div class="toolbar">
     <button class="btn btn-primary" id="newQuoteBtn">${ICONS.plus}${lang==='en'?'New Quotation':'عرض سعر جديد'}</button>
     <button class="btn" id="quoteFilterBtn">${ICONS.filter}${L.toolbar.filter}</button>
+    <button class="btn" id="quote-selModeBtn" onclick="toggleSelMode('quote')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
     <div class="sort-control">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
       <select id="quoteSortSelect">
@@ -1034,9 +1137,11 @@ function renderSales(){
     <button class="btn-mini" id="quoteFilterApply">${L.toolbar.applyFilter}</button>
     <button class="btn-mini" id="quoteFilterReset" style="background:var(--surface-2);color:var(--text);">${L.toolbar.resetFilter}</button>
   </div>
+  <div class="bulk-bar" id="bulkBar-quote"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('quote')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('quote')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('quote')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
   <div class="table-card">
     <table>
       <thead><tr>
+        <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="quoteCheckAll" onchange="toggleAllSel('quote')"></th>
         <th>${lang==='en'?'Quote #':'رقم العرض'}</th>
         <th>${lang==='en'?'Customer':'العميل'}</th>
         <th>${lang==='en'?'Date':'التاريخ'}</th>
@@ -1047,7 +1152,8 @@ function renderSales(){
       </tr></thead>
       <tbody id="quoteTbody"></tbody>
     </table>
-  </div>`;
+  </div>
+</div>`;
 };
 
 let quoteLines = [];
@@ -1602,11 +1708,12 @@ function printQuotation(idx){
 
 function renderInventory(){
   const L = STR[lang];
-  return `
+  return `<div data-page="inv">
   <div class="toolbar">
     <button class="btn btn-primary" id="addItemBtn">${ICONS.plus}${L.toolbar.addItem}</button>
     <button class="btn" id="invFilterBtn">${ICONS.filter}${L.toolbar.filter}</button>
     <button class="btn" id="invExportBtn">${ICONS.download}${L.toolbar.export}</button>
+    <button class="btn" id="inv-selModeBtn" onclick="toggleSelMode('inv')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
     <div class="sort-control">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
       <select id="invSortSelect">
@@ -1647,15 +1754,18 @@ function renderInventory(){
     <button class="btn-mini" id="invFilterApply">${L.toolbar.applyFilter}</button>
     <button class="btn-mini" id="invFilterReset" style="background:var(--surface-2);color:var(--text);">${L.toolbar.resetFilter}</button>
   </div>
+  <div class="bulk-bar" id="bulkBar-inv"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('inv')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('inv')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('inv')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
   <div class="table-card">
     <table>
       <thead><tr>
+        <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="invCheckAll" onchange="toggleAllSel('inv')"></th>
         <th>${L.table.item}</th><th>${L.table.sku}</th><th>${L.table.category}</th>
         <th>${L.table.stock}</th><th>${L.table.location}</th><th>${L.table.status}</th><th>${L.table.actions}</th>
       </tr></thead>
       <tbody id="invTbody"></tbody>
     </table>
-  </div>`;
+  </div>
+</div>`;
 }
 
 function statusFor(item){
@@ -1694,12 +1804,13 @@ function renderInvRows(filter='', statusF='', catF=''){
     });
   }
   if(rows.length===0){
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">${ICONS.box}<div>${lang==='en'?'No items match your search':'لا توجد أصناف مطابقة لبحثك'}</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">${ICONS.box}<div>${lang==='en'?'No items match your search':'لا توجد أصناف مطابقة لبحثك'}</div></div></td></tr>`;
     return;
   }
   tbody.innerHTML = rows.map(({item:i, idx})=>{
     const st = statusFor(i);
-    return `<tr>
+    return `<tr class="${selState.inv.has(idx)?'selected-row':''}" data-page-idx="${idx}">
+      <td class="sel-check-col" style="display:${selMode.inv?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.inv.has(idx)?'checked':''} onchange="toggleSel('inv',${idx},this)"></td>
       <td><div class="item-cell"><div class="item-thumb">${i.image?`<img src="${i.image}" alt="">`:ICONS.box}</div><div><div class="item-name">${lang==='en'?i.name:i.nameAr}</div><div class="item-sku">${i.sku}</div></div></div></td>
       <td>${i.sku}</td>
       <td><span class="cat-tag">${lang==='en'?i.cat:i.catAr}</span></td>
@@ -1812,7 +1923,7 @@ function renderPurchasing(){
   const L = STR[lang];
   const totalPOs   = purchaseOrders.length;
   const pendingPOs = purchaseOrders.filter(p=>p.status==='pending').length;
-  return `
+  return `<div data-page="po">
   <div class="kpi-strip">
     ${statCard(ICONS.users,'var(--blue)','var(--blue-soft)',    L.purchasing.suppliers, String(suppliers.length),'+1', true)}
     ${statCard(ICONS.purchase,'var(--amber)','var(--amber-soft)',L.purchasing.openPOs,   String(pendingPOs),'+0', true)}
@@ -1820,6 +1931,7 @@ function renderPurchasing(){
   </div>
   <div class="toolbar">
     <button class="btn btn-primary" id="newPoBtn">${ICONS.plus}${L.purchasing.newPO}</button>
+    <button class="btn" id="po-selModeBtn" onclick="toggleSelMode('po')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
     <div class="sort-control">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
       <select id="poSortSelect">
@@ -1836,10 +1948,12 @@ function renderPurchasing(){
       <input id="poSearch" placeholder="${lang==='en'?'Search orders...':'ابحث في الطلبات...'}">
     </div>
   </div>
+  <div class="bulk-bar" id="bulkBar-po"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('po')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('po')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('po')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
   <div class="row-2">
     <div class="table-card" style="overflow:auto;">
       <table>
         <thead><tr>
+          <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="poCheckAll" onchange="toggleAllSel('po')"></th>
           <th>PO #</th>
           <th>${lang==='en'?'Supplier':'المورد'}</th>
           <th>${lang==='en'?'Date':'التاريخ'}</th>
@@ -1850,7 +1964,7 @@ function renderPurchasing(){
         </tr></thead>
         <tbody id="poTableBody">
           ${purchaseOrders.length===0
-            ? `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-2);">${lang==='en'?'No purchase orders yet':'لا توجد طلبات شراء بعد'}</td></tr>`
+            ? `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-2);">${lang==='en'?'No purchase orders yet':'لا توجد طلبات شراء بعد'}</td></tr>`
             : (()=>{
                 const poIdx = purchaseOrders.map((_,i)=>i);
                 const sv = sortState.po;
@@ -1868,7 +1982,8 @@ function renderPurchasing(){
                 return poIdx.map(idx=>{
                   const po=purchaseOrders[idx];
                   const st = poStatusCfg(po.status);
-                  return `<tr>
+                  return `<tr class="${selState.po.has(idx)?'selected-row':''}" data-page-idx="${idx}">
+                    <td class="sel-check-col" style="display:${selMode.po?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.po.has(idx)?'checked':''} onchange="toggleSel('po',${idx},this)"></td>
                     <td><b style="color:var(--blue);">${po.id}</b></td>
                     <td>${po.supplier}</td>
                     <td>${po.date||'—'}</td>
@@ -1900,18 +2015,19 @@ function renderPurchasing(){
           <span class="pill ${s.status==='good'?'pill-ok':'pill-critical'}">${s.status==='good'?(lang==='en'?'Good':'جيد'):(lang==='en'?'Delay':'تأخير')}</span>
         </div>`).join('')}
     </div>
-  </div>`;
+  </div>
+</div>`;
 }
 
 /* ===================================================================
-   PAGE RENDER: ISSUES
+   PAGE RENDER: ISSUES / WITHDRAWALS / CONSUMPTION
 =================================================================== */
 function renderIssues(){
   const L = STR[lang];
   const pending = reqsData.filter(r=>r.status==='pending').length;
   const approvedToday = reqsData.filter(r=>r.status==='approved').length;
   const deptCount = [...new Set(reqsData.map(r=>r.dept))].length;
-  return `
+  return `<div data-page="req">
   <div class="kpi-strip">
     ${statCard(ICONS.issue,'var(--amber)','var(--amber-soft)', L.issues.pending,String(pending),'+'+Math.max(0,pending-1), false)}
     ${statCard(ICONS.flag,'var(--green)','var(--green-soft)', L.issues.approvedToday,String(approvedToday),'+'+Math.max(0,approvedToday), true)}
@@ -1919,6 +2035,7 @@ function renderIssues(){
   </div>
   <div class="toolbar">
     <button class="btn btn-primary" id="newIssueBtn">${ICONS.plus}${L.issues.newRequest}</button>
+    <button class="btn" id="req-selModeBtn" onclick="toggleSelMode('req')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
     <div class="sort-control">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
       <select id="reqSortSelect">
@@ -1931,6 +2048,7 @@ function renderIssues(){
       </select>
     </div>
   </div>
+  <div class="bulk-bar" id="bulkBar-req"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('req')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('req')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('req')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
   <div class="card">
     <div class="card-head"><div class="card-title">${L.issues.list}</div></div>
     ${(()=>{
@@ -1950,7 +2068,8 @@ function renderIssues(){
       return reqIdx.map(idx=>{
         const r=reqsData[idx];
         return `
-      <div class="alert-row">
+      <div class="alert-row" style="${selState.req.has(idx)?'background:var(--blue-soft);border-color:var(--blue);':''}" data-page-idx="${idx}">
+        <input type="checkbox" class="row-check sel-check-card" data-idx="${idx}" ${selState.req.has(idx)?'checked':''} onchange="toggleSel('req',${idx},this)" style="margin-inline-start:4px;display:${selMode.req?'':'none'}">
         <div class="alert-icon" style="background:var(--blue-soft);color:var(--blue)">${ICONS.issue}</div>
         <div class="alert-mid">
           <div class="alert-name">${r.id} — ${lang==='en'?r.item:r.itemAr} × ${r.qty}</div>
@@ -1965,7 +2084,8 @@ function renderIssues(){
       </div>`;
       }).join('');
     })()}
-  </div>`;
+  </div>
+</div>`;
 }
 
 /* ===================================================================
@@ -2659,9 +2779,9 @@ function calcDaysRemaining(endDate){
 function renderProjects(){
   const L = STR[lang].projects;
   const page = currentProjectTab === 'dashboard' ? renderProjectsDashboard() : currentProjectTab === 'plan' ? renderProjectsPlan() : renderProjectsList();
-  return `<div class="report-tabs" style="margin-bottom:8px;">${[
+  return `<div data-page="proj"><div class="report-tabs" style="margin-bottom:8px;">${[
     {key:'dashboard',label:L.dashboard},{key:'list',label:L.list},{key:'plan',label:L.plan}
-  ].map(t => `<span class="report-tab${currentProjectTab===t.key?' active':''}" data-ptab="${t.key}">${t.label}</span>`).join('')}</div>${page}`;
+  ].map(t => `<span class="report-tab${currentProjectTab===t.key?' active':''}" data-ptab="${t.key}">${t.label}</span>`).join('')}</div>${page}</div>`;
 }
 
 function renderProjectsPlan(){
@@ -2777,6 +2897,7 @@ function renderProjectsList(){
   <div class="toolbar">
     <button class="btn btn-primary" id="newProjBtn">${ICONS.plus} ${L.newProject}</button>
     <button class="btn" id="projFilterBtn">${ICONS.filter} ${L.filter}</button>
+    <button class="btn" id="proj-selModeBtn" onclick="toggleSelMode('proj')">${ICONS.checkSquare} <span class="sel-btn-text">${STR[lang].sel.selectMode}</span></button>
     <div class="sort-control">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
       <select id="projSortSelect">
@@ -2797,10 +2918,13 @@ function renderProjectsList(){
     <button class="btn-mini" id="projFilterApply">${L.filter}</button>
     <button class="btn-mini" id="projFilterReset" style="background:var(--surface-2);color:var(--text);">${lang==='en'?'Reset':'إعادة'}</button>
   </div>
-  <div class="table-card"><table><thead><tr><th>${L.projectNumber}</th><th>${L.projectName}</th><th>${L.client}</th><th>${L.type}</th><th>${L.manager}</th><th>${L.contractValue}</th><th>${L.progress}</th><th>${L.status}</th><th>${L.priority}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>
-  ${filtered.length ? filtered.map(p=>{
+  <div class="bulk-bar" id="bulkBar-proj"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('proj')">${ICONS.checkSquare} ${STR[lang].sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('proj')">${ICONS.trash} ${STR[lang].sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('proj')">${ICONS.close} ${STR[lang].sel.cancelSelect}</button></div>
+  <div class="table-card"><table><thead><tr><th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="projCheckAll" onchange="toggleAllSel('proj')"></th><th>${L.projectNumber}</th><th>${L.projectName}</th><th>${L.client}</th><th>${L.type}</th><th>${L.manager}</th><th>${L.contractValue}</th><th>${L.progress}</th><th>${L.status}</th><th>${L.priority}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>
+  ${filtered.length ? (()=>{
+    return filtered.map(p=>{
     const idx=projects.indexOf(p), e=calcEndDate(p.startDate,p.duration), r=calcDaysRemaining(e);
-    return `<tr>
+    return `<tr class="${selState.proj.has(idx)?'selected-row':''}" data-page-idx="${idx}">
+      <td class="sel-check-col" style="display:${selMode.proj?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.proj.has(idx)?'checked':''} onchange="toggleSel('proj',${idx},this)"></td>
       <td><b>${p.id}</b></td><td>${lang==='en'?p.name:p.nameAr}</td><td>${lang==='en'?p.client:p.clientAr}</td><td>${lang==='en'?p.type:p.typeAr}</td>
       <td>${p.manager}</td><td style="font-weight:700;color:var(--blue);">SAR ${p.contractValue.toLocaleString('en',{minimumFractionDigits:0})}</td>
       <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:5px;background:var(--surface-2);border-radius:3px;"><div style="width:${p.progress}%;height:100%;background:${r<0?'var(--red)':p.progress>=80?'var(--green)':'var(--blue)'};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:700;">${p.progress}%</span></div></td>
@@ -2808,7 +2932,7 @@ function renderProjectsList(){
       <td><span class="pill ${getPriorityClass(p.priority)}">${getPriorityLabel(p.priority)}</span></td>
       <td><div class="row-actions"><button title="${lang==='en'?'View':'عرض'}" onclick="openProjectDetail(${idx})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="openProjectModal(${idx})">${ICONS.edit}</button><button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteProject(${idx})">${ICONS.trash}</button></div></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="10"><div class="empty-state">${ICONS.box}<div>${L.noData}</div></div></td></tr>`}
+  }).join('');})() : `<tr><td colspan="11"><div class="empty-state">${ICONS.box}<div>${L.noData}</div></div></td></tr>`}
   </tbody></table></div>`;
 }
 
@@ -3423,6 +3547,7 @@ function navigate(page){
   contentEl.classList.add('page-enter');
   buildNav();
   postRenderHooks(page);
+  ['inv','quote','po','req','proj'].forEach(p => updateBulkBar(p));
   contentEl.scrollTop = 0;
   // Close sidebar on mobile after navigation
   if(window.innerWidth <= 900){
