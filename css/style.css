@@ -386,6 +386,28 @@ tbody tr:hover{background:var(--surface-2);}
 .row-actions button:hover{background:var(--surface-2);color:var(--text);}
 .row-actions svg{width:13px;height:13px;}
 
+/* --- Row selection checkboxes --- */
+.row-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);background:var(--surface);cursor:pointer;appearance:none;-webkit-appearance:none;position:relative;flex-shrink:0;transition:all .2s var(--ease);display:inline-flex;align-items:center;justify-content:center;}
+.row-check:hover{border-color:var(--blue);background:var(--blue-soft);}
+.row-check:checked{background:var(--blue);border-color:var(--blue);}
+.row-check:checked::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-1px);}
+.row-check:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+th .row-check{width:17px;height:17px;}
+tr.selected-row{background:var(--blue-soft) !important;}
+tr.selected-row td{color:var(--text) !important;}
+/* --- Selection mode button --- */
+.btn-sel-active{background:var(--blue) !important;color:#fff !important;border-color:var(--blue) !important;}
+.btn-sel-active:hover{background:var(--blue-hover) !important;}
+/* --- Bulk selection bar --- */
+.bulk-bar{display:none;align-items:center;gap:12px;padding:10px 16px;background:var(--blue);color:#fff;border-radius:var(--radius-md);margin-bottom:12px;font-size:13px;font-weight:600;animation:fadeSlideIn .25s var(--ease) both;}
+.bulk-bar.show{display:flex;}
+.bulk-bar .bulk-count{background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;font-size:12px;}
+.bulk-bar .bulk-btn{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;font-family:inherit;}
+.bulk-bar .bulk-btn:hover{background:rgba(255,255,255,.25);}
+.bulk-bar .bulk-btn svg{width:14px;height:14px;}
+.bulk-bar .bulk-btn.bulk-danger{background:rgba(224,40,42,.3);border-color:rgba(224,40,42,.5);}
+.bulk-bar .bulk-btn.bulk-danger:hover{background:rgba(224,40,42,.5);}
+
 /* ---------- Warehouses ---------- */
 .wh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
 .wh-card{display:flex;flex-direction:column;gap:12px;}
