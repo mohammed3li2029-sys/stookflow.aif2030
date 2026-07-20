@@ -329,6 +329,10 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
 .pill-ok{background:var(--green-soft);color:#157a41;}
 [data-theme="dark"] .pill-ok{background:var(--green-soft-d);color:var(--green);}
 .btn-mini{font-size:11px;font-weight:700;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;}
+.sort-control{display:flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:11px;padding:9px 13px;flex-shrink:0;}
+.sort-control svg{width:15px;height:15px;color:var(--text-2);flex-shrink:0;}
+.sort-control select{border:none;background:transparent;color:var(--text);font-size:12.8px;font-weight:600;font-family:inherit;outline:none;cursor:pointer;padding:0;}
+.sort-control select option{background:var(--surface);color:var(--text);}
 .phase-inline{font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);width:100%;max-width:130px;}
 
 .activity-row{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--border);}
@@ -739,6 +743,7 @@ html[dir="rtl"] .toast{transform:translateX(50%);}
   .toolbar{flex-direction:column;align-items:stretch;}
   .toolbar .btn,.toolbar .btn-primary{width:100%;justify-content:center;}
   .toolbar input,.toolbar select{width:100%;}
+  .sort-control{width:100%;justify-content:center;}
   .modal{width:96% !important;max-width:400px !important;margin:12px auto !important;padding:20px 16px !important;}
   .modal-xl{width:98% !important;max-width:450px !important;padding:16px !important;}
   .modal h3{font-size:16px;}

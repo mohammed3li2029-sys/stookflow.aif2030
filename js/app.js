@@ -318,7 +318,8 @@ en:{
   weekly:{title:'Weekly Movement',inbound:'Inbound',outbound:'Outbound'},
   lowAlerts:{title:'Low Stock Alerts',orderNow:'Order Now',critical:'CRITICAL',low:'LOW'},
   activity:{title:'Recent Warehouse Activity',received:'Received',shipped:'Shipped',moved:'Moved',ago:'ago'},
-  toolbar:{addItem:'Add New Item',filter:'Filter',export:'Export',search:'Search items by name, SKU, category...',filterStatus:'Status',filterCat:'Category',filterAll:'All',applyFilter:'Apply',resetFilter:'Reset'},
+  toolbar:{addItem:'Add New Item',filter:'Filter',export:'Export',search:'Search items by name, SKU, category...',filterStatus:'Status',filterCat:'Category',filterAll:'All',applyFilter:'Apply',resetFilter:'Reset',sort:'Sort'},
+  sort:{label:'Sort',default:'Default Order',nameAZ:'Name (A→Z)',nameZA:'Name (Z→A)',dateOld:'Date (Oldest)',dateNew:'Date (Newest)',id:'By Number',customer:'By Customer',supplier:'By Supplier',total:'By Amount',stock:'By Stock',category:'By Category',dept:'By Department',priority:'By Priority',value:'By Value'},
   table:{item:'Item',sku:'SKU / ID',category:'Category',stock:'Stock',location:'Location',status:'Status',actions:'Actions',inStock:'In Stock',lowStock:'Low Stock',critical:'Critical'},
   wh:{occupancy:'Occupancy',items:'Items',sections:'Sections',transfer:'Transfer Stock',addWarehouse:'Add Warehouse',editWarehouse:'Edit Warehouse',whNameEn:'Warehouse Name (EN)',whNameAr:'Warehouse Name (AR)',capacity:'Capacity (items)',current:'Current Items',whSaved:'Warehouse saved successfully',deleteWh:'Delete Warehouse',deleteWhTitle:'Delete this warehouse?',deleteWhBody:'This will permanently remove "{name}" from the system.',transferTitle:'Transfer Stock Between Warehouses',transferFrom:'From Warehouse',transferTo:'To Warehouse',transferItem:'Item',transferQty:'Quantity',transferNote:'Notes (optional)',transferSubmit:'Execute Transfer',transferDone:'Stock transfer completed successfully',transferErr:'Please fill all required fields'},
   modal:{addItem:'Add New Item',editItem:'Edit Item',viewItem:'Item Details',itemName:'Item Name',sku:'SKU',category:'Category',unit:'Unit',qty:'Stock Qty',minLevel:'Min Stock Level',location:'Warehouse / Location',cancel:'Cancel',save:'Save Item',saveChanges:'Save Changes',close:'Close',delete:'Delete',deleteTitle:'Delete this item?',deleteBody:'This will permanently remove "{name}" from inventory. This can\'t be undone.',deletedToast:'Item deleted',uploadImage:'Upload Image',removeImage:'Remove Image',image:'Item Image'},
@@ -359,7 +360,8 @@ ar:{
   weekly:{title:'الحركة الأسبوعية',inbound:'وارد',outbound:'صادر'},
   lowAlerts:{title:'تنبيهات انخفاض المخزون',orderNow:'اطلب الآن',critical:'حرج',low:'منخفض'},
   activity:{title:'أحدث أنشطة المستودع',received:'تم الاستلام',shipped:'تم الشحن',moved:'تم النقل',ago:'مضت'},
-  toolbar:{addItem:'إضافة صنف جديد',filter:'تصفية',export:'تصدير',search:'ابحث بالاسم أو الرمز أو الفئة...',filterStatus:'الحالة',filterCat:'الفئة',filterAll:'الكل',applyFilter:'تطبيق',resetFilter:'إعادة'},
+  toolbar:{addItem:'إضافة صنف جديد',filter:'تصفية',export:'تصدير',search:'ابحث بالاسم أو الرمز أو الفئة...',filterStatus:'الحالة',filterCat:'الفئة',filterAll:'الكل',applyFilter:'تطبيق',resetFilter:'إعادة',sort:'ترتيب'},
+  sort:{label:'ترتيب',default:'الترتيب الأصلي',nameAZ:'الاسم (أ→ي)',nameZA:'الاسم (ي→أ)',dateOld:'التاريخ (الأقدم)',dateNew:'التاريخ (الأحدث)',id:'حسب الرقم',customer:'حسب العميل',supplier:'حسب المورد',total:'حسب المبلغ',stock:'حسب الكمية',category:'حسب الفئة',dept:'حسب القسم',priority:'حسب الأولوية',value:'حسب القيمة'},
   table:{item:'الصنف',sku:'الرمز',category:'الفئة',stock:'الكمية',location:'الموقع',status:'الحالة',actions:'إجراءات',inStock:'متوفر',lowStock:'منخفض',critical:'حرج'},
   wh:{occupancy:'الإشغال',items:'الأصناف',sections:'الأقسام',transfer:'تحويل المخزون',addWarehouse:'إضافة مستودع',editWarehouse:'تعديل المستودع',whNameEn:'اسم المستودع (EN)',whNameAr:'اسم المستودع (AR)',capacity:'السعة (أصناف)',current:'الأصناف الحالية',whSaved:'تم حفظ المستودع بنجاح',deleteWh:'حذف المستودع',deleteWhTitle:'هل تريد حذف هذا المستودع؟',deleteWhBody:'سيتم حذف "{name}" نهائياً من النظام.',transferTitle:'تحويل المخزون بين المستودعات',transferFrom:'من المستودع',transferTo:'إلى المستودع',transferItem:'الصنف',transferQty:'الكمية',transferNote:'ملاحظات (اختياري)',transferSubmit:'تنفيذ التحويل',transferDone:'تم تنفيذ التحويل بنجاح',transferErr:'يرجى تعبئة جميع الحقول المطلوبة'},
   modal:{addItem:'إضافة صنف جديد',editItem:'تعديل الصنف',viewItem:'تفاصيل الصنف',itemName:'اسم الصنف',sku:'رمز الصنف',category:'الفئة',unit:'الوحدة',qty:'الكمية',minLevel:'الحد الأدنى للمخزون',location:'المستودع / الموقع',cancel:'إلغاء',save:'حفظ الصنف',saveChanges:'حفظ التعديلات',close:'إغلاق',delete:'حذف',deleteTitle:'هل تريد حذف هذا الصنف؟',deleteBody:'سيتم حذف "{name}" نهائيًا من المخزون. لا يمكن التراجع عن هذا الإجراء.',deletedToast:'تم حذف الصنف',uploadImage:'تحميل صورة',removeImage:'إزالة الصورة',image:'صورة الصنف'},
@@ -386,6 +388,7 @@ let lang = (function(){
   return 'en';
 })();
 let theme = 'light';
+const sortState = {inv:'default', quote:'default', po:'default', req:'default', proj:'default'};
 
 function t(path){
   return path.split('.').reduce((o,k)=>(o&&o[k]!==undefined)?o[k]:null, STR[lang]);
@@ -945,6 +948,17 @@ function renderQuoteRows(filter='', statusF=''){
       if(statusF && q.status !== statusF) return false;
       return true;
     });
+  const sv = sortState.quote;
+  if(sv && sv !== 'default'){
+    rows.sort((a,b)=>{
+      if(sv==='date-asc') return a.q.date.localeCompare(b.q.date);
+      if(sv==='date-desc') return b.q.date.localeCompare(a.q.date);
+      if(sv==='id') return a.q.id.localeCompare(b.q.id);
+      if(sv==='customer') return a.q.customer.localeCompare(b.q.customer);
+      if(sv==='total') return a.q.total - b.q.total;
+      return 0;
+    });
+  }
   if(rows.length===0){
     tbody.innerHTML = '    <tr><td colspan="7"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
     return;
@@ -991,6 +1005,17 @@ function renderSales(){
   <div class="toolbar">
     <button class="btn btn-primary" id="newQuoteBtn">${ICONS.plus}${lang==='en'?'New Quotation':'عرض سعر جديد'}</button>
     <button class="btn" id="quoteFilterBtn">${ICONS.filter}${L.toolbar.filter}</button>
+    <div class="sort-control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+      <select id="quoteSortSelect">
+        <option value="default" ${sortState.quote==='default'?'selected':''}>${L.sort.default}</option>
+        <option value="date-asc" ${sortState.quote==='date-asc'?'selected':''}>${L.sort.dateOld}</option>
+        <option value="date-desc" ${sortState.quote==='date-desc'?'selected':''}>${L.sort.dateNew}</option>
+        <option value="id" ${sortState.quote==='id'?'selected':''}>${L.sort.id}</option>
+        <option value="customer" ${sortState.quote==='customer'?'selected':''}>${L.sort.customer}</option>
+        <option value="total" ${sortState.quote==='total'?'selected':''}>${L.sort.total}</option>
+      </select>
+    </div>
     <div class="table-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="quoteSearch" placeholder="${lang==='en'?'Search by ID, customer or status...':'ابحث بالرقم، العميل أو الحالة...'}">
@@ -1582,6 +1607,17 @@ function renderInventory(){
     <button class="btn btn-primary" id="addItemBtn">${ICONS.plus}${L.toolbar.addItem}</button>
     <button class="btn" id="invFilterBtn">${ICONS.filter}${L.toolbar.filter}</button>
     <button class="btn" id="invExportBtn">${ICONS.download}${L.toolbar.export}</button>
+    <div class="sort-control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+      <select id="invSortSelect">
+        <option value="default" ${sortState.inv==='default'?'selected':''}>${L.sort.default}</option>
+        <option value="name-asc" ${sortState.inv==='name-asc'?'selected':''}>${L.sort.nameAZ}</option>
+        <option value="name-desc" ${sortState.inv==='name-desc'?'selected':''}>${L.sort.nameZA}</option>
+        <option value="sku" ${sortState.inv==='sku'?'selected':''}>${L.sort.id}</option>
+        <option value="stock" ${sortState.inv==='stock'?'selected':''}>${L.sort.stock}</option>
+        <option value="category" ${sortState.inv==='category'?'selected':''}>${L.sort.category}</option>
+      </select>
+    </div>
     <div class="table-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="invSearch" placeholder="${L.toolbar.search}">
@@ -1645,6 +1681,18 @@ function renderInvRows(filter='', statusF='', catF=''){
       }
       return true;
     });
+  const sv = sortState.inv;
+  if(sv && sv !== 'default'){
+    rows.sort((a,b)=>{
+      const ai=a.item, bi=b.item;
+      if(sv==='name-asc') return (lang==='en'?ai.name:ai.nameAr).localeCompare(lang==='en'?bi.name:bi.nameAr);
+      if(sv==='name-desc') return (lang==='en'?bi.name:bi.nameAr).localeCompare(lang==='en'?ai.name:ai.nameAr);
+      if(sv==='sku') return ai.sku.localeCompare(bi.sku);
+      if(sv==='stock') return ai.stock - bi.stock;
+      if(sv==='category') return (lang==='en'?ai.cat:ai.catAr).localeCompare(lang==='en'?bi.cat:bi.catAr);
+      return 0;
+    });
+  }
   if(rows.length===0){
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">${ICONS.box}<div>${lang==='en'?'No items match your search':'لا توجد أصناف مطابقة لبحثك'}</div></div></td></tr>`;
     return;
@@ -1772,6 +1820,17 @@ function renderPurchasing(){
   </div>
   <div class="toolbar">
     <button class="btn btn-primary" id="newPoBtn">${ICONS.plus}${L.purchasing.newPO}</button>
+    <div class="sort-control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+      <select id="poSortSelect">
+        <option value="default" ${sortState.po==='default'?'selected':''}>${L.sort.default}</option>
+        <option value="date-asc" ${sortState.po==='date-asc'?'selected':''}>${L.sort.dateOld}</option>
+        <option value="date-desc" ${sortState.po==='date-desc'?'selected':''}>${L.sort.dateNew}</option>
+        <option value="id" ${sortState.po==='id'?'selected':''}>${L.sort.id}</option>
+        <option value="supplier" ${sortState.po==='supplier'?'selected':''}>${L.sort.supplier}</option>
+        <option value="total" ${sortState.po==='total'?'selected':''}>${L.sort.total}</option>
+      </select>
+    </div>
     <div class="table-search" style="max-width:300px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="poSearch" placeholder="${lang==='en'?'Search orders...':'ابحث في الطلبات...'}">
@@ -1792,24 +1851,40 @@ function renderPurchasing(){
         <tbody id="poTableBody">
           ${purchaseOrders.length===0
             ? `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-2);">${lang==='en'?'No purchase orders yet':'لا توجد طلبات شراء بعد'}</td></tr>`
-            : purchaseOrders.map((po,idx)=>{
-                const st = poStatusCfg(po.status);
-                return `<tr>
-                  <td><b style="color:var(--blue);">${po.id}</b></td>
-                  <td>${po.supplier}</td>
-                  <td>${po.date||'—'}</td>
-                  <td>${po.deliveryDate||'—'}</td>
-                  <td><b>SAR ${(po.grandTotal||0).toLocaleString('en',{minimumFractionDigits:2})}</b></td>
-                  <td><span class="pill ${st.cls}">${lang==='en'?st.en:st.ar}</span></td>
-                  <td>
-                    <div class="row-actions">
-                      <button title="${lang==='en'?'View':'عرض'}" data-action="viewpo" data-idx="${idx}">${ICONS.eye}</button>
-                      <button title="${lang==='en'?'Edit':'تعديل'}" data-action="editpo" data-idx="${idx}">${ICONS.edit}</button>
-                      <button title="${lang==='en'?'Delete':'حذف'}" data-action="deletepo" data-idx="${idx}">${ICONS.trash}</button>
-                    </div>
-                  </td>
-                </tr>`;
-              }).join('')
+            : (()=>{
+                const poIdx = purchaseOrders.map((_,i)=>i);
+                const sv = sortState.po;
+                if(sv && sv!=='default'){
+                  poIdx.sort((a,b)=>{
+                    const pa=purchaseOrders[a], pb=purchaseOrders[b];
+                    if(sv==='date-asc') return (pa.date||'').localeCompare(pb.date||'');
+                    if(sv==='date-desc') return (pb.date||'').localeCompare(pa.date||'');
+                    if(sv==='id') return pa.id.localeCompare(pb.id);
+                    if(sv==='supplier') return pa.supplier.localeCompare(pb.supplier);
+                    if(sv==='total') return (pa.grandTotal||0)-(pb.grandTotal||0);
+                    return 0;
+                  });
+                }
+                return poIdx.map(idx=>{
+                  const po=purchaseOrders[idx];
+                  const st = poStatusCfg(po.status);
+                  return `<tr>
+                    <td><b style="color:var(--blue);">${po.id}</b></td>
+                    <td>${po.supplier}</td>
+                    <td>${po.date||'—'}</td>
+                    <td>${po.deliveryDate||'—'}</td>
+                    <td><b>SAR ${(po.grandTotal||0).toLocaleString('en',{minimumFractionDigits:2})}</b></td>
+                    <td><span class="pill ${st.cls}">${lang==='en'?st.en:st.ar}</span></td>
+                    <td>
+                      <div class="row-actions">
+                        <button title="${lang==='en'?'View':'عرض'}" data-action="viewpo" data-idx="${idx}">${ICONS.eye}</button>
+                        <button title="${lang==='en'?'Edit':'تعديل'}" data-action="editpo" data-idx="${idx}">${ICONS.edit}</button>
+                        <button title="${lang==='en'?'Delete':'حذف'}" data-action="deletepo" data-idx="${idx}">${ICONS.trash}</button>
+                      </div>
+                    </td>
+                  </tr>`;
+                }).join('');
+              })()
           }
         </tbody>
       </table>
@@ -1842,10 +1917,39 @@ function renderIssues(){
     ${statCard(ICONS.flag,'var(--green)','var(--green-soft)', L.issues.approvedToday,String(approvedToday),'+'+Math.max(0,approvedToday), true)}
     ${statCard(ICONS.warehouse,'var(--blue)','var(--blue-soft)', L.issues.departments,String(deptCount),'0', true)}
   </div>
-  <div class="toolbar"><button class="btn btn-primary" id="newIssueBtn">${ICONS.plus}${L.issues.newRequest}</button></div>
+  <div class="toolbar">
+    <button class="btn btn-primary" id="newIssueBtn">${ICONS.plus}${L.issues.newRequest}</button>
+    <div class="sort-control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+      <select id="reqSortSelect">
+        <option value="default" ${sortState.req==='default'?'selected':''}>${L.sort.default}</option>
+        <option value="date-asc" ${sortState.req==='date-asc'?'selected':''}>${L.sort.dateOld}</option>
+        <option value="date-desc" ${sortState.req==='date-desc'?'selected':''}>${L.sort.dateNew}</option>
+        <option value="id" ${sortState.req==='id'?'selected':''}>${L.sort.id}</option>
+        <option value="dept" ${sortState.req==='dept'?'selected':''}>${L.sort.dept}</option>
+        <option value="priority" ${sortState.req==='priority'?'selected':''}>${L.sort.priority}</option>
+      </select>
+    </div>
+  </div>
   <div class="card">
     <div class="card-head"><div class="card-title">${L.issues.list}</div></div>
-    ${reqsData.map((r,idx)=>`
+    ${(()=>{
+      const reqIdx = reqsData.map((_,i)=>i);
+      const sv = sortState.req;
+      if(sv && sv!=='default'){
+        reqIdx.sort((a,b)=>{
+          const ra=reqsData[a], rb=reqsData[b];
+          if(sv==='date-asc') return (ra.date||'').localeCompare(rb.date||'');
+          if(sv==='date-desc') return (rb.date||'').localeCompare(ra.date||'');
+          if(sv==='id') return ra.id.localeCompare(rb.id);
+          if(sv==='dept') return (lang==='en'?ra.dept:ra.deptAr).localeCompare(lang==='en'?rb.dept:rb.deptAr);
+          if(sv==='priority'){const po={critical:0,urgent:1,normal:2};return (po[ra.priority]||2)-(po[rb.priority]||2);}
+          return 0;
+        });
+      }
+      return reqIdx.map(idx=>{
+        const r=reqsData[idx];
+        return `
       <div class="alert-row">
         <div class="alert-icon" style="background:var(--blue-soft);color:var(--blue)">${ICONS.issue}</div>
         <div class="alert-mid">
@@ -1858,7 +1962,9 @@ function renderIssues(){
           <button title="${lang==='en'?'Edit':'تعديل'}" data-action="editreq" data-idx="${idx}">${ICONS.edit}</button>
           <button title="${lang==='en'?'Delete':'حذف'}" data-action="deletereq" data-idx="${idx}">${ICONS.trash}</button>
         </div>
-      </div>`).join('')}
+      </div>`;
+      }).join('');
+    })()}
   </div>`;
 }
 
@@ -2655,10 +2761,34 @@ function renderProjectsList(){
     if(pf && p.priority!==pf) return false;
     return true;
   });
+  const psv = sortState.proj;
+  if(psv && psv !== 'default'){
+    filtered.sort((a,b)=>{
+      if(psv==='date-asc') return (a.startDate||'').localeCompare(b.startDate||'');
+      if(psv==='date-desc') return (b.startDate||'').localeCompare(a.startDate||'');
+      if(psv==='id') return a.id.localeCompare(b.id);
+      if(psv==='name') return (lang==='en'?a.name:a.nameAr).localeCompare(lang==='en'?b.name:b.nameAr);
+      if(psv==='client') return (lang==='en'?a.client:a.clientAr).localeCompare(lang==='en'?b.client:b.clientAr);
+      if(psv==='value') return a.contractValue - b.contractValue;
+      return 0;
+    });
+  }
   return `
   <div class="toolbar">
     <button class="btn btn-primary" id="newProjBtn">${ICONS.plus} ${L.newProject}</button>
     <button class="btn" id="projFilterBtn">${ICONS.filter} ${L.filter}</button>
+    <div class="sort-control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+      <select id="projSortSelect">
+        <option value="default" ${sortState.proj==='default'?'selected':''}>${STR[lang].sort.default}</option>
+        <option value="date-asc" ${sortState.proj==='date-asc'?'selected':''}>${STR[lang].sort.dateOld}</option>
+        <option value="date-desc" ${sortState.proj==='date-desc'?'selected':''}>${STR[lang].sort.dateNew}</option>
+        <option value="id" ${sortState.proj==='id'?'selected':''}>${STR[lang].sort.id}</option>
+        <option value="name" ${sortState.proj==='name'?'selected':''}>${lang==='en'?'By Name':'حسب الاسم'}</option>
+        <option value="client" ${sortState.proj==='client'?'selected':''}>${STR[lang].sort.customer}</option>
+        <option value="value" ${sortState.proj==='value'?'selected':''}>${STR[lang].sort.value}</option>
+      </select>
+    </div>
     <div class="table-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="projSearch" placeholder="${L.searchProjects}"></div>
   </div>
   <div class="filter-panel" id="projFilterPanel">
@@ -3346,7 +3476,15 @@ function postRenderHooks(page){
     document.getElementById('quoteFilterReset').addEventListener('click', ()=>{
       document.getElementById('quoteFilterStatus').value='';
       document.getElementById('quoteSearch').value='';
+      sortState.quote = 'default';
+      document.getElementById('quoteSortSelect').value = 'default';
       renderQuoteRows();
+    });
+    document.getElementById('quoteSortSelect').addEventListener('change', e=>{
+      sortState.quote = e.target.value;
+      const search = document.getElementById('quoteSearch').value;
+      const status = document.getElementById('quoteFilterStatus').value;
+      renderQuoteRows(search, status);
     });
   }
   if(page==='dashboard') mountDashboardCharts();
@@ -3392,6 +3530,12 @@ function postRenderHooks(page){
       const s=document.getElementById('projSearch'); if(s) s.value='';
       const sf=document.getElementById('projStatusFilter'); if(sf) sf.value='';
       const pf=document.getElementById('projPriorityFilter'); if(pf) pf.value='';
+      sortState.proj = 'default';
+      navigate('projects');
+    });
+    const ps = document.getElementById('projSortSelect');
+    if(ps) ps.addEventListener('change', e=>{
+      sortState.proj = e.target.value;
       navigate('projects');
     });
     const ss = document.getElementById('projSearch');
@@ -3441,7 +3585,13 @@ function postRenderHooks(page){
     document.getElementById('invFilterReset').addEventListener('click', ()=>{
       document.getElementById('invFilterStatus').value='';
       document.getElementById('invFilterCat').value='';
+      sortState.inv = 'default';
+      document.getElementById('invSortSelect').value = 'default';
       renderInvRows();
+    });
+    document.getElementById('invSortSelect').addEventListener('change', e=>{
+      sortState.inv = e.target.value;
+      renderInvRows(document.getElementById('invSearch').value, document.getElementById('invFilterStatus').value, document.getElementById('invFilterCat').value);
     });
     // export CSV
     document.getElementById('invExportBtn').addEventListener('click', ()=> exportCSV(inventoryData, 'inventory'));
@@ -3451,12 +3601,20 @@ function postRenderHooks(page){
     document.querySelectorAll('[data-action="viewpo"]').forEach(b=>b.addEventListener('click',()=>openPOView(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="editpo"]').forEach(b=>b.addEventListener('click',()=>openPOModal(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="deletepo"]').forEach(b=>b.addEventListener('click',()=>openPODelete(parseInt(b.dataset.idx))));
+    document.getElementById('poSortSelect').addEventListener('change', e=>{
+      sortState.po = e.target.value;
+      navigate('purchasing');
+    });
   }
   if(page==='issues'){
     document.getElementById('newIssueBtn').addEventListener('click', ()=>openIssueModal(null));
     document.querySelectorAll('[data-action="viewreq"]').forEach(b=>b.addEventListener('click',()=>viewIssue(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="editreq"]').forEach(b=>b.addEventListener('click',()=>openIssueModal(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="deletereq"]').forEach(b=>b.addEventListener('click',()=>deleteIssue(parseInt(b.dataset.idx))));
+    document.getElementById('reqSortSelect').addEventListener('change', e=>{
+      sortState.req = e.target.value;
+      navigate('issues');
+    });
   }
   if(page==='warehouses'){
     document.getElementById('addWhBtn').addEventListener('click', ()=> openWhModal(null));
