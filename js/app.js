@@ -319,7 +319,7 @@ en:{
   lowAlerts:{title:'Low Stock Alerts',orderNow:'Order Now',critical:'CRITICAL',low:'LOW'},
   activity:{title:'Recent Warehouse Activity',received:'Received',shipped:'Shipped',moved:'Moved',ago:'ago'},
   toolbar:{addItem:'Add New Item',filter:'Filter',export:'Export',search:'Search items by name, SKU, category...',filterStatus:'Status',filterCat:'Category',filterAll:'All',applyFilter:'Apply',resetFilter:'Reset',sort:'Sort'},
-  sort:{label:'Sort',default:'Default Order',nameAZ:'Name (A→Z)',nameZA:'Name (Z→A)',dateOld:'Date (Oldest)',dateNew:'Date (Newest)',id:'By Number',customer:'By Customer',supplier:'By Supplier',total:'By Amount',stock:'By Stock',category:'By Category',dept:'By Department',priority:'By Priority',value:'By Value'},
+  sort:{label:'Sort',default:'Default Order',nameAZ:'Name (A→Z)',nameZA:'Name (Z→A)',name:'By Name',dateOld:'Date (Oldest)',dateNew:'Date (Newest)',id:'By Number',customer:'By Customer',supplier:'By Supplier',total:'By Amount',stock:'By Stock',category:'By Category',dept:'By Department',priority:'By Priority',value:'By Value'},
   table:{item:'Item',sku:'SKU / ID',category:'Category',stock:'Stock',location:'Location',status:'Status',actions:'Actions',inStock:'In Stock',lowStock:'Low Stock',critical:'Critical'},
   wh:{occupancy:'Occupancy',items:'Items',sections:'Sections',transfer:'Transfer Stock',addWarehouse:'Add Warehouse',editWarehouse:'Edit Warehouse',whNameEn:'Warehouse Name (EN)',whNameAr:'Warehouse Name (AR)',capacity:'Capacity (items)',current:'Current Items',whSaved:'Warehouse saved successfully',deleteWh:'Delete Warehouse',deleteWhTitle:'Delete this warehouse?',deleteWhBody:'This will permanently remove "{name}" from the system.',transferTitle:'Transfer Stock Between Warehouses',transferFrom:'From Warehouse',transferTo:'To Warehouse',transferItem:'Item',transferQty:'Quantity',transferNote:'Notes (optional)',transferSubmit:'Execute Transfer',transferDone:'Stock transfer completed successfully',transferErr:'Please fill all required fields'},
   modal:{addItem:'Add New Item',editItem:'Edit Item',viewItem:'Item Details',itemName:'Item Name',sku:'SKU',category:'Category',unit:'Unit',qty:'Stock Qty',minLevel:'Min Stock Level',location:'Warehouse / Location',cancel:'Cancel',save:'Save Item',saveChanges:'Save Changes',close:'Close',delete:'Delete',deleteTitle:'Delete this item?',deleteBody:'This will permanently remove "{name}" from inventory. This can\'t be undone.',deletedToast:'Item deleted',uploadImage:'Upload Image',removeImage:'Remove Image',image:'Item Image'},
@@ -361,7 +361,7 @@ ar:{
   lowAlerts:{title:'تنبيهات انخفاض المخزون',orderNow:'اطلب الآن',critical:'حرج',low:'منخفض'},
   activity:{title:'أحدث أنشطة المستودع',received:'تم الاستلام',shipped:'تم الشحن',moved:'تم النقل',ago:'مضت'},
   toolbar:{addItem:'إضافة صنف جديد',filter:'تصفية',export:'تصدير',search:'ابحث بالاسم أو الرمز أو الفئة...',filterStatus:'الحالة',filterCat:'الفئة',filterAll:'الكل',applyFilter:'تطبيق',resetFilter:'إعادة',sort:'ترتيب'},
-  sort:{label:'ترتيب',default:'الترتيب الأصلي',nameAZ:'الاسم (أ→ي)',nameZA:'الاسم (ي→أ)',dateOld:'التاريخ (الأقدم)',dateNew:'التاريخ (الأحدث)',id:'حسب الرقم',customer:'حسب العميل',supplier:'حسب المورد',total:'حسب المبلغ',stock:'حسب الكمية',category:'حسب الفئة',dept:'حسب القسم',priority:'حسب الأولوية',value:'حسب القيمة'},
+  sort:{label:'ترتيب',default:'الترتيب الأصلي',nameAZ:'الاسم (أ→ي)',nameZA:'الاسم (ي→أ)',name:'حسب الاسم',dateOld:'التاريخ (الأقدم)',dateNew:'التاريخ (الأحدث)',id:'حسب الرقم',customer:'حسب العميل',supplier:'حسب المورد',total:'حسب المبلغ',stock:'حسب الكمية',category:'حسب الفئة',dept:'حسب القسم',priority:'حسب الأولوية',value:'حسب القيمة'},
   table:{item:'الصنف',sku:'الرمز',category:'الفئة',stock:'الكمية',location:'الموقع',status:'الحالة',actions:'إجراءات',inStock:'متوفر',lowStock:'منخفض',critical:'حرج'},
   wh:{occupancy:'الإشغال',items:'الأصناف',sections:'الأقسام',transfer:'تحويل المخزون',addWarehouse:'إضافة مستودع',editWarehouse:'تعديل المستودع',whNameEn:'اسم المستودع (EN)',whNameAr:'اسم المستودع (AR)',capacity:'السعة (أصناف)',current:'الأصناف الحالية',whSaved:'تم حفظ المستودع بنجاح',deleteWh:'حذف المستودع',deleteWhTitle:'هل تريد حذف هذا المستودع؟',deleteWhBody:'سيتم حذف "{name}" نهائياً من النظام.',transferTitle:'تحويل المخزون بين المستودعات',transferFrom:'من المستودع',transferTo:'إلى المستودع',transferItem:'الصنف',transferQty:'الكمية',transferNote:'ملاحظات (اختياري)',transferSubmit:'تنفيذ التحويل',transferDone:'تم تنفيذ التحويل بنجاح',transferErr:'يرجى تعبئة جميع الحقول المطلوبة'},
   modal:{addItem:'إضافة صنف جديد',editItem:'تعديل الصنف',viewItem:'تفاصيل الصنف',itemName:'اسم الصنف',sku:'رمز الصنف',category:'الفئة',unit:'الوحدة',qty:'الكمية',minLevel:'الحد الأدنى للمخزون',location:'المستودع / الموقع',cancel:'إلغاء',save:'حفظ الصنف',saveChanges:'حفظ التعديلات',close:'إغلاق',delete:'حذف',deleteTitle:'هل تريد حذف هذا الصنف؟',deleteBody:'سيتم حذف "{name}" نهائيًا من المخزون. لا يمكن التراجع عن هذا الإجراء.',deletedToast:'تم حذف الصنف',uploadImage:'تحميل صورة',removeImage:'إزالة الصورة',image:'صورة الصنف'},
@@ -980,7 +980,7 @@ function renderQuoteRows(filter='', statusF=''){
             </span>
           `).join('')
           : `<span style="color:var(--text-3);font-size:11px;">—</span>`}
-        <button class="btn-icon-sm" onclick="uploadQuoteAttachment(${idx})" title="${lang==='en'?'Upload file':'رفع ملف'}" style="cursor:pointer;border:none;background:transparent;border-radius:8px;padding:4px;font-size:14px;display:inline-flex;align-items:center;color:var(--blue);">+</button>
+        <button class="btn-icon-sm upload-btn" onclick="uploadQuoteAttachment(${idx})" title="${lang==='en'?'Upload file':'رفع ملف'}" style="cursor:pointer;border:none;background:transparent;border-radius:8px;padding:4px;display:inline-flex;align-items:center;color:var(--blue);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="12"/><line x1="15" y1="15" x2="12" y2="12"/></svg></button>
       </td>
       <td><div class="row-actions">
         <button title="${lang==='en'?'View/Print':'عرض/طباعة'}" onclick="openQuoteView(${idx})">${ICONS.eye}</button>
@@ -2784,7 +2784,7 @@ function renderProjectsList(){
         <option value="date-asc" ${sortState.proj==='date-asc'?'selected':''}>${STR[lang].sort.dateOld}</option>
         <option value="date-desc" ${sortState.proj==='date-desc'?'selected':''}>${STR[lang].sort.dateNew}</option>
         <option value="id" ${sortState.proj==='id'?'selected':''}>${STR[lang].sort.id}</option>
-        <option value="name" ${sortState.proj==='name'?'selected':''}>${lang==='en'?'By Name':'حسب الاسم'}</option>
+        <option value="name" ${sortState.proj==='name'?'selected':''}>${STR[lang].sort.name}</option>
         <option value="client" ${sortState.proj==='client'?'selected':''}>${STR[lang].sort.customer}</option>
         <option value="value" ${sortState.proj==='value'?'selected':''}>${STR[lang].sort.value}</option>
       </select>
