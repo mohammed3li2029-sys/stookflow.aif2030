@@ -4,24 +4,48 @@
    assignment is automatically mirrored to the database (when configured).
    In demo mode (no Supabase config) this is a harmless no-op and the
    array behaves exactly like a normal array.
+
+   _suppressBackendSync: when true, the proxy's set/delete traps skip the
+   sync-to-database step entirely. This is essential for realtime updates:
+   when a change arrives from Supabase (someone else's edit, or an echo of
+   our own), we need to apply it to the local array WITHOUT writing it
+   straight back to the database — otherwise every incoming update would
+   trigger another outgoing write, which broadcasts another incoming
+   update, forever. Any code that programmatically replaces array
+   contents from data that already came FROM Supabase must wrap that
+   replacement with _suppressBackendSync = true / false.
 =================================================================== */
+let _suppressBackendSync = false;
 function withFirestoreSync(arr, collectionName, idField){
   return new Proxy(arr, {
     set(target, prop, value){
       target[prop] = value;
-      if(window.StockFlowBackend && window.StockFlowBackend.enabled && prop !== 'length'){
+      if(!_suppressBackendSync && window.StockFlowBackend && window.StockFlowBackend.enabled && prop !== 'length'){
         window.StockFlowBackend.syncCollection(collectionName, target, idField);
       }
       return true;
     },
     deleteProperty(target, prop){
       delete target[prop];
-      if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+      if(!_suppressBackendSync && window.StockFlowBackend && window.StockFlowBackend.enabled){
         window.StockFlowBackend.syncCollection(collectionName, target, idField);
       }
       return true;
     }
   });
+}
+
+/** Replace an array's contents with `items`, without triggering an
+    outgoing sync write — for applying data that already came FROM
+    Supabase (initial load, or a realtime update). */
+function silentReplace(targetArray, items){
+  _suppressBackendSync = true;
+  try{
+    targetArray.length = 0;
+    items.forEach(item => targetArray.push(item));
+  } finally {
+    _suppressBackendSync = false;
+  }
 }
 
 /* Once the backend reports its status, try loading Inventory & Warehouses
@@ -42,12 +66,12 @@ async function loadAllStockFlowData(skipRender){
       window.StockFlowBackend.loadCollection('users'),
     ]);
 
-    if(inv && inv.length){ inventoryData.length = 0; inv.forEach(item => inventoryData.push(item)); }
-    if(wh && wh.length){ warehouseData.length = 0; wh.forEach(item => warehouseData.push(item)); }
-    if(reqs && reqs.length){ reqsData.length = 0; reqs.forEach(item => reqsData.push(item)); }
-    if(projs && projs.length){ projects.length = 0; projs.forEach(item => projects.push(item)); }
-    if(quotes && quotes.length){ quotations.length = 0; quotes.forEach(item => quotations.push(item)); }
-    if(pos && pos.length){ purchaseOrders.length = 0; pos.forEach(item => purchaseOrders.push(item)); }
+    if(inv && inv.length) silentReplace(inventoryData, inv);
+    if(wh && wh.length) silentReplace(warehouseData, wh);
+    if(reqs && reqs.length) silentReplace(reqsData, reqs);
+    if(projs && projs.length) silentReplace(projects, projs);
+    if(quotes && quotes.length) silentReplace(quotations, quotes);
+    if(pos && pos.length) silentReplace(purchaseOrders, pos);
 
     if(profiles && profiles.length){
       Object.assign(profileData, profiles[0]);
@@ -55,10 +79,9 @@ async function loadAllStockFlowData(skipRender){
     }
 
     if(users && users.length){
-      usersData.length = 0;
       // Password isn't stored server-side (see syncUsers()); restore with
       // a local placeholder so the edit form still has a value to show.
-      users.forEach(u => usersData.push({...u, password: encodePW('')}));
+      silentReplace(usersData, users.map(u => ({...u, password: encodePW('')})));
       if(typeof syncLoginUsers === 'function') syncLoginUsers();
     }
 
@@ -75,6 +98,83 @@ async function loadAllStockFlowData(skipRender){
   }catch(err){
     console.error('[StockFlow] Supabase data load failed:', err);
   }
+}
+
+/* ===================================================================
+   REALTIME SYNC
+   Subscribe once per table. When Supabase reports a change (from any
+   client — a teammate's browser, or an echo of our own write), we
+   re-fetch just that table and replace the local array via
+   silentReplace() (never writes back — see _suppressBackendSync above).
+   Each table has its own short debounce so a burst of rapid changes
+   (e.g. saving a project with many nested edits) results in one
+   refresh, not a flood of them.
+=================================================================== */
+let _realtimeUnsubscribers = [];
+const _realtimeTimers = {};
+
+function _debouncedReload(table, reloadFn){
+  clearTimeout(_realtimeTimers[table]);
+  _realtimeTimers[table] = setTimeout(reloadFn, 400);
+}
+
+async function setupRealtimeSync(){
+  if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
+  teardownRealtimeSync(); // avoid duplicate subscriptions if called twice
+
+  const arrayTables = [
+    ['inventory', inventoryData],
+    ['warehouses', warehouseData],
+    ['material_requests', reqsData],
+    ['projects', projects],
+    ['quotations', quotations],
+    ['purchase_orders', purchaseOrders],
+  ];
+
+  arrayTables.forEach(([table, arr]) => {
+    const unsub = window.StockFlowBackend.subscribeToTable(table, () => {
+      _debouncedReload(table, async () => {
+        const items = await window.StockFlowBackend.loadCollection(table);
+        if(items){
+          silentReplace(arr, items);
+          if(typeof navigate === 'function' && typeof currentPage !== 'undefined'){
+            navigate(currentPage);
+          }
+        }
+      });
+    });
+    _realtimeUnsubscribers.push(unsub);
+  });
+
+  _realtimeUnsubscribers.push(
+    window.StockFlowBackend.subscribeToTable('profile', () => {
+      _debouncedReload('profile', async () => {
+        const items = await window.StockFlowBackend.loadCollection('profile');
+        if(items && items.length){
+          Object.assign(profileData, items[0]);
+          if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
+        }
+      });
+    })
+  );
+
+  _realtimeUnsubscribers.push(
+    window.StockFlowBackend.subscribeToTable('users', () => {
+      _debouncedReload('users', async () => {
+        const items = await window.StockFlowBackend.loadCollection('users');
+        if(items){
+          silentReplace(usersData, items.map(u => ({...u, password: encodePW('')})));
+          if(typeof syncLoginUsers === 'function') syncLoginUsers();
+          if(currentPage === 'users' && typeof navigate === 'function') navigate(currentPage);
+        }
+      });
+    })
+  );
+}
+
+function teardownRealtimeSync(){
+  _realtimeUnsubscribers.forEach(unsub => { try{ unsub(); }catch(e){} });
+  _realtimeUnsubscribers = [];
 }
 
 function revealMainApp(){
@@ -136,6 +236,7 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
     profileData.initials = getInitials(profileData.name);
     await loadAllStockFlowData(true);
     revealMainApp();
+    setupRealtimeSync();
   } else {
     revealLoginScreen();
   }
@@ -4906,6 +5007,7 @@ function applyLoginLang(){
 }
 
 function doLogout(){
+  teardownRealtimeSync();
   if(window.StockFlowBackend && window.StockFlowBackend.enabled){
     window.StockFlowBackend.signOutUser().catch(()=>{});
   }
@@ -4974,7 +5076,7 @@ function doLogin(){
       // For a real Supabase login (not the local demo account), load this
       // account's saved data now — a page refresh already does this via
       // the session-restore flow, but a fresh manual login needs it too.
-      if(fbUser){ loadAllStockFlowData(); }
+      if(fbUser){ loadAllStockFlowData(); setupRealtimeSync(); }
       // update profile with logged-in user
       profileData.name = user.name;
       profileData.role = user.role;

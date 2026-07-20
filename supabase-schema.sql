@@ -100,3 +100,24 @@ begin
     );
   end loop;
 end $$;
+
+-- ----------------------------------------------------------------------------
+-- Realtime: add every table to Supabase's realtime publication so that
+-- js/app.js's live-update feature (subscribeToTable) actually receives
+-- change events. Safe to re-run — skips tables already added.
+-- ----------------------------------------------------------------------------
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users']
+  loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I;', t);
+    end if;
+  end loop;
+end $$;

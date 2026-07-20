@@ -114,6 +114,27 @@ function syncCollection(table, items, idField) {
   }, 500);
 }
 
+/**
+ * Subscribe to realtime changes (insert/update/delete) on a table.
+ * Calls `onChange` with no arguments whenever anything changes — callers
+ * are expected to just re-fetch that table's current state (simpler and
+ * safer than trying to patch individual rows from the change payload).
+ * Returns an unsubscribe function; safe to call even if not configured
+ * (returns a no-op unsubscribe in that case).
+ */
+function subscribeToTable(table, onChange) {
+  if (!supabase) return () => {};
+  const channel = supabase
+    .channel(`stockflow-${table}-changes`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table },
+      () => onChange()
+    )
+    .subscribe();
+  return () => { try { supabase.removeChannel(channel); } catch (e) {} };
+}
+
 window.StockFlowBackend = {
   enabled,
   signInWithEmail,
@@ -121,7 +142,8 @@ window.StockFlowBackend = {
   onAuthChange,
   getSession,
   loadCollection,
-  syncCollection
+  syncCollection,
+  subscribeToTable
 };
 
 // Let the rest of the app know the backend is ready to use (or confirmed demo-only).
