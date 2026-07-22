@@ -135,6 +135,48 @@ function subscribeToTable(table, onChange) {
   return () => { try { supabase.removeChannel(channel); } catch (e) {} };
 }
 
+const STORAGE_BUCKET = "stockflow-files";
+
+/**
+ * Upload a File (from an <input type="file">) to Supabase Storage under
+ * `folder/` (e.g. "inventory", "profile", "quotes", "projects"), using a
+ * collision-proof filename. Returns the public URL on success, or null
+ * if Supabase isn't configured (caller should fall back to demo/local
+ * behavior in that case).
+ */
+async function uploadFile(folder, file) {
+  if (!supabase) return null;
+  const safeName = String(file.name || "file").replace(/[^\w.\-]+/g, "_");
+  const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${safeName}`;
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: false
+  });
+  if (error) {
+    console.error(`[StockFlow] File upload failed (${folder}):`, error);
+    throw error;
+  }
+  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, path };
+}
+
+/** Delete a previously-uploaded file by its storage path (not its public URL). */
+async function deleteFile(path) {
+  if (!supabase || !path) return;
+  try {
+    await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+  } catch (err) {
+    console.error("[StockFlow] File delete failed:", err);
+  }
+}
+
+/** True if a string looks like base64 image/file data (old format) rather
+    than a Storage URL (new format) — used to keep old records displaying
+    correctly without forcing a one-time migration. */
+function isLegacyDataUrl(value) {
+  return typeof value === "string" && value.startsWith("data:");
+}
+
 window.StockFlowBackend = {
   enabled,
   signInWithEmail,
@@ -143,6 +185,9 @@ window.StockFlowBackend = {
   getSession,
   loadCollection,
   syncCollection,
+  uploadFile,
+  deleteFile,
+  isLegacyDataUrl,
   subscribeToTable
 };
 

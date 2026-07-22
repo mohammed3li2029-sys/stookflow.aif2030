@@ -48,6 +48,38 @@ function silentReplace(targetArray, items){
   }
 }
 
+/* ===================================================================
+   FILE UPLOAD HELPER (Supabase Storage, with demo-mode fallback)
+   Used for inventory item photos, the profile picture, quote
+   attachments, and project documents — anywhere a file used to be
+   read as base64 and stored directly inside a database row. Storing
+   large base64 blobs in the JSONB columns makes every row heavier to
+   read/write and slows the app down as more files get added; storing
+   them in Supabase Storage instead keeps the database rows small
+   (just a short URL) while the actual file bytes live in Storage.
+
+   Returns { url, path } — `path` is null in demo mode / on fallback,
+   since there's nothing in Storage to delete later in that case.
+=================================================================== */
+async function uploadFileOrFallback(file, folder){
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    try{
+      const result = await window.StockFlowBackend.uploadFile(folder, file);
+      if(result) return { url: result.url, path: result.path };
+    }catch(err){
+      showToast(lang==='en' ? 'Upload failed, using local preview instead.' : 'فشل الرفع، تم استخدام معاينة محلية بدلاً منه.');
+    }
+  }
+  // Demo mode, or upload failed: fall back to base64 (old behavior).
+  const dataUrl = await new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  return { url: dataUrl, path: null };
+}
+
 /* Once the backend reports its status, try loading Inventory & Warehouses
    from Supabase. If the tables are empty/unavailable, the built-in demo
    data (already on screen) is left untouched — so the app always works,
@@ -1407,8 +1439,19 @@ async function deleteQuoteAttachment(quoteIdx, attachIdx){
   const q = quotations[quoteIdx];
   if(!q || !q.attachments) return;
   q.attachments.splice(attachIdx, 1);
+  syncQuotations();
   navigate('sales');
   showToast(lang==='en'?'Attachment deleted!':'تم حذف المرفق!');
+}
+
+/* Attachments live inside a quotation object's nested array, so pushing/
+   splicing them doesn't trigger the outer `quotations` array's sync
+   proxy (same reasoning as syncCurrentProject() for projects). Call
+   this after any attachment add/remove to persist the change. */
+function syncQuotations(){
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('quotations', quotations, 'id');
+  }
 }
 
 let _uploadQuoteIdx = null;
@@ -1421,21 +1464,19 @@ function uploadQuoteAttachment(quoteIdx){
     input.id = '_quoteUploadInput';
     input.multiple = true;
     input.style.display = 'none';
-    input.addEventListener('change', function(){
+    input.addEventListener('change', async function(){
       const idx = _uploadQuoteIdx;
       if(idx === null || !quotations[idx]) return;
       const files = Array.from(this.files);
-      files.forEach(f=>{
-        if(f.size > 10*1024*1024){ showToast(lang==='en'?'File too large (max 10MB)':'الملف كبير جداً (الحد الأقصى 10 ميجابايت)'); return; }
-        const reader = new FileReader();
-        reader.onload = function(e){
-          if(!quotations[idx].attachments) quotations[idx].attachments = [];
-          quotations[idx].attachments.push({name: f.name, data: e.target.result, type: f.type});
-          navigate('sales');
-          showToast(lang==='en'?'File uploaded!':'تم رفع الملف!');
-        };
-        reader.readAsDataURL(f);
-      });
+      for(const f of files){
+        if(f.size > 10*1024*1024){ showToast(lang==='en'?'File too large (max 10MB)':'الملف كبير جداً (الحد الأقصى 10 ميجابايت)'); continue; }
+        const { url } = await uploadFileOrFallback(f, 'quotes');
+        if(!quotations[idx].attachments) quotations[idx].attachments = [];
+        quotations[idx].attachments.push({name: f.name, data: url, type: f.type});
+      }
+      syncQuotations();
+      navigate('sales');
+      showToast(lang==='en'?'File uploaded!':'تم رفع الملف!');
       this.value = '';
       _uploadQuoteIdx = null;
     });
@@ -3306,22 +3347,19 @@ function showAddDocModal(idx){
     <div class="field"><label>${L.uploadDate}</label><input type="date" id="docDate" value="${new Date().toISOString().split('T')[0]}"></div>
     <div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${lang==='en'?'Cancel':'إلغاء'}</button><button class="btn btn-primary" id="docSave">${lang==='en'?'Add':'إضافة'}</button></div>`);
   setTimeout(()=>{
-    document.getElementById('docSave')?.addEventListener('click', ()=>{
+    document.getElementById('docSave')?.addEventListener('click', async ()=>{
       const name = document.getElementById('docName')?.value?.trim();
       if(!name) return;
       const fileInput = document.getElementById('docFile');
       const file = fileInput?.files?.[0];
       if(file){
-        const reader = new FileReader();
-        reader.onload = function(e){
-          p.docs.push({name, type:document.getElementById('docType')?.value||'PDF', date:document.getElementById('docDate')?.value||'', url:e.target.result, file:file.name});
-          syncCurrentProject();
-          overlay.remove();
-          const existing = document.getElementById('projDetailOverlay');
-          if(existing) existing.remove();
-          openProjectDetail(idx);
-        };
-        reader.readAsDataURL(file);
+        const { url } = await uploadFileOrFallback(file, 'projects');
+        p.docs.push({name, type:document.getElementById('docType')?.value||'PDF', date:document.getElementById('docDate')?.value||'', url, file:file.name});
+        syncCurrentProject();
+        overlay.remove();
+        const existing = document.getElementById('projDetailOverlay');
+        if(existing) existing.remove();
+        openProjectDetail(idx);
       } else {
         p.docs.push({name, type:document.getElementById('docType')?.value||'PDF', date:document.getElementById('docDate')?.value||'', url:'', file:''});
         syncCurrentProject();
@@ -3844,17 +3882,14 @@ function openModal(idx=null){
   document.getElementById('modalOverlay').classList.add('show');
 }
 document.getElementById('mImgUploadBtn').addEventListener('click', ()=> document.getElementById('mImgFile').click());
-document.getElementById('mImgFile').addEventListener('change', e=>{
+document.getElementById('mImgFile').addEventListener('change', async e=>{
   const file = e.target.files[0];
   if(!file) return;
   if(!file.type.startsWith('image/')) return;
-  const reader = new FileReader();
-  reader.onload = ev=>{
-    currentImageData = ev.target.result;
-    setImgPreview(currentImageData);
-  };
-  reader.readAsDataURL(file);
   e.target.value = '';
+  const { url } = await uploadFileOrFallback(file, 'inventory');
+  currentImageData = url;
+  setImgPreview(currentImageData);
 });
 document.getElementById('mImgRemoveBtn').addEventListener('click', ()=>{
   currentImageData = null;
@@ -4706,13 +4741,13 @@ function closeProfileModal(){document.getElementById('profileModalOverlay').clas
 document.getElementById('profileCancel').addEventListener('click',closeProfileModal);
 document.getElementById('profileModalOverlay').addEventListener('click',e=>{if(e.target.id==='profileModalOverlay')closeProfileModal();});
 document.getElementById('profileImgUploadBtn').addEventListener('click',()=>document.getElementById('profileImgFile').click());
-document.getElementById('profileImgFile').addEventListener('change',e=>{
+document.getElementById('profileImgFile').addEventListener('change', async e=>{
   const file=e.target.files[0];
   if(!file||!file.type.startsWith('image/')) return;
-  const r=new FileReader();
-  r.onload=ev=>{profileImgData=ev.target.result;setProfilePreview(profileImgData);};
-  r.readAsDataURL(file);
   e.target.value='';
+  const { url } = await uploadFileOrFallback(file, 'profile');
+  profileImgData = url;
+  setProfilePreview(profileImgData);
 });
 document.getElementById('profileImgRemoveBtn').addEventListener('click',()=>{
   profileImgData=null;

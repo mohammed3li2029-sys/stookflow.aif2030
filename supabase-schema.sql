@@ -121,3 +121,35 @@ begin
     end if;
   end loop;
 end $$;
+
+-- ----------------------------------------------------------------------------
+-- Storage: a public bucket for uploaded files (inventory item photos,
+-- profile pictures, quote attachments, project documents). Storing these
+-- as files instead of base64 text inside the JSONB `data` columns above
+-- keeps the database small and pages loading fast as usage grows.
+-- Safe to re-run — skips creation if the bucket/policies already exist.
+-- ----------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public)
+values ('stockflow-files', 'stockflow-files', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Public read stockflow-files" on storage.objects;
+create policy "Public read stockflow-files"
+  on storage.objects for select
+  using (bucket_id = 'stockflow-files');
+
+drop policy if exists "Authenticated upload stockflow-files" on storage.objects;
+create policy "Authenticated upload stockflow-files"
+  on storage.objects for insert
+  with check (bucket_id = 'stockflow-files' and auth.role() = 'authenticated');
+
+drop policy if exists "Authenticated update stockflow-files" on storage.objects;
+create policy "Authenticated update stockflow-files"
+  on storage.objects for update
+  using (bucket_id = 'stockflow-files' and auth.role() = 'authenticated');
+
+drop policy if exists "Authenticated delete stockflow-files" on storage.objects;
+create policy "Authenticated delete stockflow-files"
+  on storage.objects for delete
+  using (bucket_id = 'stockflow-files' and auth.role() = 'authenticated');
