@@ -423,8 +423,14 @@ let lang = (function(){
   }catch(e){}
   return 'en';
 })();
-let theme = 'light';
-const sortState = {inv:'default', quote:'default', po:'default', req:'default', proj:'default'};
+let theme = (function(){
+  try{ const s=localStorage.getItem('stockflow_theme'); if(s==='dark'||s==='light') return s; }catch(e){}
+  return 'light';
+})();
+const sortState = (function(){
+  try{ const s=JSON.parse(localStorage.getItem('stockflow_sort')); if(s) return {inv:s.inv||'default',quote:s.quote||'default',po:s.po||'default',req:s.req||'default',proj:s.proj||'default'}; }catch(e){}
+  return {inv:'default',quote:'default',po:'default',req:'default',proj:'default'};
+})();
 const selMode = {inv:false, quote:false, po:false, req:false, proj:false};
 const selState = {inv:new Set(), quote:new Set(), po:new Set(), req:new Set(), proj:new Set()};
 
@@ -3641,11 +3647,13 @@ function postRenderHooks(page){
       document.getElementById('quoteFilterStatus').value='';
       document.getElementById('quoteSearch').value='';
       sortState.quote = 'default';
+      saveSortState();
       document.getElementById('quoteSortSelect').value = 'default';
       renderQuoteRows();
     });
     document.getElementById('quoteSortSelect').addEventListener('change', e=>{
       sortState.quote = e.target.value;
+      saveSortState();
       const search = document.getElementById('quoteSearch').value;
       const status = document.getElementById('quoteFilterStatus').value;
       renderQuoteRows(search, status);
@@ -3695,11 +3703,13 @@ function postRenderHooks(page){
       const sf=document.getElementById('projStatusFilter'); if(sf) sf.value='';
       const pf=document.getElementById('projPriorityFilter'); if(pf) pf.value='';
       sortState.proj = 'default';
+      saveSortState();
       navigate('projects');
     });
     const ps = document.getElementById('projSortSelect');
     if(ps) ps.addEventListener('change', e=>{
       sortState.proj = e.target.value;
+      saveSortState();
       navigate('projects');
     });
     const ss = document.getElementById('projSearch');
@@ -3750,11 +3760,13 @@ function postRenderHooks(page){
       document.getElementById('invFilterStatus').value='';
       document.getElementById('invFilterCat').value='';
       sortState.inv = 'default';
+      saveSortState();
       document.getElementById('invSortSelect').value = 'default';
       renderInvRows();
     });
     document.getElementById('invSortSelect').addEventListener('change', e=>{
       sortState.inv = e.target.value;
+      saveSortState();
       renderInvRows(document.getElementById('invSearch').value, document.getElementById('invFilterStatus').value, document.getElementById('invFilterCat').value);
     });
     // export CSV
@@ -3767,6 +3779,7 @@ function postRenderHooks(page){
     document.querySelectorAll('[data-action="deletepo"]').forEach(b=>b.addEventListener('click',()=>openPODelete(parseInt(b.dataset.idx))));
     document.getElementById('poSortSelect').addEventListener('change', e=>{
       sortState.po = e.target.value;
+      saveSortState();
       navigate('purchasing');
     });
   }
@@ -3777,6 +3790,7 @@ function postRenderHooks(page){
     document.querySelectorAll('[data-action="deletereq"]').forEach(b=>b.addEventListener('click',()=>deleteIssue(parseInt(b.dataset.idx))));
     document.getElementById('reqSortSelect').addEventListener('change', e=>{
       sortState.req = e.target.value;
+      saveSortState();
       navigate('issues');
     });
   }
@@ -5228,12 +5242,14 @@ navigate = function(page){
 =================================================================== */
 function toggleTheme(){
   theme = theme==='light' ? 'dark' : 'light';
+  try{ localStorage.setItem('stockflow_theme', theme); }catch(e){}
   document.body.setAttribute('data-theme', theme);
   document.getElementById('themeIcon').innerHTML = theme==='dark'
     ? '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>'
     : '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
   navigate(currentPage);
 }
+function saveSortState(){ try{ localStorage.setItem('stockflow_sort', JSON.stringify(sortState)); }catch(e){} }
 
 function applyStaticI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -5462,6 +5478,7 @@ document.getElementById('loginLangBtn').addEventListener('click', ()=>{
 // theme toggle on login screen
 document.getElementById('loginThemeBtn').addEventListener('click', ()=>{
   theme = theme==='light' ? 'dark' : 'light';
+  try{ localStorage.setItem('stockflow_theme', theme); }catch(e){}
   document.body.setAttribute('data-theme', theme);
   syncLoginThemeIcon();
 });
@@ -5472,6 +5489,7 @@ function syncLoginThemeIcon(){
 }
 
 // init login screen (don't auto-navigate to dashboard)
+document.body.setAttribute('data-theme', theme);
 applyLoginLang();
 buildNav();
 applyStaticI18n();
