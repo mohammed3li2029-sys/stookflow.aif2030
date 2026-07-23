@@ -404,12 +404,44 @@ tbody tr:hover{background:var(--surface-2);}
 .row-actions svg{width:13px;height:13px;}
 
 /* --- Row selection checkboxes --- */
-.row-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);background:var(--surface);cursor:pointer;appearance:none;-webkit-appearance:none;position:relative;flex-shrink:0;transition:all .2s var(--ease);display:inline-flex;align-items:center;justify-content:center;}
-.row-check:hover{border-color:var(--blue);background:var(--blue-soft);}
-.row-check:checked{background:var(--blue);border-color:var(--blue);}
-.row-check:checked::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-1px);}
+.row-check{
+  width:18px;height:18px;
+  cursor:pointer;appearance:none;-webkit-appearance:none;
+  position:relative;flex-shrink:0;
+  background:transparent;border:none;
+}
+.row-check::before{
+  content:'';position:absolute;inset:0;
+  border:2.5px solid var(--border);border-radius:3px;
+  transition:0.2s linear;
+}
+.row-check:hover::before{border-color:var(--blue);background:rgba(10,102,255,.08);}
+.row-check:checked::before{
+  background-color:transparent;border:none;
+  transform:rotate(45deg);
+}
+.row-check::after{
+  content:'';position:absolute;
+  visibility:hidden;opacity:0;
+  left:50%;top:40%;
+  width:7px;height:14px;
+  border:2px solid #0ea021;
+  border-width:0 2px 2px 0;
+  filter:drop-shadow(0px 0px 8px #0ea021);
+  transform:translate(-50%,-50%) rotate(-90deg) scale(0.2);
+  transition:0.2s linear;
+}
+.row-check:checked::after{
+  visibility:visible;opacity:1;
+  transform:translate(-50%,-50%) rotate(28deg) scale(1);
+  animation:checkPulse 1s ease-in;
+}
 .row-check:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
-th .row-check{width:17px;height:17px;}
+th .row-check{width:16px;height:16px;}
+@keyframes checkPulse{
+  0%,100%{transform:translate(-50%,-50%) rotate(28deg) scale(1)}
+  50%{transform:translate(-50%,-50%) rotate(28deg) scale(1.6)}
+}
 tr.selected-row{background:var(--blue-soft) !important;}
 tr.selected-row td{color:var(--text) !important;}
 /* --- Selection mode button --- */
