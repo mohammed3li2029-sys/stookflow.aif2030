@@ -371,6 +371,7 @@ en:{
   projects:{list:'Projects List',dashboard:'Projects Dashboard',plan:'Automation Plan',newProject:'New Project',editProject:'Edit Project',deleteProject:'Delete Project',deleteConfirm:'Are you sure you want to delete this project?',projectName:'Project Name',projectNumber:'Project #',client:'Client',type:'Type',location:'Location',manager:'Project Manager',contractValue:'Contract Value',contractDate:'Contract Date',startDate:'Start Date',duration:'Duration (days)',endDate:'Expected End Date',progress:'Progress',status:'Status',priority:'Priority',contractNo:'Contract No.',contractFile:'Contract (PDF)',coordinates:'Coordinates',engineer:'Responsible Engineer',notes:'Notes',phases:'Phases',materials:'Materials',purchases:'Purchases',team:'Team',documents:'Documents',gallery:'Gallery',activityLog:'Activity Log',risks:'Risks',alerts:'Alerts',addMaterial:'Add Material',editMaterial:'Edit Material',importExcel:'Import from Excel',importBOM:'Import BOM',materialName:'Material Name',qtyRequired:'Qty Required',qtyIssued:'Qty Issued',qtyRemaining:'Qty Remaining',qtyAvailable:'Available in Stock',materialStatus:'Status',statusProvided:'Provided',statusOrdered:'On Order',statusNotAvailable:'Not Available',issueDate:'Issue Date',issueRef:'Issue Ref',receivedBy:'Received By',issuedBy:'Issued By',poNumber:'PO #',supplier:'Supplier',orderValue:'Order Value',orderDate:'Order Date',deliveryDate:'Delivery Date',orderStatus:'Order Status',teamMember:'Team Member',role:'Role',addMember:'Add Member',documentName:'Document Name',docType:'Document Type',uploadDate:'Upload Date',addDocument:'Add Document',imageCategory:'Image Category',beforeExec:'Before Execution',duringExec:'During Execution',afterExec:'After Execution',addImage:'Add Image',logEntry:'Log Entry',addNote:'Add Note',riskName:'Risk',riskLevel:'Risk Level',addRisk:'Add Risk',activeProjects:'Active Projects',completedProjects:'Completed Projects',overdueProjects:'Overdue Projects',totalProjectsValue:'Total Projects Value',upcomingDeadlines:'Upcoming Deadlines',overdueList:'Overdue Projects',mostUsedMaterials:'Most Used Materials',topProgress:'Top Progress',daysRemaining:'days remaining',phase:'Phase',startDatePhase:'Start Date',endDatePhase:'End Date',responsible:'Responsible',phaseStatus:'Phase Status',phaseNotStarted:'Not Started',phaseInProgress:'In Progress',phaseCompleted:'Completed',phaseDelayed:'Delayed',alertNearDeadline:'Project deadline approaching',alertOverdue:'Project is overdue',alertMaterialShortage:'Material shortage',alertContractEnding:'Contract ending soon',alertMaterialArrived:'Materials arrived',alertSupplierDelay:'Supplier delay',searchProjects:'Search by name, client or number...',allStatus:'All Statuses',allPriority:'All Priorities',filter:'Filter',export:'Export',exportExcel:'Export to Excel',overall:'Overall Completion',totalMaterials:'Total Materials',provided:'Provided',onOrder:'Under Order',notAvailable:'Not Available',materialSummary:'Material Summary',issueOrders:'Issue Orders',purchaseOrders:'Purchase Orders',teamMembers:'Team Members',documentsList:'Documents',imageGallery:'Image Gallery',activityHistory:'Activity History',riskRegistry:'Risk Registry',alertsList:'Alerts',noData:'No projects found',noMaterials:'No materials added',noPhases:'No phases defined',noTeam:'No team members',noDocs:'No documents uploaded',noImages:'No images uploaded',noNotes:'No activity recorded',noRisks:'No risks registered',noAlerts:'No alerts',unknown:'Unknown','Phase 1':'Contract Signing','Phase 2':'Plan Approval','Phase 3':'Material Preparation','Phase 4':'Manufacturing','Phase 5':'Painting','Phase 6':'Transport','Phase 7':'Installation','Phase 8':'Preliminary Handover','Phase 9':'Final Handover'},
   units:{days:'days'},
   profile:{title:'Edit Profile',name:'Full Name',role:'Role',email:'Email',changePhoto:'Change Photo',removePhoto:'Remove Photo',saved:'Profile updated successfully'},
+  scrollTop:'Scroll to top',
 },
 ar:{
   brand:{tagline:'إدارة المخازن الذكية للمصانع'},
@@ -414,6 +415,7 @@ ar:{
   projects:{list:'قائمة المشاريع',dashboard:'لوحة المشاريع',plan:'خطة الأتمتة',newProject:'مشروع جديد',editProject:'تعديل المشروع',deleteProject:'حذف المشروع',deleteConfirm:'هل أنت متأكد من حذف هذا المشروع؟',projectName:'اسم المشروع',projectNumber:'رقم المشروع',client:'العميل',type:'النوع',location:'الموقع',manager:'مدير المشروع',contractValue:'قيمة العقد',contractDate:'تاريخ العقد',startDate:'تاريخ البداية',duration:'المدة (أيام)',endDate:'تاريخ الانتهاء المتوقع',progress:'نسبة الإنجاز',status:'الحالة',priority:'الأولوية',contractNo:'رقم العقد',contractFile:'العقد (PDF)',coordinates:'الإحداثيات',engineer:'المهندس المسؤول',notes:'ملاحظات',phases:'المراحل',materials:'المواد',purchases:'المشتريات',team:'الفريق',documents:'المستندات',gallery:'معرض الصور',activityLog:'سجل النشاط',risks:'المخاطر',alerts:'التنبيهات',addMaterial:'إضافة مادة',editMaterial:'تعديل المادة',importExcel:'استيراد من Excel',importBOM:'استيراد BOM',materialName:'اسم المادة',qtyRequired:'الكمية المطلوبة',qtyIssued:'الكمية المصروفة',qtyRemaining:'الكمية المتبقية',qtyAvailable:'المتاح في المستودع',materialStatus:'الحالة',statusProvided:'متوفرة',statusOrdered:'قيد الطلب',statusNotAvailable:'غير متوفرة',issueDate:'تاريخ الصرف',issueRef:'رقم الإذن',receivedBy:'المستلم',issuedBy:'تم الصرف بواسطة',poNumber:'رقم أمر الشراء',supplier:'المورد',orderValue:'قيمة الطلب',orderDate:'تاريخ الطلب',deliveryDate:'تاريخ التوريد',orderStatus:'حالة الطلب',teamMember:'عضو الفريق',role:'الدور',addMember:'إضافة عضو',documentName:'اسم المستند',docType:'نوع المستند',uploadDate:'تاريخ الرفع',addDocument:'إضافة مستند',imageCategory:'تصنيف الصورة',beforeExec:'قبل التنفيذ',duringExec:'أثناء التنفيذ',afterExec:'بعد التنفيذ',addImage:'إضافة صورة',logEntry:'حدث',addNote:'إضافة ملاحظة',riskName:'المخاطرة',riskLevel:'مستوى المخاطرة',addRisk:'إضافة مخاطرة',activeProjects:'المشاريع النشطة',completedProjects:'المشاريع المكتملة',overdueProjects:'المشاريع المتأخرة',totalProjectsValue:'إجمالي قيمة المشاريع',upcomingDeadlines:'المواعيد القريبة',overdueList:'المشاريع المتأخرة',mostUsedMaterials:'أكثر المواد استخداماً',topProgress:'أعلى إنجاز',daysRemaining:'يوم متبقي',phase:'المرحلة',startDatePhase:'تاريخ البدء',endDatePhase:'تاريخ النهاية',responsible:'المسؤول',phaseStatus:'حالة المرحلة',phaseNotStarted:'لم تبدأ',phaseInProgress:'قيد التنفيذ',phaseCompleted:'مكتملة',phaseDelayed:'متأخرة',alertNearDeadline:'اقتراب موعد انتهاء المشروع',alertOverdue:'تأخر المشروع عن الجدول',alertMaterialShortage:'نقص في المواد',alertContractEnding:'اقتراب انتهاء العقد',alertMaterialArrived:'وصول المواد',alertSupplierDelay:'تأخر الموردين',searchProjects:'ابحث بالاسم أو العميل أو الرقم...',allStatus:'جميع الحالات',allPriority:'جميع الأولويات',filter:'تصفية',export:'تصدير',exportExcel:'تصدير إلى Excel',overall:'الإنجاز الإجمالي',totalMaterials:'إجمالي المواد',provided:'متوفرة',onOrder:'قيد الطلب',notAvailable:'غير متوفرة',materialSummary:'ملخص المواد',issueOrders:'أوامر الصرف',purchaseOrders:'أوامر الشراء',teamMembers:'أعضاء الفريق',documentsList:'المستندات',imageGallery:'معرض الصور',activityHistory:'سجل النشاط',riskRegistry:'سجل المخاطر',alertsList:'التنبيهات',noData:'لا توجد مشاريع',noMaterials:'لا توجد مواد',noPhases:'لا توجد مراحل',noTeam:'لا يوجد أعضاء',noDocs:'لا توجد مستندات',noImages:'لا توجد صور',noNotes:'لا توجد أحداث',noRisks:'لا توجد مخاطر',noAlerts:'لا توجد تنبيهات',unknown:'غير معروف','Phase 1':'توقيع العقد','Phase 2':'اعتماد المخططات','Phase 3':'تجهيز المواد','Phase 4':'التصنيع','Phase 5':'الدهان','Phase 6':'النقل','Phase 7':'التركيب','Phase 8':'الاستلام الابتدائي','Phase 9':'الاستلام النهائي'},
   units:{days:'يوم'},
   profile:{title:'تعديل الملف الشخصي',name:'الاسم الكامل',role:'الدور الوظيفي',email:'البريد الإلكتروني',changePhoto:'تغيير الصورة',removePhoto:'إزالة الصورة',saved:'تم تحديث الملف الشخصي بنجاح'},
+  scrollTop:'العودة للأعلى',
 }};
 
 let lang = (function(){
@@ -5493,3 +5495,29 @@ document.body.setAttribute('data-theme', theme);
 applyLoginLang();
 buildNav();
 applyStaticI18n();
+
+// scroll-to-top button
+(function(){
+  const btn=document.getElementById('scrollTopBtn');
+  if(!btn) return;
+  function getScrollEl(){
+    const c=document.querySelector('.content');
+    if(c && c.scrollHeight > c.clientHeight) return c;
+    return document.documentElement;
+  }
+  function check(){
+    const el=getScrollEl();
+    const st=el===document.documentElement ? window.scrollY : el.scrollTop;
+    btn.classList.toggle('visible', st>300);
+  }
+  function scrollToTop(){
+    const el=getScrollEl();
+    if(el===document.documentElement) window.scrollTo({top:0,behavior:'smooth'});
+    else el.scrollTo({top:0,behavior:'smooth'});
+  }
+  btn.addEventListener('click', scrollToTop);
+  window.addEventListener('scroll', check, {passive:true});
+  const c=document.querySelector('.content');
+  if(c) c.addEventListener('scroll', check, {passive:true});
+  check();
+})();
