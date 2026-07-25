@@ -4133,7 +4133,8 @@ function navigate(page){
   try{ localStorage.setItem('stockflow_last_page', page); }catch(e){}
   const L = STR[lang];
   const contentEl = document.getElementById('content');
-  document.getElementById('pageTitle').textContent = L.page[page][0];
+  const iconKey = {dashboard:'dashboard',inventory:'inventory',warehouses:'warehouse',sales:'sales',purchasing:'purchase',issues:'issue',movements:'movements',reports:'reports',projects:'projects',tasks:'tasks',users:'users',notifications:'notifications',settings:'settings'};
+  document.getElementById('pageTitle').innerHTML = `<span class="page-title-icon">${ICONS[iconKey[page]]||''}</span><span class="page-title-text">${L.page[page][0]}</span>`;
   document.getElementById('pageSub').textContent = L.page[page][1];
   contentEl.classList.remove('page-enter');
   void contentEl.offsetWidth;
