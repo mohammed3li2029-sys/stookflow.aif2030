@@ -2943,7 +2943,7 @@ function renderProjectsDashboard(){
     ${statCard(ICONS.issue,'var(--red)','var(--red-soft)',L.overdueProjects,String(overdue.length),'',true)}
     ${statCard(ICONS.dollar,'var(--blue)','var(--blue-soft)',L.totalProjectsValue,'SAR '+totalVal.toLocaleString('en',{minimumFractionDigits:0}),'',true)}
   </div>
-  <div class="row-2" style="grid-template-columns:1.5fr 1fr;">
+  <div class="row-2 proj-dash-row" style="grid-template-columns:1.5fr 1fr;">
     <div class="card"><div class="card-head"><div class="card-title">${L.upcomingDeadlines}</div></div>
       ${(active.length ? [...active].sort((a,b)=>calcEndDate(a.startDate,a.duration)>calcEndDate(b.startDate,b.duration)?1:-1).slice(0,5) : []).length ? `<table><thead><tr><th>${lang==='en'?'Project':'المشروع'}</th><th>${lang==='en'?'End Date':'النهاية'}</th><th>${L.progress}</th><th>${lang==='en'?'Left':'متبقي'}</th></tr></thead><tbody>${active.sort((a,b)=>calcEndDate(a.startDate,a.duration)>calcEndDate(b.startDate,b.duration)?1:-1).slice(0,5).map(p=>{
         const e=calcEndDate(p.startDate,p.duration), r=calcDaysRemaining(e);
