@@ -1476,7 +1476,7 @@ html[dir="rtl"] .scroll-top-btn{right:auto;left:28px;}
   .topbar .mobile-search-btn{display:none !important;}
   .topbar .search-close-btn{display:none !important;}
   .topbar-actions{gap:4px;}
-  .lang-toggle{display:none !important;}
+  .topbar .lang-toggle{display:none !important;}
   .topbar #themeToggle{display:none !important;}
   .page-sub{display:none !important;}
   .topbar{margin:10px 10px 0 !important;}

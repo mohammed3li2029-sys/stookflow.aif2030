@@ -5894,6 +5894,18 @@ document.getElementById('langToggle').addEventListener('click', ()=>{
   applyLang();
 });
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+const mobileLangBtn = document.getElementById('langToggleMobile');
+if(mobileLangBtn){
+  mobileLangBtn.addEventListener('click', ()=>{
+    lang = lang==='en' ? 'ar' : 'en';
+    try{ localStorage.setItem('stockflow_lang', lang); }catch(e){}
+    applyLang();
+  });
+}
+const sidebarThemeBtn = document.getElementById('sidebarThemeBtn');
+if(sidebarThemeBtn){
+  sidebarThemeBtn.addEventListener('click', toggleTheme);
+}
 
 document.getElementById('layoutBtn').addEventListener('click', function(){
   dashCustomizing = !dashCustomizing;
