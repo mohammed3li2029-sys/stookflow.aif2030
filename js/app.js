@@ -5779,30 +5779,24 @@ function setSidebar(collapsed){
   }
 }
 
-['click','touchstart'].forEach(evt => {
-  document.getElementById('sidebarToggle')?.addEventListener(evt, e=>{
-    e.preventDefault();
-    if(window.innerWidth <= 900){
-      document.getElementById('sidebar').classList.toggle('open');
-      document.querySelector('.app').classList.toggle('has-sidebar-open');
-    } else {
-      setSidebar(!sidebarCollapsed);
-    }
-  }, {passive:false});
-});
-['click','touchstart'].forEach(evt => {
-  document.getElementById('sidebarMobileBtn')?.addEventListener(evt, e=>{
-    e.preventDefault();
+document.getElementById('sidebarToggle')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  if(window.innerWidth <= 900){
     document.getElementById('sidebar').classList.toggle('open');
     document.querySelector('.app').classList.toggle('has-sidebar-open');
-  }, {passive:false});
+  } else {
+    setSidebar(!sidebarCollapsed);
+  }
 });
-['click','touchstart'].forEach(evt => {
-  document.getElementById('sidebarCloseBtn')?.addEventListener(evt, e=>{
-    e.preventDefault();
-    document.getElementById('sidebar').classList.remove('open');
-    document.querySelector('.app')?.classList.remove('has-sidebar-open');
-  }, {passive:false});
+document.getElementById('sidebarMobileBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.app').classList.toggle('has-sidebar-open');
+});
+document.getElementById('sidebarCloseBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.app')?.classList.remove('has-sidebar-open');
 });
 // Close sidebar when tapping overlay on mobile
 document.querySelector('.app')?.addEventListener('click', function(e){
@@ -5813,20 +5807,16 @@ document.querySelector('.app')?.addEventListener('click', function(e){
 });
 
 // Mobile search toggle
-['click','touchstart'].forEach(evt => {
-  document.getElementById('mobileSearchBtn')?.addEventListener(evt, e=>{
-    e.preventDefault();
-    document.getElementById('globalSearchWrap').classList.toggle('open');
-    if(document.getElementById('globalSearchWrap').classList.contains('open')){
-      document.getElementById('globalSearch').focus();
-    }
-  }, {passive:false});
+document.getElementById('mobileSearchBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('globalSearchWrap').classList.toggle('open');
+  if(document.getElementById('globalSearchWrap').classList.contains('open')){
+    document.getElementById('globalSearch').focus();
+  }
 });
-['click','touchstart'].forEach(evt => {
-  document.getElementById('searchCloseBtn')?.addEventListener(evt, e=>{
-    e.preventDefault();
-    document.getElementById('globalSearchWrap').classList.remove('open');
-  }, {passive:false});
+document.getElementById('searchCloseBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('globalSearchWrap').classList.remove('open');
 });
 
 // table scroll indicator on mobile
