@@ -87,13 +87,14 @@ async function uploadFileOrFallback(file, folder){
 async function loadAllStockFlowData(skipRender){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
-    const [inv, wh, reqs, projs, quotes, pos, profiles, users] = await Promise.all([
+    const [inv, wh, reqs, projs, quotes, pos, tasksArr, profiles, users] = await Promise.all([
       window.StockFlowBackend.loadCollection('inventory'),
       window.StockFlowBackend.loadCollection('warehouses'),
       window.StockFlowBackend.loadCollection('material_requests'),
       window.StockFlowBackend.loadCollection('projects'),
       window.StockFlowBackend.loadCollection('quotations'),
       window.StockFlowBackend.loadCollection('purchase_orders'),
+      window.StockFlowBackend.loadCollection('tasks'),
       window.StockFlowBackend.loadCollection('profile'),
       window.StockFlowBackend.loadCollection('users'),
     ]);
@@ -104,6 +105,7 @@ async function loadAllStockFlowData(skipRender){
     if(projs && projs.length) silentReplace(projects, projs);
     if(quotes && quotes.length) silentReplace(quotations, quotes);
     if(pos && pos.length) silentReplace(purchaseOrders, pos);
+    if(tasksArr && tasksArr.length) silentReplace(tasksData, tasksArr);
 
     if(profiles && profiles.length){
       Object.assign(profileData, profiles[0]);
@@ -161,6 +163,7 @@ async function setupRealtimeSync(){
     ['projects', projects],
     ['quotations', quotations],
     ['purchase_orders', purchaseOrders],
+    ['tasks', tasksData],
   ];
 
   arrayTables.forEach(([table, arr]) => {
@@ -291,6 +294,7 @@ const ICONS = {
   users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   notifications:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
   settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.13.36.43.65.8.8.13.05.27.09.41.09H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>',
+  tasks:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
   box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>',
   dollar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
   flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4a1 1 0 0 1 1.4-.9L18 8l-12.6 5L4 22Z"/></svg>',
@@ -331,7 +335,7 @@ const FACTORY_LOGO = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="htt
 const STR = {
 en:{
   brand:{tagline:'Smart Warehouse & Inventory'},
-  nav:{dashboard:'Dashboard',inventory:'Inventory',warehouses:'Warehouses',sales:'Sales',purchasing:'Purchasing',issues:'Issue & Consumption',movements:'Stock Movements',reports:'Reports & Analytics',users:'User Management',notifications:'Notifications',settings:'Settings',help:'Help',logout:'Logout'},
+  nav:{dashboard:'Dashboard',inventory:'Inventory',warehouses:'Warehouses',sales:'Sales',purchasing:'Purchasing',issues:'Issue & Consumption',movements:'Stock Movements',reports:'Reports & Analytics',projects:'Projects',tasks:'Tasks',users:'User Management',notifications:'Notifications',settings:'Settings',help:'Help',logout:'Logout'},
   topbar:{search:'Search items, suppliers, orders...',role:'Administrator'},
   page:{
     dashboard:['Dashboard','Real-time overview of your warehouse'],
@@ -343,6 +347,7 @@ en:{
     movements:['Stock Movements','Inbound, outbound & transfers'],
     reports:['Reports & Analytics','Insight into stock performance'],
     projects:['Projects Management','Track all project phases from contract to delivery'],
+    tasks:['Task Management','Create, assign and track all tasks'],
     users:['User Management','Roles, access & activity logs'],
     notifications:['Notifications','Alerts and system messages'],
     settings:['Settings','Preferences & system configuration'],
@@ -372,10 +377,35 @@ en:{
   units:{days:'days'},
   profile:{title:'Edit Profile',name:'Full Name',role:'Role',email:'Email',changePhoto:'Change Photo',removePhoto:'Remove Photo',saved:'Profile updated successfully'},
   scrollTop:'Scroll to top',
+  tasks:{
+    allTasks:'All Tasks',myTasks:'My Tasks',sentByMe:'Sent by Me',completed:'Completed',overdue:'Overdue',
+    newTask:'New Task',editTask:'Edit Task',taskDetails:'Task Details',
+    title:'Title',desc:'Description',assignee:'Assignee',personal:'Personal Task',
+    project:'Project',department:'Department',
+    priority:'Priority',priorityLow:'Low',priorityMedium:'Medium',priorityHigh:'High',priorityUrgent:'Urgent',
+    status:'Status',statusNew:'New',statusInProgress:'In Progress',statusPendingApproval:'Pending Approval',statusStopped:'Stopped',statusCompleted:'Completed',statusCancelled:'Cancelled',statusOverdue:'Overdue',
+    startDate:'Start Date',dueDate:'Due Date',time:'Time',
+    files:'Files',attachFiles:'Attach Files & Images',
+    notes:'Notes',addNote:'Add Note',
+    checklist:'Checklist',addChecklistItem:'Add item',checklistPlaceholder:'New checklist item...',
+    recurrence:'Recurrence',recurrenceNone:'None',recurrenceDaily:'Daily',recurrenceWeekly:'Weekly',recurrenceMonthly:'Monthly',
+    comments:'Comments',addComment:'Write a comment...',noComments:'No comments yet',
+    activityLog:'Activity Log',noActivity:'No activity yet',
+    stats:'Statistics',totalTasks:'Total Tasks',completedTasks:'Completed',inProgressTasks:'In Progress',overdueTasks:'Overdue',urgentTasks:'Urgent',completionRate:'Completion Rate',
+    calendar:'Calendar',daily:'Daily',weekly:'Weekly',monthly:'Monthly',
+    search:'Search tasks...',filterBy:'Filter by',filterPriority:'Priority',filterStatus:'Status',filterProject:'Project',filterAssignee:'Assignee',filterDate:'Date',
+    assignTo:'Assign to',unassigned:'Unassigned',createPersonal:'Create personal task (only you can see)',
+    acceptTask:'Accept Task',startTask:'Start Task',submitForApproval:'Submit for Approval',stopTask:'Stop Task',completeTask:'Complete Task',cancelTask:'Cancel Task',reopenTask:'Reopen Task',
+    deleteTask:'Delete Task',deleteConfirm:'Are you sure you want to delete this task?',
+    taskCreated:'Task created successfully',taskUpdated:'Task updated successfully',taskDeleted:'Task deleted successfully',taskCompleted:'Task completed successfully',
+    commentAdded:'Comment added',commentDeleted:'Comment deleted',fileUploaded:'File uploaded',
+    overdueDeadline:'Deadline passed',upcomingDeadline:'Deadline approaching',
+    viewAll:'View All',today:'Today',noTasks:'No tasks found',
+  },
 },
 ar:{
   brand:{tagline:'إدارة المخازن الذكية للمصانع'},
-  nav:{dashboard:'لوحة القيادة',inventory:'المخزون',warehouses:'المستودعات',sales:'المبيعات',purchasing:'المشتريات',issues:'الصرف والاستهلاك',movements:'حركة المخزون',reports:'التقارير والتحليلات',projects:'المشاريع',users:'إدارة المستخدمين',notifications:'التنبيهات',settings:'الإعدادات',help:'المساعدة',logout:'تسجيل الخروج'},
+  nav:{dashboard:'لوحة القيادة',inventory:'المخزون',warehouses:'المستودعات',sales:'المبيعات',purchasing:'المشتريات',issues:'الصرف والاستهلاك',movements:'حركة المخزون',reports:'التقارير والتحليلات',projects:'المشاريع',tasks:'إدارة المهام',users:'إدارة المستخدمين',notifications:'التنبيهات',settings:'الإعدادات',help:'المساعدة',logout:'تسجيل الخروج'},
   topbar:{search:'ابحث عن منتج، مورد، طلب...',role:'مدير النظام'},
   page:{
     dashboard:['لوحة القيادة','نظرة عامة فورية على المستودع'],
@@ -387,9 +417,11 @@ ar:{
     movements:['حركة المخزون','الوارد والصادر والتحويلات'],
     reports:['التقارير والتحليلات','رؤية أداء المخزون'],
     projects:['إدارة المشاريع','متابعة جميع مراحل المشروع من العقد إلى التسليم'],
+    tasks:['إدارة المهام','إنشاء وتتبع وتعيين جميع المهام'],
     users:['إدارة المستخدمين','الأدوار والصلاحيات وسجل النشاط'],
     notifications:['التنبيهات','تنبيهات ورسائل النظام'],
     settings:['الإعدادات','التفضيلات وإعدادات النظام'],
+    tasks:['إدارة المهام','إنشاء وتتبع وتعيين جميع المهام'],
   },
   kpi:{totalItems:'إجمالي الأصناف',invValue:'قيمة المخزون',lowStock:'أصناف منخفضة المخزون',activeOrders:'الطلبات النشطة'},
   dist:{title:'توزيع المخزون',raw:'مواد خام',wip:'تحت التصنيع',finished:'منتجات تامة'},
@@ -416,6 +448,31 @@ ar:{
   units:{days:'يوم'},
   profile:{title:'تعديل الملف الشخصي',name:'الاسم الكامل',role:'الدور الوظيفي',email:'البريد الإلكتروني',changePhoto:'تغيير الصورة',removePhoto:'إزالة الصورة',saved:'تم تحديث الملف الشخصي بنجاح'},
   scrollTop:'العودة للأعلى',
+  tasks:{
+    allTasks:'جميع المهام',myTasks:'مهامي',sentByMe:'المرسلة مني',completed:'المكتملة',overdue:'المتأخرة',
+    newTask:'مهمة جديدة',editTask:'تعديل المهمة',taskDetails:'تفاصيل المهمة',
+    title:'العنوان',desc:'الوصف',assignee:'المسؤول',personal:'مهمة شخصية',
+    project:'المشروع',department:'القسم',
+    priority:'الأولوية',priorityLow:'منخفضة',priorityMedium:'متوسطة',priorityHigh:'عالية',priorityUrgent:'عاجلة',
+    status:'الحالة',statusNew:'جديدة',statusInProgress:'قيد التنفيذ',statusPendingApproval:'بانتظار الاعتماد',statusStopped:'متوقفة',statusCompleted:'مكتملة',statusCancelled:'ملغاة',statusOverdue:'متأخرة',
+    startDate:'تاريخ البداية',dueDate:'تاريخ الاستحقاق',time:'الوقت',
+    files:'الملفات',attachFiles:'إرفاق ملفات وصور',
+    notes:'ملاحظات',addNote:'إضافة ملاحظة',
+    checklist:'قائمة المراجعة',addChecklistItem:'إضافة بند',checklistPlaceholder:'بند جديد...',
+    recurrence:'التكرار',recurrenceNone:'بدون',recurrenceDaily:'يومي',recurrenceWeekly:'أسبوعي',recurrenceMonthly:'شهري',
+    comments:'التعليقات',addComment:'اكتب تعليقاً...',noComments:'لا توجد تعليقات بعد',
+    activityLog:'سجل النشاط',noActivity:'لا يوجد نشاط بعد',
+    stats:'الإحصائيات',totalTasks:'إجمالي المهام',completedTasks:'المكتملة',inProgressTasks:'قيد التنفيذ',overdueTasks:'المتأخرة',urgentTasks:'العاجلة',completionRate:'نسبة الإنجاز',
+    calendar:'التقويم',daily:'يومي',weekly:'أسبوعي',monthly:'شهري',
+    search:'بحث في المهام...',filterBy:'تصفية حسب',filterPriority:'الأولوية',filterStatus:'الحالة',filterProject:'المشروع',filterAssignee:'المسؤول',filterDate:'التاريخ',
+    assignTo:'إسناد إلى',unassigned:'غير مسندة',createPersonal:'إنشاء مهمة شخصية (أنت فقط تراها)',
+    acceptTask:'قبول المهمة',startTask:'بدء التنفيذ',submitForApproval:'تقديم للاعتماد',stopTask:'إيقاف',completeTask:'إكمال',cancelTask:'إلغاء',reopenTask:'إعادة فتح',
+    deleteTask:'حذف المهمة',deleteConfirm:'هل أنت متأكد من حذف هذه المهمة؟',
+    taskCreated:'تم إنشاء المهمة بنجاح',taskUpdated:'تم تحديث المهمة بنجاح',taskDeleted:'تم حذف المهمة بنجاح',taskCompleted:'تم إكمال المهمة بنجاح',
+    commentAdded:'تمت إضافة التعليق',commentDeleted:'تم حذف التعليق',fileUploaded:'تم رفع الملف',
+    overdueDeadline:'انتهت المدة',upcomingDeadline:'الموعد يقترب',
+    viewAll:'عرض الكل',today:'اليوم',noTasks:'لا توجد مهام',
+  },
 }};
 
 let lang = (function(){
@@ -3555,11 +3612,507 @@ function addProjectMaterial(idx){
 }
 
 
-const PAGES = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','users','notifications','settings'];
+/* ===================================================================
+   TASK MANAGEMENT MODULE
+=================================================================== */
+let taskTab='all', taskView='board', taskCalDate=new Date(), taskDetailIdx=null, taskSearch='', taskFilterPriority='', taskFilterStatus='', taskFilterProject='', taskFilterAssignee='';
+let taskCounter=100;
+
+function nextTaskId(){
+  const maxExisting = tasksData.reduce((max, t) => { const n=parseInt(String(t.id||'').replace('TSK-',''),10); return Number.isFinite(n)&&n>max?n:max; }, taskCounter-1);
+  taskCounter = maxExisting+2;
+  return 'TSK-'+String(maxExisting+1).padStart(3,'0');
+}
+
+function loadTasksFromStorage(){
+  try{ const s=localStorage.getItem('stockflow_tasks'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
+  return [];
+}
+function saveTasksToStorage(){ try{ localStorage.setItem('stockflow_tasks', JSON.stringify(tasksData)); }catch(e){} }
+const tasksData = withFirestoreSync(loadTasksFromStorage(), 'tasks', 'id');
+
+function taskStatusLabel(st){
+  const L=STR[lang].tasks;
+  const m={new:L.statusNew,inProgress:L.statusInProgress,pendingApproval:L.statusPendingApproval,stopped:L.statusStopped,completed:L.statusCompleted,cancelled:L.statusCancelled,overdue:L.statusOverdue};
+  return m[st]||st;
+}
+function taskStatusClass(st){
+  return {new:'pill-info',inProgress:'pill-warning',pendingApproval:'pill-purple',stopped:'pill-dark',completed:'pill-success',cancelled:'pill-critical',overdue:'pill-danger'}[st]||'pill-info';
+}
+function taskPriorityLabel(pr){
+  const L=STR[lang].tasks;
+  return {low:L.priorityLow,medium:L.priorityMedium,high:L.priorityHigh,urgent:L.priorityUrgent}[pr]||pr;
+}
+function taskPriorityClass(pr){
+  return {low:'tp-low',medium:'tp-medium',high:'tp-high',urgent:'tp-urgent'}[pr]||'tp-medium';
+}
+function taskPriorityIcon(pr){
+  return {low:'🟢',medium:'🟡',high:'🟠',urgent:'🔴'}[pr]||'🟡';
+}
+function taskProjectLabel(pid){
+  if(!pid) return '';
+  const p=projects.find(x=>x.id===pid);
+  return p?(lang==='en'?p.name:p.nameAr):pid;
+}
+function taskAssigneeLabel(a){
+  if(!a) return lang==='en'?'Unassigned':'غير مسندة';
+  return a;
+}
+function taskDueLabel(d){
+  if(!d) return '';
+  const today=new Date().toISOString().slice(0,10);
+  if(d<today) return lang==='en'?'Overdue':'متأخر';
+  const diff=Math.ceil((new Date(d)-new Date(today))/(1000*60*60*24));
+  if(diff===0) return lang==='en'?'Today':'اليوم';
+  if(diff===1) return lang==='en'?'Tomorrow':'غداً';
+  if(diff<=3) return (lang==='en'?'in ':'بعد ')+diff+(lang==='en'?' days':' يوم');
+  return d;
+}
+function getTaskStats(){
+  const total=tasksData.length;
+  const completed=tasksData.filter(t=>t.status==='completed').length;
+  const inProgress=tasksData.filter(t=>t.status==='inProgress').length;
+  const overdue=tasksData.filter(t=>t.status==='overdue'||(t.dueDate&&t.dueDate<new Date().toISOString().slice(0,10)&&t.status!=='completed'&&t.status!=='cancelled')).length;
+  const urgent=tasksData.filter(t=>t.priority==='urgent'&&t.status!=='completed'&&t.status!=='cancelled').length;
+  const rate=total?Math.round((completed/total)*100):0;
+  return {total,completed,inProgress,overdue,urgent,rate};
+}
+function filterTasks(tab){
+  let arr=[...tasksData];
+  const today=new Date().toISOString().slice(0,10);
+  arr.forEach(t=>{ if(t.dueDate&&t.dueDate<today&&t.status!=='completed'&&t.status!=='cancelled') t._overdue=true; else t._overdue=false; });
+  if(tab==='my') arr=arr.filter(t=>t.assignee===profileData.name);
+  else if(tab==='sent') arr=arr.filter(t=>t.creator===profileData.name);
+  else if(tab==='completed') arr=arr.filter(t=>t.status==='completed');
+  else if(tab==='overdue') arr=arr.filter(t=>t._overdue);
+  if(taskSearch){ const q=taskSearch.toLowerCase(); arr=arr.filter(t=>(t.title+t.titleAr+(t.desc||'')+(t.descAr||'')).toLowerCase().includes(q)); }
+  if(taskFilterPriority) arr=arr.filter(t=>t.priority===taskFilterPriority);
+  if(taskFilterStatus) arr=arr.filter(t=>t.status===taskFilterStatus);
+  if(taskFilterProject) arr=arr.filter(t=>t.project===taskFilterProject);
+  if(taskFilterAssignee) arr=arr.filter(t=>t.assignee===taskFilterAssignee);
+  arr.sort((a,b)=>{
+    const od={urgent:0,high:1,medium:2,low:3};
+    if(a._overdue&&!b._overdue) return -1;
+    if(!a._overdue&&b._overdue) return 1;
+    if((od[a.priority]||99)!==(od[b.priority]||99)) return (od[a.priority]||99)-(od[b.priority]||99);
+    return (b.createdAt||'').localeCompare(a.createdAt||'');
+  });
+  return arr;
+}
+
+function renderTasks(){
+  const L=STR[lang].tasks;
+  const stats=getTaskStats();
+  return `<div data-page="tasks">
+  <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="taskNewBtn" style="display:flex;align-items:center;gap:6px;">${ICONS.plus}<span>${L.newTask}</span></button>
+      <button class="btn" id="taskViewBoard" style="display:flex;align-items:center;gap:4px;" data-view="board">${ICONS.dashboard}<span>${lang==='en'?'Board':'لوحة'}</span></button>
+      <button class="btn" id="taskViewCal" style="display:flex;align-items:center;gap:4px;" data-view="calendar">${ICONS.calendar}<span>${L.calendar}</span></button>
+    </div>
+    <div class="search-bar" style="display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1.5px solid transparent;border-radius:11px;padding:9px 13px;flex:1;min-width:200px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;color:var(--text-3);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="taskSearch" placeholder="${L.search}" style="border:none;background:none;outline:none;width:100%;font-size:13px;color:var(--text);font-family:inherit;" value="${taskSearch}">
+    </div>
+  </div>
+  <div class="task-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;">
+    ${statCardMini(ICONS.box,'var(--blue)',L.totalTasks,stats.total)}
+    ${statCardMini(ICONS.checkSquare,'var(--green)',L.completedTasks,stats.completed)}
+    ${statCardMini(ICONS.clock,'var(--amber)',L.inProgressTasks,stats.inProgress)}
+    ${statCardMini(ICONS.flag,'var(--red)',L.overdueTasks,stats.overdue)}
+    ${statCardMini(ICONS.flag,'#E0282A',L.urgentTasks,stats.urgent)}
+    ${statCardMini(ICONS.reports,'var(--blue)',L.completionRate,stats.rate+'%')}
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    ${['all','my','sent','completed','overdue'].map(t=>`<button class="btn task-tab-btn ${taskTab===t?'btn-primary':''}" data-ttab="${t}">${t==='all'?L.allTasks:t==='my'?L.myTasks:t==='sent'?L.sentByMe:t==='completed'?L.completed:L.overdue}</button>`).join('')}
+  </div>
+  <div id="taskFilterBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+    <select id="taskFilterPr" class="table-search" style="min-width:120px;padding:7px 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);">
+      <option value="">${L.filterPriority}: ${lang==='en'?'All':'الكل'}</option>
+      <option value="urgent" ${taskFilterPriority==='urgent'?'selected':''}>${L.priorityUrgent}</option>
+      <option value="high" ${taskFilterPriority==='high'?'selected':''}>${L.priorityHigh}</option>
+      <option value="medium" ${taskFilterPriority==='medium'?'selected':''}>${L.priorityMedium}</option>
+      <option value="low" ${taskFilterPriority==='low'?'selected':''}>${L.priorityLow}</option>
+    </select>
+    <select id="taskFilterSt" class="table-search" style="min-width:120px;padding:7px 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);">
+      <option value="">${L.filterStatus}: ${lang==='en'?'All':'الكل'}</option>
+      <option value="new" ${taskFilterStatus==='new'?'selected':''}>${L.statusNew}</option>
+      <option value="inProgress" ${taskFilterStatus==='inProgress'?'selected':''}>${L.statusInProgress}</option>
+      <option value="pendingApproval" ${taskFilterStatus==='pendingApproval'?'selected':''}>${L.statusPendingApproval}</option>
+      <option value="stopped" ${taskFilterStatus==='stopped'?'selected':''}>${L.statusStopped}</option>
+      <option value="completed" ${taskFilterStatus==='completed'?'selected':''}>${L.statusCompleted}</option>
+      <option value="cancelled" ${taskFilterStatus==='cancelled'?'selected':''}>${L.statusCancelled}</option>
+    </select>
+    <select id="taskFilterProj" class="table-search" style="min-width:120px;padding:7px 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);">
+      <option value="">${L.filterProject}: ${lang==='en'?'All':'الكل'}</option>
+      ${projects.map(p=>`<option value="${p.id}" ${taskFilterProject===p.id?'selected':''}>${lang==='en'?p.name:p.nameAr}</option>`).join('')}
+    </select>
+  </div>
+  <div id="taskContent"></div>
+  </div>`;
+}
+function statCardMini(icon,color,label,value){
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);">
+    <div style="width:40px;height:40px;border-radius:10px;background:${color}18;color:${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${icon}</div>
+    <div><div style="font-size:20px;font-weight:700;color:var(--text);line-height:1;">${value}</div><div style="font-size:11px;color:var(--text-2);margin-top:2px;">${label}</div></div>
+  </div>`;
+}
+
+function renderTaskBoard(){
+  const L=STR[lang].tasks;
+  const tasks=filterTasks(taskTab);
+  if(!tasks.length) return `<div class="empty-state" style="padding:60px 20px;text-align:center;color:var(--text-2);">${ICONS.tasks}<div style="margin-top:12px;font-size:15px;font-weight:600;">${L.noTasks}</div></div>`;
+  return `<div class="table-card"><table style="width:100%;border-collapse:collapse;">
+  <thead><tr>
+    <th style="width:30px;"></th>
+    <th>${L.title}</th>
+    <th>${L.assignee}</th>
+    <th>${L.priority}</th>
+    <th>${L.status}</th>
+    <th>${L.project}</th>
+    <th>${L.dueDate}</th>
+    <th style="width:50px;"></th>
+  </tr></thead>
+  <tbody>${tasks.map((t,i)=>{
+    const idx=tasksData.indexOf(t);
+    return `<tr class="task-row" data-tidx="${idx}" style="cursor:pointer;">
+      <td style="text-align:center;">${t.type==='personal'?'<span style="font-size:14px;" title="'+L.personal+'">🔒</span>':''}</td>
+      <td style="font-weight:600;color:var(--text);">${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</td>
+      <td style="font-size:12px;color:var(--text-2);">${t.assignee?escapeHtml(t.assignee):'<span style="color:var(--text-3);">'+L.unassigned+'</span>'}</td>
+      <td><span class="task-priority ${taskPriorityClass(t.priority)}">${taskPriorityIcon(t.priority)} ${taskPriorityLabel(t.priority)}</span></td>
+      <td><span class="pill ${taskStatusClass(t.status)}">${taskStatusLabel(t.status)}</span></td>
+      <td style="font-size:12px;color:var(--text-2);">${taskProjectLabel(t.project)||'-'}</td>
+      <td><span style="font-size:12px;color:${t._overdue?'var(--red)':'var(--text-2)'};">${taskDueLabel(t.dueDate)}</span></td>
+      <td><button class="row-actions task-del-btn" data-tidx="${idx}" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;">${ICONS.trash}</button></td>
+    </tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+
+function renderTaskCalendar(){
+  const L=STR[lang].tasks;
+  const y=taskCalDate.getFullYear(), m=taskCalDate.getMonth();
+  const firstDay=new Date(y,m,1).getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const today=new Date().toISOString().slice(0,10);
+  const monthNames=lang==='en'?['January','February','March','April','May','June','July','August','September','October','November','December']:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const dayNames=lang==='en'?['Sun','Mon','Tue','Wed','Thu','Fri','Sat']:['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+  let cells='';
+  for(let i=0;i<firstDay;i++) cells+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayTasks=tasksData.filter(t=>t.startDate===ds||t.dueDate===ds);
+    const isToday=ds===today;
+    cells+=`<div class="cal-cell ${isToday?'today':''} ${dayTasks.length?'has-event':''}" data-date="${ds}">
+      <span>${d}</span>
+      ${dayTasks.length?`<span class="cal-task-dots">${dayTasks.slice(0,3).map(t=>`<span class="cal-event-dot" style="background:${t.priority==='urgent'?'var(--red)':t.priority==='high'?'var(--amber)':t.priority==='medium'?'var(--blue)':'var(--green)'};" title="${escapeHtml(t.title)}"></span>`).join('')}</span>`:''}
+    </div>`;
+  }
+  return `<div style="display:grid;grid-template-columns:1fr 300px;gap:16px;">
+  <div class="table-card" style="padding:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <button class="btn" id="taskCalPrev" style="padding:6px 10px;">${lang==='en'?'◀':'▶'}</button>
+      <h3 style="margin:0;font-size:16px;color:var(--text);">${monthNames[m]} ${y}</h3>
+      <button class="btn" id="taskCalNext" style="padding:6px 10px;">${lang==='en'?'▶':'◀'}</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;">
+      ${dayNames.map(d=>`<div style="font-size:11px;font-weight:700;color:var(--text-2);padding:8px 0;text-transform:uppercase;">${d}</div>`).join('')}
+      ${cells}
+    </div>
+  </div>
+  <div class="table-card" style="padding:16px;max-height:500px;overflow-y:auto;" id="taskCalDayPanel">
+    <div style="font-size:13px;color:var(--text-2);text-align:center;padding:30px 0;">${lang==='en'?'Click a day to view tasks':'اضغط على يوم لعرض المهام'}</div>
+  </div>
+  </div>`;
+}
+
+function renderTaskDetail(idx){
+  const L=STR[lang].tasks;
+  const t=tasksData[idx];
+  if(!t) return '';
+  const files=(t.files||[]).map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-2);border-radius:8px;">
+    <span style="font-size:13px;color:var(--text);">${f.name}</span>
+    <button class="btn task-file-del" data-fi="${i}" style="margin-inline-start:auto;padding:2px 6px;font-size:11px;color:var(--red);">${ICONS.trash}</button>
+  </div>`).join('');
+  const checklist=(t.checklist||[]).map((c,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+    <input type="checkbox" class="task-check-item" data-ci="${i}" ${c.checked?'checked':''} style="width:18px;height:18px;accent-color:var(--blue);cursor:pointer;">
+    <span style="font-size:13px;color:${c.checked?'var(--text-3)':'var(--text)'};text-decoration:${c.checked?'line-through':'none'};">${escapeHtml(c.text)}</span>
+    <button class="task-check-del" data-ci="${i}" style="margin-inline-start:auto;background:none;border:none;color:var(--text-3);cursor:pointer;font-size:14px;">✕</button>
+  </div>`).join('');
+  const comments=(t.comments||[]).map((c,i)=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+    <div class="avatar" style="width:32px;height:32px;font-size:11px;flex-shrink:0;">${(c.user||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div style="flex:1;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text);">${escapeHtml(c.user)}</span>
+        <span style="font-size:11px;color:var(--text-3);">${c.date||''} ${c.time||''}</span>
+        <button class="task-comment-del" data-ci="${i}" style="margin-inline-start:auto;background:none;border:none;color:var(--text-3);cursor:pointer;font-size:12px;">${ICONS.trash}</button>
+      </div>
+      <div style="font-size:13px;color:var(--text-2);">${escapeHtml(c.text)}</div>
+    </div>
+  </div>`).join('');
+  const log=(t.activityLog||[]).map(l=>`<div style="display:flex;gap:8px;padding:6px 0;font-size:12px;">
+    <span style="color:var(--text-3);white-space:nowrap;">${l.date||''} ${l.time||''}</span>
+    <span style="color:var(--text-2);"><strong>${escapeHtml(l.user||'')}</strong> ${escapeHtml(l.action||'')}</span>
+  </div>`).join('');
+  const statusBtns=[];
+  if(t.status==='new'&&t.assignee===profileData.name) statusBtns.push(`<button class="btn btn-primary task-action-btn" data-action="accept">${L.acceptTask}</button>`);
+  if(t.status==='pendingApproval') statusBtns.push(`<button class="btn btn-primary task-action-btn" data-action="start">${L.startTask}</button>`);
+  if(t.status==='inProgress'){
+    statusBtns.push(`<button class="btn task-action-btn" data-action="pending">${L.submitForApproval}</button>`);
+    statusBtns.push(`<button class="btn task-action-btn" data-action="complete">${L.completeTask}</button>`);
+  }
+  if(t.status==='inProgress'||t.status==='new') statusBtns.push(`<button class="btn task-action-btn" data-action="stop" style="color:var(--amber);">${L.stopTask}</button>`);
+  if(t.status==='stopped') statusBtns.push(`<button class="btn btn-primary task-action-btn" data-action="start">${L.startTask}</button>`);
+  return `<div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
+  <div>
+    <div class="table-card" style="padding:20px;margin-bottom:16px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:18px;color:var(--text);">${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</h2>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text-3);font-weight:600;">${t.id}</span>
+            <span class="pill ${taskStatusClass(t.status)}">${taskStatusLabel(t.status)}</span>
+            <span class="task-priority ${taskPriorityClass(t.priority)}">${taskPriorityIcon(t.priority)} ${taskPriorityLabel(t.priority)}</span>
+            ${t.type==='personal'?'<span style="font-size:11px;color:var(--text-3);">'+L.personal+'</span>':''}
+          </div>
+        </div>
+        <button class="btn" id="taskDetailClose" style="padding:6px 10px;">${ICONS.x}</button>
+      </div>
+      <p style="margin:0 0 16px;font-size:13px;color:var(--text-2);line-height:1.6;">${escapeHtml(lang==='en'?(t.desc||''):(t.descAr||t.desc||''))}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="padding:10px 12px;background:var(--surface-2);border-radius:10px;">
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:2px;">${L.startDate}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${t.startDate||'-'}</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--surface-2);border-radius:10px;">
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:2px;">${L.dueDate}</div>
+          <div style="font-size:13px;font-weight:600;color:${t._overdue?'var(--red)':'var(--text)'};">${t.dueDate||'-'} ${taskDueLabel(t.dueDate)?'('+taskDueLabel(t.dueDate)+')':''}</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--surface-2);border-radius:10px;">
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:2px;">${L.assignee}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${taskAssigneeLabel(t.assignee)}</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--surface-2);border-radius:10px;">
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:2px;">${L.project}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${taskProjectLabel(t.project)||'-'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">${statusBtns.join('')}</div>
+    </div>
+    <div class="table-card" style="padding:20px;margin-bottom:16px;">
+      <h3 style="margin:0 0 12px;font-size:14px;color:var(--text);">${L.checklist}</h3>
+      <div id="taskChecklist">${checklist||'<div style="font-size:12px;color:var(--text-3);">-</div>'}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <input type="text" id="taskCheckInput" placeholder="${L.checklistPlaceholder}" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;outline:none;">
+        <button class="btn btn-primary" id="taskCheckAdd" style="padding:8px 12px;">${ICONS.plus}</button>
+      </div>
+    </div>
+    <div class="table-card" style="padding:20px;">
+      <h3 style="margin:0 0 12px;font-size:14px;color:var(--text);">${L.files}</h3>
+      <div id="taskFiles" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">${files||''}</div>
+      <label class="btn" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:12px;cursor:pointer;">${ICONS.plus} ${L.attachFiles}<input type="file" id="taskFileInput" multiple accept="image/*,.pdf,.doc,.docx,.xlsx" style="display:none;"></label>
+    </div>
+  </div>
+  <div>
+    <div class="table-card" style="padding:16px;margin-bottom:16px;">
+      <h3 style="margin:0 0 12px;font-size:14px;color:var(--text);">${L.comments}</h3>
+      <div id="taskComments" style="max-height:300px;overflow-y:auto;">${comments||'<div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px;">'+L.noComments+'</div>'}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <input type="text" id="taskCommentInput" placeholder="${L.addComment}" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;outline:none;">
+        <button class="btn btn-primary" id="taskCommentAdd" style="padding:8px 12px;">${ICONS.plus}</button>
+      </div>
+    </div>
+    <div class="table-card" style="padding:16px;">
+      <h3 style="margin:0 0 12px;font-size:14px;color:var(--text);">${L.activityLog}</h3>
+      <div style="max-height:250px;overflow-y:auto;">${log||'<div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px;">'+L.noActivity+'</div>'}</div>
+    </div>
+  </div>
+  </div>`;
+}
+
+function openTaskModal(idx=null){
+  const L=STR[lang].tasks;
+  const t=idx!==null?tasksData[idx]:null;
+  const existing=document.getElementById('taskModalOverlay');
+  if(existing) existing.remove();
+  const users=usersData.map(u=>u.name);
+  const html=`<div class="modal-overlay show" id="taskModalOverlay" style="z-index:2000;">
+  <div class="modal modal-xl" style="max-width:700px;max-height:90vh;overflow-y:auto;">
+    <h3 style="margin:0 0 16px;">${t?L.editTask:L.newTask}</h3>
+    <div class="field"><label>${L.title} (${lang==='en'?'EN':'AR'})</label><input type="text" id="taskTitle" value="${t?escapeHtml(t.title):''}"></div>
+    <div class="field"><label>${L.title} (AR)</label><input type="text" id="taskTitleAr" value="${t?escapeHtml(t.titleAr||''):''}"></div>
+    <div class="field"><label>${L.desc} (${lang==='en'?'EN':'AR'})</label><textarea id="taskDesc" rows="3" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13px;font-family:inherit;resize:vertical;">${t?escapeHtml(t.desc||''):''}</textarea></div>
+    <div class="field"><label>${L.desc} (AR)</label><textarea id="taskDescAr" rows="3" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13px;font-family:inherit;resize:vertical;">${t?escapeHtml(t.descAr||''):''}</textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field"><label>${L.assignee}</label><select id="taskAssignee"><option value="">${L.unassigned}</option>${users.map(u=>`<option value="${u}" ${t&&t.assignee===u?'selected':''}>${u}</option>`).join('')}</select></div>
+      <div class="field"><label>${L.project}</label><select id="taskProject"><option value="">-</option>${projects.map(p=>`<option value="${p.id}" ${t&&t.project===p.id?'selected':''}>${lang==='en'?p.name:p.nameAr}</option>`).join('')}</select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field"><label>${L.department}</label><input type="text" id="taskDept" value="${t?escapeHtml(t.department||''):''}"></div>
+      <div class="field"><label>${L.priority}</label><select id="taskPriority"><option value="low" ${t&&t.priority==='low'?'selected':''}>${L.priorityLow}</option><option value="medium" ${(!t||t.priority==='medium')?'selected':''}>${L.priorityMedium}</option><option value="high" ${t&&t.priority==='high'?'selected':''}>${L.priorityHigh}</option><option value="urgent" ${t&&t.priority==='urgent'?'selected':''}>${L.priorityUrgent}</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div class="field"><label>${L.startDate}</label><input type="date" id="taskStartDate" value="${t?t.startDate||'':new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>${L.dueDate}</label><input type="date" id="taskDueDate" value="${t?t.dueDate||'':''}"></div>
+      <div class="field"><label>${L.time}</label><input type="time" id="taskTime" value="${t?t.time||'':''}"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field"><label>${L.recurrence}</label><select id="taskRecurrence"><option value="none" ${(!t||t.recurrence==='none')?'selected':''}>${L.recurrenceNone}</option><option value="daily" ${t&&t.recurrence==='daily'?'selected':''}>${L.recurrenceDaily}</option><option value="weekly" ${t&&t.recurrence==='weekly'?'selected':''}>${L.recurrenceWeekly}</option><option value="monthly" ${t&&t.recurrence==='monthly'?'selected':''}>${L.recurrenceMonthly}</option></select></div>
+      <div class="field" style="display:flex;align-items:flex-end;padding-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);margin:0;">
+          <input type="checkbox" id="taskPersonal" ${t&&t.type==='personal'?'checked':''} style="width:18px;height:18px;accent-color:var(--blue);"> ${L.createPersonal}
+        </label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeTaskModal()">${L.newTask==='New Task'?'Cancel':'إلغاء'}</button>
+      <button class="btn btn-primary" id="taskSaveBtn">${L.newTask==='New Task'?'Save':'حفظ'}</button>
+    </div>
+  </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.getElementById('taskModalOverlay').addEventListener('click',e=>{if(e.target.id==='taskModalOverlay') closeTaskModal();});
+  document.getElementById('taskSaveBtn').addEventListener('click',()=>saveTask(idx));
+}
+function closeTaskModal(){ const el=document.getElementById('taskModalOverlay'); if(el) el.remove(); }
+
+function saveTask(idx){
+  const L=STR[lang].tasks;
+  const title=document.getElementById('taskTitle').value.trim();
+  const titleAr=document.getElementById('taskTitleAr').value.trim();
+  if(!title){showToast(lang==='en'?'Title is required':'العنوان مطلوب');return;}
+  const now=new Date();
+  const nowStr=now.toISOString().slice(0,10);
+  const nowTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const data={
+    title, titleAr, desc:document.getElementById('taskDesc').value.trim(), descAr:document.getElementById('taskDescAr').value.trim(),
+    assignee:document.getElementById('taskAssignee').value||null,
+    project:document.getElementById('taskProject').value||null,
+    department:document.getElementById('taskDept').value.trim(),
+    priority:document.getElementById('taskPriority').value,
+    startDate:document.getElementById('taskStartDate').value,
+    dueDate:document.getElementById('taskDueDate').value,
+    time:document.getElementById('taskTime').value,
+    recurrence:document.getElementById('taskRecurrence').value,
+    type:document.getElementById('taskPersonal').checked?'personal':'directed',
+    creator:profileData.name,
+    files:[], comments:[], checklist:[], activityLog:[],
+    createdAt:nowStr, updatedAt:nowStr,
+  };
+  if(idx!==null){
+    const t=tasksData[idx];
+    Object.assign(t,data);
+    t.activityLog.push({action:lang==='en'?'Task updated':'تم تحديث المهمة',user:profileData.name,date:nowStr,time:nowTime});
+    showToast(L.taskUpdated);
+  } else {
+    data.status='new';
+    data.id=nextTaskId();
+    data.activityLog.push({action:lang==='en'?'Task created':'تم إنشاء المهمة',user:profileData.name,date:nowStr,time:nowTime});
+    tasksData.unshift(data);
+    showToast(L.taskCreated);
+  }
+  saveTasksToStorage();
+  closeTaskModal();
+  navigate(currentPage);
+}
+
+function addTaskComment(idx){
+  const L=STR[lang].tasks;
+  const input=document.getElementById('taskCommentInput');
+  const text=input.value.trim();
+  if(!text) return;
+  const now=new Date();
+  tasksData[idx].comments.push({user:profileData.name,text,date:now.toISOString().slice(0,10),time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')});
+  tasksData[idx].activityLog.push({action:(lang==='en'?'Comment added: ':'تمت إضافة تعليق: ')+text.slice(0,50),user:profileData.name,date:now.toISOString().slice(0,10),time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')});
+  saveTasksToStorage();
+  input.value='';
+  taskDetailIdx=idx;
+  navigate(currentPage);
+  showToast(L.commentAdded);
+}
+function deleteTaskComment(ti,ci){
+  tasksData[ti].comments.splice(ci,1);
+  saveTasksToStorage();
+  taskDetailIdx=ti;
+  navigate(currentPage);
+}
+function addTaskChecklist(idx){
+  const input=document.getElementById('taskCheckInput');
+  const text=input.value.trim();
+  if(!text) return;
+  if(!tasksData[idx].checklist) tasksData[idx].checklist=[];
+  tasksData[idx].checklist.push({text,checked:false});
+  saveTasksToStorage();
+  input.value='';
+  taskDetailIdx=idx;
+  navigate(currentPage);
+}
+function toggleTaskCheck(ti,ci){
+  tasksData[ti].checklist[ci].checked=!tasksData[ti].checklist[ci].checked;
+  saveTasksToStorage();
+  taskDetailIdx=ti;
+  navigate(currentPage);
+}
+function deleteTaskCheck(ti,ci){
+  tasksData[ti].checklist.splice(ci,1);
+  saveTasksToStorage();
+  taskDetailIdx=ti;
+  navigate(currentPage);
+}
+function deleteTaskFile(ti,fi){
+  tasksData[ti].files.splice(fi,1);
+  saveTasksToStorage();
+  taskDetailIdx=ti;
+  navigate(currentPage);
+}
+function uploadTaskFile(ti){
+  const input=document.getElementById('taskFileInput');
+  if(!input.files.length) return;
+  Array.from(input.files).forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      if(!tasksData[ti].files) tasksData[ti].files=[];
+      tasksData[ti].files.push({name:f.name,url:e.target.result,type:f.type});
+      const now=new Date();
+      tasksData[ti].activityLog.push({action:(lang==='en'?'File uploaded: ':'تم رفع الملف: ')+f.name,user:profileData.name,date:now.toISOString().slice(0,10),time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')});
+      saveTasksToStorage();
+      taskDetailIdx=ti;
+      navigate(currentPage);
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function taskAction(idx,action){
+  const t=tasksData[idx];
+  const now=new Date();
+  const nowStr=now.toISOString().slice(0,10);
+  const nowTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const L=STR[lang].tasks;
+  const statusMap={accept:'inProgress',start:'inProgress',pending:'pendingApproval',complete:'completed',stop:'stopped',cancel:'cancelled'};
+  t.status=statusMap[action]||t.status;
+  t.updatedAt=nowStr;
+  const actLabel={accept:L.acceptTask,start:L.startTask,pending:L.submitForApproval,complete:L.completeTask,stop:L.stopTask,cancel:L.cancelTask};
+  t.activityLog.push({action:actLabel[action]||action,user:profileData.name,date:nowStr,time:nowTime});
+  saveTasksToStorage();
+  if(action==='complete') showToast(L.taskCompleted);
+  taskDetailIdx=idx;
+  navigate(currentPage);
+}
+function deleteTask(idx){
+  const L=STR[lang].tasks;
+  if(!confirm(L.deleteConfirm)) return;
+  tasksData.splice(idx,1);
+  saveTasksToStorage();
+  showToast(L.taskDeleted);
+  taskDetailIdx=null;
+  navigate(currentPage);
+}
+
+
+const PAGES = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','users','notifications','settings'];
 const RENDERERS = {
   dashboard:renderDashboard, inventory:renderInventory, warehouses:renderWarehouses,
   purchasing:renderPurchasing, issues:renderIssues, movements:renderMovements, projects:renderProjects,
-  sales:renderSales, reports:renderReports, users:renderUsers, notifications:renderNotifications, settings:renderSettings,
+  tasks:renderTasks, sales:renderSales, reports:renderReports, users:renderUsers, notifications:renderNotifications, settings:renderSettings,
 };
 let currentPage = 'dashboard';
 
@@ -3569,7 +4122,7 @@ function buildNav(){
   const iconKey = {
     dashboard:'dashboard', inventory:'inventory', warehouses:'warehouse',
     sales:'sales', purchasing:'purchase', issues:'issue', movements:'movements',
-    reports:'reports', projects:'projects', users:'users', notifications:'notifications', settings:'settings'
+    reports:'reports', projects:'projects', tasks:'tasks', users:'users', notifications:'notifications', settings:'settings'
   };
   navList.innerHTML = PAGES.map(p=>`
     <button class="nav-item ${p===currentPage?'active':''}" data-page="${p}" data-tooltip="${L.nav[p]||p}">
@@ -3837,6 +4390,75 @@ function postRenderHooks(page){
     document.getElementById('approvalSwitch').addEventListener('click', ()=> toggleSetting('approval'));
     document.getElementById('backupSwitch').addEventListener('click', ()=> toggleSetting('backup'));
     document.getElementById('offlineSwitch').addEventListener('click', ()=> toggleSetting('offline'));
+  }
+  if(page==='tasks'){
+    const tc=document.getElementById('taskContent');
+    if(taskDetailIdx!==null){
+      if(tc) tc.innerHTML=renderTaskDetail(taskDetailIdx);
+      const closeBtn=document.getElementById('taskDetailClose');
+      if(closeBtn) closeBtn.addEventListener('click',()=>{ taskDetailIdx=null; navigate('tasks'); });
+      document.querySelectorAll('.task-action-btn').forEach(b=>b.addEventListener('click',()=>taskAction(taskDetailIdx,b.dataset.action)));
+      const ci=document.getElementById('taskCommentInput');
+      if(ci) ci.addEventListener('keydown',e=>{ if(e.key==='Enter') addTaskComment(taskDetailIdx); });
+      const ca=document.getElementById('taskCommentAdd');
+      if(ca) ca.addEventListener('click',()=>addTaskComment(taskDetailIdx));
+      const cki=document.getElementById('taskCheckInput');
+      if(cki) cki.addEventListener('keydown',e=>{ if(e.key==='Enter') addTaskChecklist(taskDetailIdx); });
+      const cka=document.getElementById('taskCheckAdd');
+      if(cka) cka.addEventListener('click',()=>addTaskChecklist(taskDetailIdx));
+      document.querySelectorAll('.task-check-item').forEach(el=>el.addEventListener('change',()=>toggleTaskCheck(taskDetailIdx,parseInt(el.dataset.ci))));
+      document.querySelectorAll('.task-check-del').forEach(el=>el.addEventListener('click',()=>deleteTaskCheck(taskDetailIdx,parseInt(el.dataset.ci))));
+      document.querySelectorAll('.task-comment-del').forEach(el=>el.addEventListener('click',()=>deleteTaskComment(taskDetailIdx,parseInt(el.dataset.ci))));
+      document.querySelectorAll('.task-file-del').forEach(el=>el.addEventListener('click',()=>deleteTaskFile(taskDetailIdx,parseInt(el.dataset.fi))));
+      const fi=document.getElementById('taskFileInput');
+      if(fi) fi.addEventListener('change',()=>uploadTaskFile(taskDetailIdx));
+    } else {
+      if(tc){
+        if(taskView==='calendar'){
+          tc.innerHTML=renderTaskCalendar();
+          const prev=document.getElementById('taskCalPrev');
+          const next=document.getElementById('taskCalNext');
+          if(prev) prev.addEventListener('click',()=>{ taskCalDate.setMonth(taskCalDate.getMonth()-1); navigate('tasks'); });
+          if(next) next.addEventListener('click',()=>{ taskCalDate.setMonth(taskCalDate.getMonth()+1); navigate('tasks'); });
+          document.querySelectorAll('.cal-cell[data-date]').forEach(cell=>{
+            cell.addEventListener('click',()=>{
+              const ds=cell.dataset.date;
+              const dayTasks=tasksData.filter(t=>t.startDate===ds||t.dueDate===ds);
+              const panel=document.getElementById('taskCalDayPanel');
+              if(panel){
+                panel.innerHTML=dayTasks.length?dayTasks.map(t=>{
+                  const idx=tasksData.indexOf(t);
+                  return `<div class="task-row" data-tidx="${idx}" style="padding:10px;border-bottom:1px solid var(--border);cursor:pointer;">
+                    <div style="font-size:13px;font-weight:600;color:var(--text);">${escapeHtml(t.title)}</div>
+                    <div style="font-size:11px;color:var(--text-2);display:flex;gap:6px;margin-top:4px;">
+                      <span class="pill ${taskStatusClass(t.status)}">${taskStatusLabel(t.status)}</span>
+                      <span class="task-priority ${taskPriorityClass(t.priority)}">${taskPriorityIcon(t.priority)}</span>
+                    </div>
+                  </div>`;
+                }).join(''):'<div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px;">'+(lang==='en'?'No tasks':'لا توجد مهام')+'</div>';
+                panel.querySelectorAll('.task-row').forEach(r=>r.addEventListener('click',()=>{ taskDetailIdx=parseInt(r.dataset.tidx); navigate('tasks'); }));
+              }
+            });
+          });
+        } else {
+          tc.innerHTML=renderTaskBoard();
+          document.querySelectorAll('.task-row').forEach(r=>r.addEventListener('click',()=>{
+            taskDetailIdx=parseInt(r.dataset.tidx);
+            navigate('tasks');
+          }));
+          document.querySelectorAll('.task-del-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); deleteTask(parseInt(b.dataset.tidx)); }));
+        }
+      }
+    }
+    const newBtn=document.getElementById('taskNewBtn');
+    if(newBtn) newBtn.addEventListener('click',()=>openTaskModal(null));
+    const searchInput=document.getElementById('taskSearch');
+    if(searchInput) searchInput.addEventListener('input',e=>{ taskSearch=e.target.value; if(tc){ if(taskDetailIdx===null){ if(taskView==='calendar') tc.innerHTML=renderTaskCalendar(); else tc.innerHTML=renderTaskBoard(); document.querySelectorAll('.task-row').forEach(r=>r.addEventListener('click',()=>{ taskDetailIdx=parseInt(r.dataset.tidx); navigate('tasks'); })); document.querySelectorAll('.task-del-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); deleteTask(parseInt(b.dataset.tidx)); })); } } });
+    document.querySelectorAll('.task-tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ taskTab=btn.dataset.ttab; navigate('tasks'); }));
+    document.getElementById('taskFilterPr')?.addEventListener('change',e=>{ taskFilterPriority=e.target.value; navigate('tasks'); });
+    document.getElementById('taskFilterSt')?.addEventListener('change',e=>{ taskFilterStatus=e.target.value; navigate('tasks'); });
+    document.getElementById('taskFilterProj')?.addEventListener('change',e=>{ taskFilterProject=e.target.value; navigate('tasks'); });
+    document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{ taskView=b.dataset.view; navigate('tasks'); }));
   }
 }
 

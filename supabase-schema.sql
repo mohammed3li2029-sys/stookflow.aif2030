@@ -60,6 +60,12 @@ create table if not exists users (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists tasks (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Keep updated_at current on every write, for every table above.
 create or replace function set_updated_at()
 returns trigger as $$
@@ -73,7 +79,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks']
   loop
     execute format('drop trigger if exists trg_%I_updated_at on %I;', t, t);
     execute format('create trigger trg_%I_updated_at before update on %I for each row execute function set_updated_at();', t, t);
@@ -90,7 +96,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks']
   loop
     execute format('alter table %I enable row level security;', t);
     execute format('drop policy if exists "Authenticated read/write %s" on %I;', t, t);
@@ -111,7 +117,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks']
   loop
     if not exists (
       select 1 from pg_publication_tables
