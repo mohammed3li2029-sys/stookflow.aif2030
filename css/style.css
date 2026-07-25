@@ -1204,6 +1204,7 @@ html[dir="rtl"] .content.page-enter table tbody tr{
 .nav-item[data-page="projects"]:hover svg{ color: var(--green); }
 .nav-item[data-page="users"]:hover svg{ color: var(--blue); }
 .nav-item[data-page="notifications"]:hover svg{ color: var(--amber); }
+.nav-item[data-page="tasks"]:hover svg{ color: var(--blue); }
 
 /* ===================================================================
    BELL / NOTIFICATIONS ICON

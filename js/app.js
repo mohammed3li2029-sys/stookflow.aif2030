@@ -3715,13 +3715,13 @@ function renderTasks(){
       <input type="text" id="taskSearch" placeholder="${L.search}" style="border:none;background:none;outline:none;width:100%;font-size:13px;color:var(--text);font-family:inherit;" value="${taskSearch}">
     </div>
   </div>
-  <div class="task-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;">
-    ${statCardMini(ICONS.box,'var(--blue)',L.totalTasks,stats.total)}
-    ${statCardMini(ICONS.checkSquare,'var(--green)',L.completedTasks,stats.completed)}
-    ${statCardMini(ICONS.clock,'var(--amber)',L.inProgressTasks,stats.inProgress)}
-    ${statCardMini(ICONS.flag,'var(--red)',L.overdueTasks,stats.overdue)}
-    ${statCardMini(ICONS.flag,'#E0282A',L.urgentTasks,stats.urgent)}
-    ${statCardMini(ICONS.reports,'var(--blue)',L.completionRate,stats.rate+'%')}
+  <div class="task-stats-row grid-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px;">
+    ${statCard(ICONS.box,'var(--blue)','var(--blue-soft)',L.totalTasks,stats.total,'',false)}
+    ${statCard(ICONS.checkSquare,'var(--green)','var(--green-soft)',L.completedTasks,stats.completed,'',false)}
+    ${statCard(ICONS.clock,'var(--amber)','var(--amber-soft)',L.inProgressTasks,stats.inProgress,'',false)}
+    ${statCard(ICONS.flag,'var(--red)','var(--red-soft)',L.overdueTasks,stats.overdue,'',false)}
+    ${statCard(ICONS.flag,'#E0282A','#FCEAEA',L.urgentTasks,stats.urgent,'',false)}
+    ${statCard(ICONS.reports,'var(--blue)','var(--blue-soft)',L.completionRate,stats.rate+'%','',false)}
   </div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
     ${['all','my','sent','completed','overdue'].map(t=>`<button class="btn task-tab-btn ${taskTab===t?'btn-primary':''}" data-ttab="${t}">${t==='all'?L.allTasks:t==='my'?L.myTasks:t==='sent'?L.sentByMe:t==='completed'?L.completed:L.overdue}</button>`).join('')}
@@ -3751,12 +3751,6 @@ function renderTasks(){
   <div id="taskContent"></div>
   </div>`;
 }
-function statCardMini(icon,color,label,value){
-  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);">
-    <div style="width:40px;height:40px;border-radius:10px;background:${color}18;color:${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${icon}</div>
-    <div><div style="font-size:20px;font-weight:700;color:var(--text);line-height:1;">${value}</div><div style="font-size:11px;color:var(--text-2);margin-top:2px;">${label}</div></div>
-  </div>`;
-}
 
 function renderTaskBoard(){
   const L=STR[lang].tasks;
@@ -3783,7 +3777,7 @@ function renderTaskBoard(){
       <td><span class="pill ${taskStatusClass(t.status)}">${taskStatusLabel(t.status)}</span></td>
       <td style="font-size:12px;color:var(--text-2);">${taskProjectLabel(t.project)||'-'}</td>
       <td><span style="font-size:12px;color:${t._overdue?'var(--red)':'var(--text-2)'};">${taskDueLabel(t.dueDate)}</span></td>
-      <td><button class="row-actions task-del-btn" data-tidx="${idx}" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;">${ICONS.trash}</button></td>
+      <td><div class="row-actions"><button class="task-del-btn" data-tidx="${idx}">${ICONS.trash}</button></div></td>
     </tr>`;
   }).join('')}</tbody></table></div>`;
 }
