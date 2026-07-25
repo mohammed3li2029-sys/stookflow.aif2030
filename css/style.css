@@ -777,7 +777,7 @@ html[dir="rtl"] .toast{transform:translateX(50%);}
 }
 /* ─── Responsive: Small tablet (max 900px) ─── */
 @media (max-width:900px){
-  .sidebar{position:fixed;top:0;bottom:0;z-index:100;width:260px !important;padding:18px 14px;inset-inline-start:-100%;}
+  .sidebar{position:fixed;top:0;bottom:0;z-index:100;width:260px !important;padding:18px 14px;padding-bottom:90px !important;inset-inline-start:-100%;overflow-y:auto;}
   .sidebar.open{inset-inline-start:0 !important;}
   .sidebar.collapsed{width:260px !important;}
   .sidebar.collapsed .brand-text,.sidebar.collapsed .nav-item span,.sidebar.collapsed #helpBtn span,.sidebar.collapsed .brand-logo{opacity:1;width:auto;pointer-events:auto;}
