@@ -1468,8 +1468,7 @@ function saveQuotation(){
   }
   
   closeQuoteModal();
-  navigate('sales');
-  showToast(lang==='en'?'Quotation saved!':'تم حفظ عرض السعر!');
+  showSuccessCheck(lang==='en'?'Quotation saved!':'تم حفظ عرض السعر!', ()=>{ navigate('sales'); });
 }
 
 async function deleteQuote(idx){
@@ -2747,8 +2746,7 @@ function saveUser(){
   syncLoginUsers();
   syncUsers();
   closeUserModal();
-  renderUsersRows();
-  showToast(lang==='en'?'User saved!':'تم حفظ المستخدم!');
+  showSuccessCheck(lang==='en'?'User saved!':'تم حفظ المستخدم!', ()=>{ renderUsersRows(); });
 }
 
 async function deleteUser(idx){
@@ -3310,9 +3308,8 @@ function saveProject(idx){
       materials:[], team:[], docs:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
     });
   }
-  showToast(lang==='en'?'Project saved!':'تم حفظ المشروع!');
   document.querySelectorAll('.modal-overlay.show').forEach(m => m.remove());
-  navigate('projects');
+  showSuccessCheck(lang==='en'?'Project saved!':'تم حفظ المشروع!', ()=>{ navigate('projects'); });
 }
 
 async function deleteProject(idx){
@@ -3538,9 +3535,11 @@ function savePhases(idx){
   const total = p.phases.length;
   const completed = p.phases.filter(ph=>ph.status==='completed').length;
   p.progress = total ? Math.round(completed/total*100) : 0;
-  const body = document.getElementById('projDetailBody');
-  if(body) body.innerHTML = renderProjPhasesTab(p, idx, STR[lang].projects);
   syncCurrentProject();
+  showSuccessCheck(lang==='en'?'Phases saved!':'تم حفظ المراحل!', ()=>{ 
+    const body = document.getElementById('projDetailBody');
+    if(body) body.innerHTML = renderProjPhasesTab(p, idx, STR[lang].projects);
+  });
 }
 function deleteProjectTeamMember(idx, mi){
   const p = projects[idx]; if(!p) return;
@@ -4548,8 +4547,9 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
     item.sku = sku; item.stock = qty; item.min = min; item.loc = loc;
     item.image = currentImageData;
   }
+  const _isEdit = editingIndex !== null;
   closeModal();
-  if(currentPage==='inventory') renderInvRows();
+  showSuccessCheck(_isEdit?(lang==='en'?'Item updated!':'تم تحديث الصنف!'):(lang==='en'?'Item saved!':'تم حفظ الصنف!'), ()=>{ if(currentPage==='inventory') renderInvRows(); });
 });
 
 /* User Modal */
@@ -4617,6 +4617,31 @@ function showToast(msg){
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+function showSuccessCheck(msg, callback, duration){
+  duration = duration || 1800;
+  const gc = getComputedStyle(document.documentElement).getPropertyValue('--green').trim()||'#1FAE5C';
+  const overlay = document.createElement('div');
+  overlay.className = 'quote-save-overlay';
+  overlay.innerHTML = `
+    <span class="t-success-check" data-state="out" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none" width="100" height="100">
+        <circle cx="24" cy="24" r="22" stroke="${gc}" stroke-width="3" fill="${gc}" style="stroke-dasharray:139;stroke-dashoffset:139;"/>
+        <path d="M14 24l7 7 13-13" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" style="stroke-dasharray:28;stroke-dashoffset:28;"/>
+      </svg>
+    </span>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>{
+    overlay.classList.add('show');
+    overlay.querySelector('.t-success-check').setAttribute('data-state','in');
+  });
+  setTimeout(()=>{
+    overlay.remove();
+    if(typeof callback === 'function') callback();
+    if(msg) showToast(msg);
+  }, duration);
 }
 
 /* ===================================================================
@@ -4870,9 +4895,8 @@ document.getElementById('poSave').addEventListener('click', ()=>{
   if(editingPoIndex!==null&&editingPoIndex>=0){ purchaseOrders[editingPoIndex]=po; }
   else { purchaseOrders.unshift(po); }
   closePOModal();
-  showToast(lang==='en'?'Purchase order saved!':'تم حفظ طلب الشراء!');
   if(typeof saveAllData==='function') saveAllData();
-  navigate('purchasing');
+  showSuccessCheck(lang==='en'?'Purchase order saved!':'تم حفظ طلب الشراء!', ()=>{ navigate('purchasing'); });
 });
 
 /* ── View PO Document ── */
@@ -5255,9 +5279,9 @@ document.getElementById('issueSave').addEventListener('click',()=>{
     reqsData.push({ id:'REQ-'+(maxId+1), dept:depts_en[deptIdx]||dept, deptAr:depts_ar[deptIdx]||deptAr, sku, item, itemAr, qty, date, reason, priority, status:'pending' });
   }
   closeIssueModal();
-  navigate('issues');
-  showToast(editingReqIdx!==null?(lang==='en'?'Request updated!':'تم تحديث الطلب!'):L.issues.requestAdded||(lang==='en'?'Material request submitted!':'تم إرسال طلب الصرف بنجاح!'));
+  const _reqMsg = editingReqIdx!==null?(lang==='en'?'Request updated!':'تم تحديث الطلب!'):L.issues.requestAdded||(lang==='en'?'Material request submitted!':'تم إرسال طلب الصرف بنجاح!');
   editingReqIdx = null;
+  showSuccessCheck(_reqMsg, ()=>{ navigate('issues'); });
 });
 
 /* ===================================================================
@@ -5312,8 +5336,7 @@ document.getElementById('whSave').addEventListener('click',()=>{
     warehouseData[editingWhIndex]=w;
   }
   closeWhModal();
-  showToast(lang==='en'?'Warehouse saved!':'تم حفظ المستودع بنجاح!');
-  navigate('warehouses');
+  showSuccessCheck(lang==='en'?'Warehouse saved!':'تم حفظ المستودع بنجاح!', ()=>{ navigate('warehouses'); });
 });
 
 /* ===================================================================
@@ -5594,8 +5617,7 @@ document.getElementById('calSaveBtn').addEventListener('click', function(e){
   saveCalEvents();
   document.getElementById('calAddForm').classList.remove('open');
   calSelected = date;
-  renderCalendar();
-  showToast(lang==='en'?'Event added!':'تم إضافة الموعد!');
+  showSuccessCheck(lang==='en'?'Event added!':'تم إضافة الموعد!', ()=>{ renderCalendar(); });
 });
 
 document.getElementById('calEventsBody').addEventListener('click', function(e){
