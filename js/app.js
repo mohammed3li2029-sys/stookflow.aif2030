@@ -3699,6 +3699,30 @@ function filterTasks(tab){
   return arr;
 }
 
+function bindTaskBoardEvents(container){
+  container.querySelectorAll('.t-acc-head').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const card=btn.closest('.t-acc');
+      const isOpen=card.dataset.open==='true';
+      card.dataset.open=isOpen?'false':'true';
+      btn.setAttribute('aria-expanded',!isOpen);
+    });
+  });
+  container.querySelectorAll('.t-acc-view-detail').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    taskDetailIdx=parseInt(b.dataset.tidx);
+    navigate('tasks');
+  }));
+  container.querySelectorAll('.t-acc-action').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    taskAction(parseInt(b.dataset.tidx),b.dataset.action);
+  }));
+  container.querySelectorAll('.task-del-btn').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    deleteTask(parseInt(b.dataset.tidx));
+  }));
+}
+
 function renderTasks(){
   const L=STR[lang].tasks;
   const stats=getTaskStats();
@@ -3755,30 +3779,44 @@ function renderTaskBoard(){
   const L=STR[lang].tasks;
   const tasks=filterTasks(taskTab);
   if(!tasks.length) return `<div class="empty-state" style="padding:60px 20px;text-align:center;color:var(--text-2);">${ICONS.tasks}<div style="margin-top:12px;font-size:15px;font-weight:600;">${L.noTasks}</div></div>`;
-  return `<div class="table-card"><table style="width:100%;border-collapse:collapse;">
-  <thead><tr>
-    <th style="width:30px;"></th>
-    <th>${L.title}</th>
-    <th>${L.assignee}</th>
-    <th>${L.priority}</th>
-    <th>${L.status}</th>
-    <th>${L.project}</th>
-    <th>${L.dueDate}</th>
-    <th style="width:50px;"></th>
-  </tr></thead>
-  <tbody>${tasks.map((t,i)=>{
+  return `<div class="task-board-grid">${tasks.map((t,i)=>{
     const idx=tasksData.indexOf(t);
-    return `<tr class="task-row" data-tidx="${idx}" style="cursor:pointer;">
-      <td style="text-align:center;">${t.type==='personal'?'<span style="font-size:14px;" title="'+L.personal+'">🔒</span>':''}</td>
-      <td style="font-weight:600;color:var(--text);">${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</td>
-      <td style="font-size:12px;color:var(--text-2);">${t.assignee?escapeHtml(t.assignee):'<span style="color:var(--text-3);">'+L.unassigned+'</span>'}</td>
-      <td><span class="task-priority ${taskPriorityClass(t.priority)}">${taskPriorityIcon(t.priority)} ${taskPriorityLabel(t.priority)}</span></td>
-      <td><span class="pill ${taskStatusClass(t.status)}">${taskStatusLabel(t.status)}</span></td>
-      <td style="font-size:12px;color:var(--text-2);">${taskProjectLabel(t.project)||'-'}</td>
-      <td><span style="font-size:12px;color:${t._overdue?'var(--red)':'var(--text-2)'};">${taskDueLabel(t.dueDate)}</span></td>
-      <td><div class="row-actions"><button class="task-del-btn" data-tidx="${idx}">${ICONS.trash}</button></div></td>
-    </tr>`;
-  }).join('')}</tbody></table></div>`;
+    const statusBtns=[];
+    if(t.status==='new'&&t.assignee===profileData.name) statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="accept" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.acceptTask}</button>`);
+    if(t.status==='pendingApproval') statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="start" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.startTask}</button>`);
+    if(t.status==='inProgress'){
+      statusBtns.push(`<button class="btn t-acc-action" data-action="pending" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.submitForApproval}</button>`);
+      statusBtns.push(`<button class="btn t-acc-action" data-action="complete" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.completeTask}</button>`);
+    }
+    if(t.status==='inProgress'||t.status==='new') statusBtns.push(`<button class="btn t-acc-action" data-action="stop" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;color:var(--amber);">${L.stopTask}</button>`);
+    if(t.status==='stopped') statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="start" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.startTask}</button>`);
+    return `<div class="t-acc t-acc-card" data-open="false">
+      <button class="t-acc-head" aria-expanded="false" data-tidx="${idx}">
+        <span class="task-title">${t.type==='personal'?'🔒 ':''}${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</span>
+        <span class="t-acc-chevron">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+        </span>
+      </button>
+      <div class="t-acc-panel"><div class="t-acc-panel-inner">
+        <div class="t-acc-card-tags">
+          <span class="pill ${taskStatusClass(t.status)}" style="font-size:10px;">${taskStatusLabel(t.status)}</span>
+          <span class="task-priority ${taskPriorityClass(t.priority)}" style="font-size:10px;">${taskPriorityIcon(t.priority)} ${taskPriorityLabel(t.priority)}</span>
+        </div>
+        <p style="margin:0 0 10px;font-size:12px;color:var(--text-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(lang==='en'?(t.desc||''):(t.descAr||t.desc||'')) || '<em>'+(lang==='en'?'No description':'لا يوجد وصف')+'</em>'}</p>
+        <div class="t-acc-detail-grid">
+          <div class="t-acc-detail-cell"><div class="t-label">${L.assignee}</div><div class="t-value">${taskAssigneeLabel(t.assignee)}</div></div>
+          <div class="t-acc-detail-cell"><div class="t-label">${L.project}</div><div class="t-value">${taskProjectLabel(t.project)||'-'}</div></div>
+          <div class="t-acc-detail-cell"><div class="t-label">${L.startDate}</div><div class="t-value">${t.startDate||'-'}</div></div>
+          <div class="t-acc-detail-cell"><div class="t-label">${L.dueDate}</div><div class="t-value" style="color:${t._overdue?'var(--red)':'var(--text)'};">${t.dueDate||'-'}${taskDueLabel(t.dueDate)?' ('+taskDueLabel(t.dueDate)+')':''}</div></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+          ${statusBtns.join('')}
+          <button class="btn t-acc-view-detail" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;margin-inline-start:auto;">${lang==='en'?'Details':'التفاصيل'} →</button>
+          <button class="task-del-btn" data-tidx="${idx}" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:4px;" title="${L.deleteConfirm}">${ICONS.trash}</button>
+        </div>
+      </div></div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function renderTaskCalendar(){
@@ -4436,18 +4474,14 @@ function postRenderHooks(page){
           });
         } else {
           tc.innerHTML=renderTaskBoard();
-          document.querySelectorAll('.task-row').forEach(r=>r.addEventListener('click',()=>{
-            taskDetailIdx=parseInt(r.dataset.tidx);
-            navigate('tasks');
-          }));
-          document.querySelectorAll('.task-del-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); deleteTask(parseInt(b.dataset.tidx)); }));
+          bindTaskBoardEvents(tc);
         }
       }
     }
     const newBtn=document.getElementById('taskNewBtn');
     if(newBtn) newBtn.addEventListener('click',()=>openTaskModal(null));
     const searchInput=document.getElementById('taskSearch');
-    if(searchInput) searchInput.addEventListener('input',e=>{ taskSearch=e.target.value; if(tc){ if(taskDetailIdx===null){ if(taskView==='calendar') tc.innerHTML=renderTaskCalendar(); else tc.innerHTML=renderTaskBoard(); document.querySelectorAll('.task-row').forEach(r=>r.addEventListener('click',()=>{ taskDetailIdx=parseInt(r.dataset.tidx); navigate('tasks'); })); document.querySelectorAll('.task-del-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); deleteTask(parseInt(b.dataset.tidx)); })); } } });
+    if(searchInput) searchInput.addEventListener('input',e=>{ taskSearch=e.target.value; if(tc){ if(taskDetailIdx===null){ if(taskView==='calendar') tc.innerHTML=renderTaskCalendar(); else { tc.innerHTML=renderTaskBoard(); bindTaskBoardEvents(tc); } } } });
     document.querySelectorAll('.task-tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ taskTab=btn.dataset.ttab; navigate('tasks'); }));
     document.getElementById('taskFilterPr')?.addEventListener('change',e=>{ taskFilterPriority=e.target.value; navigate('tasks'); });
     document.getElementById('taskFilterSt')?.addEventListener('change',e=>{ taskFilterStatus=e.target.value; navigate('tasks'); });
