@@ -5388,14 +5388,29 @@ function refreshTopbarProfile(){
   const nameEl=document.getElementById('userName');
   if(nameEl) nameEl.textContent=profileData.name;
   const av=document.querySelector('.topbar .avatar');
-  if(!av) return;
-  if(profileData.image){
-    av.innerHTML=`<img src="${profileData.image}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-    av.style.background='none';
-  } else {
-    av.innerHTML=profileData.initials;
-    av.style.background='linear-gradient(135deg,var(--blue),#7CB2FF)';
+  if(av){
+    if(profileData.image){
+      av.innerHTML=`<img src="${profileData.image}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      av.style.background='none';
+    } else {
+      av.innerHTML=profileData.initials;
+      av.style.background='linear-gradient(135deg,var(--blue),#7CB2FF)';
+    }
   }
+  const mobAv=document.getElementById('mobAvatar');
+  if(mobAv){
+    if(profileData.image){
+      mobAv.innerHTML=`<img src="${profileData.image}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      mobAv.style.background='none';
+    } else {
+      mobAv.textContent=profileData.initials;
+      mobAv.style.background='linear-gradient(135deg,var(--blue),#7CB2FF)';
+    }
+  }
+  const mobName=document.getElementById('mobName');
+  if(mobName) mobName.textContent=profileData.name;
+  const mobRole=document.getElementById('mobRole');
+  if(mobRole) mobRole.textContent=profileData.role==='admin'?(lang==='en'?'Administrator':'مدير نظام'):(lang==='en'?'Employee':'موظف');
 }
 
 function setProfilePreview(src){
@@ -5875,6 +5890,47 @@ document.getElementById('searchCloseBtn')?.addEventListener('click', e=>{
   document.getElementById('globalSearchWrap').classList.remove('open');
 });
 
+// Mobile liquid glass buttons — top bar
+document.getElementById('mobSearchBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  const ov=document.getElementById('mobSearchOverlay');
+  ov.classList.toggle('open');
+  if(ov.classList.contains('open')){
+    document.getElementById('mobSearchInput')?.focus();
+  }
+});
+document.getElementById('mobSearchClose')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('mobSearchOverlay')?.classList.remove('open');
+});
+document.getElementById('mobNotifBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('notifBtn')?.click();
+});
+// Mobile liquid glass buttons — bottom bar
+document.getElementById('mobMenuBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.app')?.classList.toggle('has-sidebar-open');
+});
+document.getElementById('mobTasksBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  navigate('tasks');
+});
+document.getElementById('mobCalBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  if(currentPage==='dashboard'){
+    document.getElementById('calendarBtn')?.click();
+  } else {
+    navigate('dashboard');
+    setTimeout(()=>document.getElementById('calendarBtn')?.click(),100);
+  }
+});
+document.getElementById('mobDashBtn')?.addEventListener('click', e=>{
+  e.preventDefault();e.stopPropagation();
+  navigate('dashboard');
+});
+
 // table scroll indicator on mobile
 function updateTableScrollHints(){
   const hint = lang==='en' ? '→ scroll →' : '→ تمرير ←';
@@ -6130,6 +6186,7 @@ document.head.appendChild(shakeStyle);
 
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('logoutBtn').addEventListener('click', doLogout);
+document.getElementById('logoutBtnMobile')?.addEventListener('click', doLogout);
 document.getElementById('loginUsername').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPassword').focus(); });
 document.getElementById('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
 
