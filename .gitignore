@@ -9,6 +9,7 @@ Thumbs.db
 # Environment / Secrets
 .env
 .env.*
+js/.env.js
 
 # Firebase
 .firebase/
