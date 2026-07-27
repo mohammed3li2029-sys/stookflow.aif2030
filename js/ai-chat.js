@@ -14,23 +14,23 @@
 
   /* ── Tool definitions for Groq function calling ── */
   const TOOL_DEFS = [
-    { name:'getInventorySummary', description:'Get full inventory summary: total items, total stock, low-stock alerts, categories. Use when user asks about inventory, stock levels, items count.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'searchInventory', description:'Search inventory by name, SKU, or category. Use when user asks about a specific product or item.', parameters:{ type:'object', properties:{ query:{ type:'string', description:'Search query (item name, SKU, or category)' }}, required:['query'] }},
-    { name:'getWarehouseSummary', description:'Get all warehouses with occupancy levels. Use when user asks about warehouses or storage capacity.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getTaskStats', description:'Get task statistics: total, completed, in-progress, overdue, urgent counts. Use when user asks about task overview or productivity.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getTodayTasks', description:'Get today\'s tasks and tasks currently in progress. Use when user asks about today\'s work or current tasks.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'searchTasks', description:'Search tasks by title, description, or assignee. Use when user asks about a specific task.', parameters:{ type:'object', properties:{ query:{ type:'string', description:'Search query' }}, required:['query'] }},
-    { name:'getSalesSummary', description:'Get sales/quotation statistics: total quotes, total value, breakdown by status. Use when user asks about sales, revenue, or quotations.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getRecentQuotations', description:'Get recent quotations list. Use when user asks to see recent quotes or recent sales.', parameters:{ type:'object', properties:{ limit:{ type:'number', description:'Number of quotes to return (default 5)' }}, required:[] }},
-    { name:'getPurchaseOrderSummary', description:'Get purchase order statistics: total, pending, approved, total value. Use when user asks about purchase orders or procurement.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getPendingPurchaseOrders', description:'Get list of pending purchase orders. Use when user asks about pending POs or what needs to be ordered.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getProjectSummary', description:'Get all projects with status and progress. Use when user asks about projects.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getSupplierSummary', description:'Get supplier list with delivery times, quality scores, and status. Use when user asks about suppliers.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getUsersSummary', description:'Get users list with roles and departments. Use when user asks about team members or users.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getTodayEvents', description:'Get today\'s calendar events. Use when user asks about today\'s schedule or events.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getUpcomingEvents', description:'Get upcoming calendar events within N days. Use when user asks about upcoming events or schedule.', parameters:{ type:'object', properties:{ days:{ type:'number', description:'Number of days ahead (default 7)' }}, required:[] }},
-    { name:'getMaterialRequestSummary', description:'Get material requests summary. Use when user asks about material requests or requisitions.', parameters:{ type:'object', properties:{}, required:[] }},
-    { name:'getOverviewStats', description:'Get full app overview: inventory, tasks, POs, projects, sales in one call. Use for general overview questions.', parameters:{ type:'object', properties:{}, required:[] }},
+    { type:'function', function:{ name:'getInventorySummary', description:'Get full inventory summary: total items, total stock, low-stock alerts, categories. Use when user asks about inventory, stock levels, items count.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'searchInventory', description:'Search inventory by name, SKU, or category. Use when user asks about a specific product or item.', parameters:{ type:'object', properties:{ query:{ type:'string', description:'Search query (item name, SKU, or category)' }}, required:['query'] }}},
+    { type:'function', function:{ name:'getWarehouseSummary', description:'Get all warehouses with occupancy levels. Use when user asks about warehouses or storage capacity.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getTaskStats', description:'Get task statistics: total, completed, in-progress, overdue, urgent counts. Use when user asks about task overview or productivity.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getTodayTasks', description:'Get today\'s tasks and tasks currently in progress. Use when user asks about today\'s work or current tasks.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'searchTasks', description:'Search tasks by title, description, or assignee. Use when user asks about a specific task.', parameters:{ type:'object', properties:{ query:{ type:'string', description:'Search query' }}, required:['query'] }}},
+    { type:'function', function:{ name:'getSalesSummary', description:'Get sales/quotation statistics: total quotes, total value, breakdown by status. Use when user asks about sales, revenue, or quotations.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getRecentQuotations', description:'Get recent quotations list. Use when user asks to see recent quotes or recent sales.', parameters:{ type:'object', properties:{ limit:{ type:'number', description:'Number of quotes to return (default 5)' }}, required:[] }}},
+    { type:'function', function:{ name:'getPurchaseOrderSummary', description:'Get purchase order statistics: total, pending, approved, total value. Use when user asks about purchase orders or procurement.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getPendingPurchaseOrders', description:'Get list of pending purchase orders. Use when user asks about pending POs or what needs to be ordered.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getProjectSummary', description:'Get all projects with status and progress. Use when user asks about projects.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getSupplierSummary', description:'Get supplier list with delivery times, quality scores, and status. Use when user asks about suppliers.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getUsersSummary', description:'Get users list with roles and departments. Use when user asks about team members or users.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getTodayEvents', description:'Get today\'s calendar events. Use when user asks about today\'s schedule or events.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getUpcomingEvents', description:'Get upcoming calendar events within N days. Use when user asks about upcoming events or schedule.', parameters:{ type:'object', properties:{ days:{ type:'number', description:'Number of days ahead (default 7)' }}, required:[] }}},
+    { type:'function', function:{ name:'getMaterialRequestSummary', description:'Get material requests summary. Use when user asks about material requests or requisitions.', parameters:{ type:'object', properties:{}, required:[] }}},
+    { type:'function', function:{ name:'getOverviewStats', description:'Get full app overview: inventory, tasks, POs, projects, sales in one call. Use for general overview questions.', parameters:{ type:'object', properties:{}, required:[] }}},
   ];
 
   /* ── System prompt ─────────────────────────────── */
@@ -60,6 +60,15 @@ When presenting data, format it nicely with bullet points or short tables. Alway
   /* ── Send message to Groq API ──────────────────── */
   async function sendToAI(userMessage) {
     chatHistory.push({ role:'user', content: userMessage });
+
+    if(!CFG.apiKey) {
+      const msg = lang === 'ar'
+        ? 'الـ API Key غير موجود. تأكد من ملف js/.env.js'
+        : 'API Key not found. Make sure js/.env.js exists.';
+      addMessage(msg, 'assistant');
+      chatHistory.push({ role:'assistant', content: msg });
+      return msg;
+    }
 
     const messages = [
       { role:'system', content: buildSystemPrompt() },
@@ -142,9 +151,14 @@ When presenting data, format it nicely with bullet points or short tables. Alway
 
     } catch(err) {
       console.error('[AI]', err);
-      const errMsg = lang === 'ar'
-        ? 'عذراً، حدث خطأ في الاتصال. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.'
-        : 'Sorry, a connection error occurred. Please check your internet and try again.';
+      let detail = err.message || String(err);
+      if(!CFG.apiKey) {
+        detail = 'API Key is missing. Make sure js/.env.js exists and contains STOCKFLOW_AI_KEY.';
+      }
+      const isArabic = /\u0600-\u06FF/.test(detail) || lang === 'ar';
+      const errMsg = isArabic
+        ? 'عذراً، حدث خطأ: ' + detail
+        : 'Error: ' + detail;
       chatHistory.push({ role:'assistant', content: errMsg });
       return errMsg;
     }
