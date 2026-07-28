@@ -1,11 +1,12 @@
 /* ===================================================================
-   AI CHART TOOLS — Data fetchers the AI assistant can call
+   AI TOOLS — Data fetchers the AI assistant can call
+   Reads directly from Supabase via StockFlowBackend
    =================================================================== */
 window.AI_TOOLS = {
 
   /* ── Inventory ─────────────────────────────────── */
-  getInventorySummary() {
-    const items = window.inventoryData || [];
+  async getInventorySummary() {
+    const items = await window.StockFlowBackend.loadCollection('inventory') || [];
     const totalItems = items.length;
     const totalStock = items.reduce((s, i) => s + (i.stock || 0), 0);
     const lowStock = items.filter(i => i.stock <= i.min);
@@ -25,8 +26,8 @@ window.AI_TOOLS = {
     };
   },
 
-  searchInventory(query) {
-    const items = window.inventoryData || [];
+  async searchInventory(query) {
+    const items = await window.StockFlowBackend.loadCollection('inventory') || [];
     const q = (query || '').toLowerCase();
     const results = items.filter(i => {
       const hay = ((i.name || '') + (i.nameAr || '') + (i.sku || '') + (i.cat || '') + (i.catAr || '')).toLowerCase();
@@ -44,8 +45,8 @@ window.AI_TOOLS = {
   },
 
   /* ── Warehouses ────────────────────────────────── */
-  getWarehouseSummary() {
-    const whs = window.warehouseData || [];
+  async getWarehouseSummary() {
+    const whs = await window.StockFlowBackend.loadCollection('warehouses') || [];
     return whs.map(w => ({
       name: lang === 'ar' ? w.nameAr : w.name,
       occupancy: w.occ + '%',
@@ -56,8 +57,8 @@ window.AI_TOOLS = {
   },
 
   /* ── Tasks ─────────────────────────────────────── */
-  getTaskStats() {
-    const tasks = window.tasksData || [];
+  async getTaskStats() {
+    const tasks = await window.StockFlowBackend.loadCollection('tasks') || [];
     const today = new Date().toISOString().slice(0, 10);
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'completed').length;
@@ -71,8 +72,8 @@ window.AI_TOOLS = {
     return { total, completed, inProgress, overdue, urgent, completionRate: total ? Math.round((completed / total) * 100) + '%' : '0%' };
   },
 
-  getTodayTasks() {
-    const tasks = window.tasksData || [];
+  async getTodayTasks() {
+    const tasks = await window.StockFlowBackend.loadCollection('tasks') || [];
     const today = new Date().toISOString().slice(0, 10);
     return tasks
       .filter(t => t.dueDate === today || (t.status === 'inProgress' && !t.dueDate))
@@ -86,8 +87,8 @@ window.AI_TOOLS = {
       }));
   },
 
-  searchTasks(query) {
-    const tasks = window.tasksData || [];
+  async searchTasks(query) {
+    const tasks = await window.StockFlowBackend.loadCollection('tasks') || [];
     const q = (query || '').toLowerCase();
     return tasks
       .filter(t => {
@@ -105,8 +106,8 @@ window.AI_TOOLS = {
   },
 
   /* ── Sales / Quotations ────────────────────────── */
-  getSalesSummary() {
-    const quotes = window.quotations || [];
+  async getSalesSummary() {
+    const quotes = await window.StockFlowBackend.loadCollection('quotations') || [];
     const totalQuotes = quotes.length;
     const totalValue = quotes.reduce((s, q) => s + (q.total || 0), 0);
     const byStatus = {};
@@ -114,8 +115,8 @@ window.AI_TOOLS = {
     return { totalQuotes, totalValue, byStatus };
   },
 
-  getRecentQuotations(limit) {
-    const quotes = window.quotations || [];
+  async getRecentQuotations(limit) {
+    const quotes = await window.StockFlowBackend.loadCollection('quotations') || [];
     return quotes.slice(0, limit || 5).map(q => ({
       id: q.id,
       customer: q.customer,
@@ -126,8 +127,8 @@ window.AI_TOOLS = {
   },
 
   /* ── Purchase Orders ───────────────────────────── */
-  getPurchaseOrderSummary() {
-    const pos = window.purchaseOrders || [];
+  async getPurchaseOrderSummary() {
+    const pos = await window.StockFlowBackend.loadCollection('purchase_orders') || [];
     const total = pos.length;
     const pending = pos.filter(p => p.status === 'pending').length;
     const approved = pos.filter(p => p.status === 'approved').length;
@@ -135,8 +136,8 @@ window.AI_TOOLS = {
     return { total, pending, approved, totalValue };
   },
 
-  getPendingPurchaseOrders() {
-    const pos = window.purchaseOrders || [];
+  async getPendingPurchaseOrders() {
+    const pos = await window.StockFlowBackend.loadCollection('purchase_orders') || [];
     return pos
       .filter(p => p.status === 'pending')
       .map(p => ({
@@ -149,8 +150,8 @@ window.AI_TOOLS = {
   },
 
   /* ── Projects ──────────────────────────────────── */
-  getProjectSummary() {
-    const prjs = window.projects || [];
+  async getProjectSummary() {
+    const prjs = await window.StockFlowBackend.loadCollection('projects') || [];
     const total = prjs.length;
     const active = prjs.filter(p => p.status === 'active').length;
     const completed = prjs.filter(p => p.status === 'completed').length;
@@ -170,8 +171,8 @@ window.AI_TOOLS = {
     };
   },
 
-  /* ── Suppliers ─────────────────────────────────── */
-  getSupplierSummary() {
+  /* ── Suppliers (hardcoded — no Supabase table) ── */
+  async getSupplierSummary() {
     const sups = window.suppliers || [];
     return sups.map(s => ({
       name: lang === 'ar' ? s.nameAr : s.name,
@@ -183,8 +184,8 @@ window.AI_TOOLS = {
   },
 
   /* ── Users ─────────────────────────────────────── */
-  getUsersSummary() {
-    const users = window.usersData || [];
+  async getUsersSummary() {
+    const users = await window.StockFlowBackend.loadCollection('users') || [];
     return {
       total: users.length,
       users: users.map(u => ({
@@ -195,8 +196,8 @@ window.AI_TOOLS = {
     };
   },
 
-  /* ── Calendar Events ───────────────────────────── */
-  getTodayEvents() {
+  /* ── Calendar Events (localStorage) ─────────────── */
+  async getTodayEvents() {
     const events = window.CAL_EVENTS || [];
     const today = new Date().toISOString().slice(0, 10);
     return events.filter(e => e.date === today).map(e => ({
@@ -205,7 +206,7 @@ window.AI_TOOLS = {
     }));
   },
 
-  getUpcomingEvents(days) {
+  async getUpcomingEvents(days) {
     const events = window.CAL_EVENTS || [];
     const today = new Date();
     const future = new Date(today);
@@ -220,8 +221,8 @@ window.AI_TOOLS = {
   },
 
   /* ── Material Requests ─────────────────────────── */
-  getMaterialRequestSummary() {
-    const reqs = window.reqsData || [];
+  async getMaterialRequestSummary() {
+    const reqs = await window.StockFlowBackend.loadCollection('material_requests') || [];
     return {
       total: reqs.length,
       pending: reqs.filter(r => r.status === 'pending').length,
@@ -238,12 +239,12 @@ window.AI_TOOLS = {
   },
 
   /* ── General Stats ─────────────────────────────── */
-  getOverviewStats() {
-    const inv = AI_TOOLS.getInventorySummary();
-    const tasks = AI_TOOLS.getTaskStats();
-    const po = AI_TOOLS.getPurchaseOrderSummary();
-    const prj = AI_TOOLS.getProjectSummary();
-    const sales = AI_TOOLS.getSalesSummary();
+  async getOverviewStats() {
+    const inv = await AI_TOOLS.getInventorySummary();
+    const tasks = await AI_TOOLS.getTaskStats();
+    const po = await AI_TOOLS.getPurchaseOrderSummary();
+    const prj = await AI_TOOLS.getProjectSummary();
+    const sales = await AI_TOOLS.getSalesSummary();
     return {
       inventory: { totalItems: inv.totalItems, totalStock: inv.totalStock, lowStock: inv.lowStockCount },
       tasks,

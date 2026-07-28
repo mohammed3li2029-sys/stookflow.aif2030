@@ -51,10 +51,10 @@ When presenting data, format it nicely with bullet points or short tables. Alway
   }
 
   /* ── Execute a tool call ───────────────────────── */
-  function executeTool(name, args) {
+  async function executeTool(name, args) {
     const fn = TOOLS[name];
     if(!fn) return { error: 'Tool not found: ' + name };
-    try { return fn(args || {}); } catch(e) { return { error: e.message }; }
+    try { return await fn(args || {}); } catch(e) { return { error: e.message }; }
   }
 
   /* ── Send message to Groq API ──────────────────── */
@@ -111,7 +111,7 @@ When presenting data, format it nicely with bullet points or short tables. Alway
           const fnName = tc.function.name;
           let fnArgs = {};
           try { fnArgs = JSON.parse(tc.function.arguments || '{}'); } catch(e){}
-          const result = executeTool(fnName, fnArgs);
+          const result = await executeTool(fnName, fnArgs);
           chatHistory.push({
             role: 'tool',
             tool_call_id: tc.id,
