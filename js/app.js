@@ -3691,6 +3691,8 @@ function filterTasks(tab){
   if(taskFilterAssignee) arr=arr.filter(t=>t.assignee===taskFilterAssignee);
   arr.sort((a,b)=>{
     const od={urgent:0,high:1,medium:2,low:3};
+    if(a.status==='completed'&&b.status!=='completed') return 1;
+    if(a.status!=='completed'&&b.status==='completed') return -1;
     if(a._overdue&&!b._overdue) return -1;
     if(!a._overdue&&b._overdue) return 1;
     if((od[a.priority]||99)!==(od[b.priority]||99)) return (od[a.priority]||99)-(od[b.priority]||99);
@@ -3720,6 +3722,14 @@ function bindTaskBoardEvents(container){
   container.querySelectorAll('.task-del-btn').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
     deleteTask(parseInt(b.dataset.tidx));
+  }));
+  container.querySelectorAll('.task-check-wrap').forEach(w=>w.addEventListener('click',e=>{
+    e.stopPropagation();
+    const idx=parseInt(w.dataset.tidx);
+    const t=tasksData[idx];
+    if(!t) return;
+    const isCompleted=t.status==='completed';
+    taskAction(idx, isCompleted?'reopen':'complete');
   }));
 }
 
@@ -3786,12 +3796,23 @@ function renderTaskBoard(){
     if(t.status==='pendingApproval') statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="start" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.startTask}</button>`);
     if(t.status==='inProgress'){
       statusBtns.push(`<button class="btn t-acc-action" data-action="pending" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.submitForApproval}</button>`);
-      statusBtns.push(`<button class="btn t-acc-action" data-action="complete" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.completeTask}</button>`);
     }
     if(t.status==='inProgress'||t.status==='new') statusBtns.push(`<button class="btn t-acc-action" data-action="stop" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;color:var(--amber);">${L.stopTask}</button>`);
     if(t.status==='stopped') statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="start" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.startTask}</button>`);
-    return `<div class="t-acc t-acc-card" data-open="false">
-      <button class="t-acc-head" aria-expanded="false" data-tidx="${idx}">
+    return `<div class="t-acc t-acc-card${t.status==='completed'?' completed':''}" data-open="false">
+      <button class="t-acc-head" aria-expanded="false">
+        <span class="task-check-wrap${t.status==='completed'?' checked':''}" data-tidx="${idx}" title="${t.status==='completed'?(lang==='en'?'Mark incomplete':'تأشير كغير مكتملة'):(lang==='en'?'Complete task':'تأشير كمكتملة')}">
+          <input type="checkbox" class="task-checkbox"${t.status==='completed'?' checked':''}>
+          <span class="checkbox-box">
+            <span class="checkbox-fill"></span>
+            <span class="checkmark">
+              <svg viewBox="0 0 24 24" class="check-icon">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+              </svg>
+            </span>
+            <span class="success-ripple"></span>
+          </span>
+        </span>
         <span class="task-title">${t.type==='personal'?'🔒 ':''}${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</span>
         <span class="t-acc-chevron">
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
@@ -4118,10 +4139,10 @@ function taskAction(idx,action){
   const nowStr=now.toISOString().slice(0,10);
   const nowTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   const L=STR[lang].tasks;
-  const statusMap={accept:'inProgress',start:'inProgress',pending:'pendingApproval',complete:'completed',stop:'stopped',cancel:'cancelled'};
+  const statusMap={accept:'inProgress',start:'inProgress',pending:'pendingApproval',complete:'completed',stop:'stopped',cancel:'cancelled',reopen:'new'};
   t.status=statusMap[action]||t.status;
   t.updatedAt=nowStr;
-  const actLabel={accept:L.acceptTask,start:L.startTask,pending:L.submitForApproval,complete:L.completeTask,stop:L.stopTask,cancel:L.cancelTask};
+  const actLabel={accept:L.acceptTask,start:L.startTask,pending:L.submitForApproval,complete:L.completeTask,stop:L.stopTask,cancel:L.cancelTask,reopen:L.reopenTask};
   t.activityLog.push({action:actLabel[action]||action,user:profileData.name,date:nowStr,time:nowTime});
   saveTasksToStorage();
   if(action==='complete') showToast(L.taskCompleted);
