@@ -3702,15 +3702,6 @@ function filterTasks(tab){
 }
 
 function bindTaskBoardEvents(container){
-  container.querySelectorAll('.t-acc-head').forEach(btn=>{
-    btn.addEventListener('click',(e)=>{
-      if(e.target.closest('.task-check-wrap')) return;
-      const card=btn.closest('.t-acc');
-      const isOpen=card.dataset.open==='true';
-      card.dataset.open=isOpen?'false':'true';
-      btn.setAttribute('aria-expanded',!isOpen);
-    });
-  });
   container.querySelectorAll('.t-acc-view-detail').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
     taskDetailIdx=parseInt(b.dataset.tidx);
@@ -3800,8 +3791,8 @@ function renderTaskBoard(){
     }
     if(t.status==='inProgress'||t.status==='new') statusBtns.push(`<button class="btn t-acc-action" data-action="stop" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;color:var(--amber);">${L.stopTask}</button>`);
     if(t.status==='stopped') statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="start" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.startTask}</button>`);
-    return `<div class="t-acc t-acc-card${t.status==='completed'?' completed':''}" data-open="false">
-      <button class="t-acc-head" aria-expanded="false">
+    return `<div class="t-acc t-acc-card${t.status==='completed'?' completed':''}">
+      <button class="t-acc-head">
         <span class="task-check-wrap${t.status==='completed'?' checked':''}" data-tidx="${idx}" title="${t.status==='completed'?(lang==='en'?'Mark incomplete':'تأشير كغير مكتملة'):(lang==='en'?'Complete task':'تأشير كمكتملة')}">
           <input type="checkbox" class="task-checkbox"${t.status==='completed'?' checked':''}>
           <span class="checkbox-box">
