@@ -3703,7 +3703,8 @@ function filterTasks(tab){
 
 function bindTaskBoardEvents(container){
   container.querySelectorAll('.t-acc-head').forEach(btn=>{
-    btn.addEventListener('click',()=>{
+    btn.addEventListener('click',(e)=>{
+      if(e.target.closest('.task-check-wrap')) return;
       const card=btn.closest('.t-acc');
       const isOpen=card.dataset.open==='true';
       card.dataset.open=isOpen?'false':'true';
