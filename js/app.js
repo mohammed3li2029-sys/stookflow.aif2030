@@ -3702,8 +3702,19 @@ function filterTasks(tab){
 }
 
 function bindTaskBoardEvents(container){
+  container.querySelectorAll('.t-acc-head').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{
+      if(e.target.closest('.task-check-wrap')) return;
+      const card=btn.closest('.t-acc');
+      const isOpen=card.dataset.open==='true';
+      card.dataset.open=isOpen?'false':'true';
+      btn.setAttribute('aria-expanded',!isOpen);
+    });
+  });
   container.querySelectorAll('.t-acc-view-detail').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
+    const card=b.closest('.t-acc');
+    if(card) { card.dataset.open='true'; card.querySelector('.t-acc-head')?.setAttribute('aria-expanded','true'); }
     taskDetailIdx=parseInt(b.dataset.tidx);
     navigate('tasks');
   }));
@@ -3720,8 +3731,29 @@ function bindTaskBoardEvents(container){
     const idx=parseInt(w.dataset.tidx);
     const t=tasksData[idx];
     if(!t) return;
+    const L=STR[lang].tasks;
+    const now=new Date();
+    const nowStr=now.toISOString().slice(0,10);
+    const nowTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
     const isCompleted=t.status==='completed';
-    taskAction(idx, isCompleted?'reopen':'complete');
+    t.status=isCompleted?'new':'completed';
+    t.updatedAt=nowStr;
+    t.activityLog.push({action:isCompleted?L.reopenTask:L.completeTask,user:profileData.name,date:nowStr,time:nowTime});
+    saveTasksToStorage();
+    /* Update DOM visually without full re-render */
+    if(!isCompleted) {
+      w.classList.add('checked');
+      w.querySelector('.task-checkbox').checked = true;
+      const card = w.closest('.t-acc-card');
+      if(card) card.classList.add('completed');
+      showToast(L.taskCompleted);
+    } else {
+      w.classList.remove('checked');
+      w.querySelector('.task-checkbox').checked = false;
+      const card = w.closest('.t-acc-card');
+      if(card) card.classList.remove('completed');
+      navigate(currentPage);
+    }
   }));
 }
 
@@ -3791,18 +3823,13 @@ function renderTaskBoard(){
     }
     if(t.status==='inProgress'||t.status==='new') statusBtns.push(`<button class="btn t-acc-action" data-action="stop" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;color:var(--amber);">${L.stopTask}</button>`);
     if(t.status==='stopped') statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="start" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.startTask}</button>`);
-    return `<div class="t-acc t-acc-card${t.status==='completed'?' completed':''}">
-      <button class="t-acc-head">
+    return `<div class="t-acc t-acc-card${t.status==='completed'?' completed':''}" data-open="false">
+      <button class="t-acc-head" aria-expanded="false">
         <span class="task-check-wrap${t.status==='completed'?' checked':''}" data-tidx="${idx}" title="${t.status==='completed'?(lang==='en'?'Mark incomplete':'تأشير كغير مكتملة'):(lang==='en'?'Complete task':'تأشير كمكتملة')}">
           <input type="checkbox" class="task-checkbox"${t.status==='completed'?' checked':''}>
           <span class="checkbox-box">
             <span class="checkbox-fill"></span>
-            <span class="checkmark">
-              <svg viewBox="0 0 24 24" class="check-icon">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-              </svg>
-            </span>
-            <span class="success-ripple"></span>
+            <span class="checkmark" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;line-height:1;z-index:10">✓</span>
           </span>
         </span>
         <span class="task-title">${t.type==='personal'?'🔒 ':''}${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</span>
