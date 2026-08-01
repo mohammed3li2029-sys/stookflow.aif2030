@@ -3627,7 +3627,12 @@ function loadTasksFromStorage(){
   try{ const s=localStorage.getItem('stockflow_tasks'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
   return [];
 }
-function saveTasksToStorage(){ try{ localStorage.setItem('stockflow_tasks', JSON.stringify(tasksData)); }catch(e){} }
+function saveTasksToStorage(){
+  try{ localStorage.setItem('stockflow_tasks', JSON.stringify(tasksData)); }catch(e){}
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('tasks', tasksData, 'id');
+  }
+}
 const tasksData = withFirestoreSync(loadTasksFromStorage(), 'tasks', 'id');
 
 function taskStatusLabel(st){
