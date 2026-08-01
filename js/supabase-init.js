@@ -132,6 +132,45 @@ function syncCollection(table, items, idField) {
     if (run) run();
   }, 500);
 }
+
+/**
+ * Single-row upsert (no pruning of other rows). Used for per-item edits
+ * (e.g. one project's phases) where rewriting the whole collection on
+ * every keystroke is wasteful and — on a busy/free-tier Supabase — can
+ * blow past the server's statement timeout (57014). A transient timeout
+ * is retried once after a short delay; the localStorage safety net in
+ * app.js covers the worst case regardless.
+ */
+async function _doSyncOne(table, row) {
+  try {
+    const { error } = await supabase.from(table).upsert(row);
+    if (error) throw error;
+  } catch (err) {
+    console.error(`[StockFlow] Failed to write one row to Supabase table "${table}":`, err);
+    setTimeout(async () => {
+      try {
+        const { error } = await supabase.from(table).upsert(row);
+        if (error) throw error;
+      } catch (err2) {
+        console.error(`[StockFlow] Retry failed for Supabase table "${table}":`, err2);
+      }
+    }, 2500);
+  }
+}
+function syncRow(table, item, idField) {
+  if (!supabase) return; // demo mode: nothing to sync
+  clearTimeout(_timers[table]);
+  const id = safeKey(item && item[idField] !== undefined ? item[idField] : '');
+  if (!id) return; // nothing identifiable to write
+  const row = { id, data: item };
+  _pendingSyncs[table] = () => _doSyncOne(table, row);
+  _timers[table] = setTimeout(() => {
+    delete _timers[table];
+    const run = _pendingSyncs[table];
+    delete _pendingSyncs[table];
+    if (run) run();
+  }, 500);
+}
 /** Run every pending debounced write immediately. Called when the page is
     being hidden/unloaded so a refresh or navigation that happens inside
     the debounce window doesn't silently drop the last edit. */
@@ -218,6 +257,7 @@ window.StockFlowBackend = {
   getSession,
   loadCollection,
   syncCollection,
+  syncRow,
   uploadFile,
   deleteFile,
   isLegacyDataUrl,

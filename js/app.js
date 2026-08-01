@@ -777,7 +777,14 @@ function syncCurrentProject(idx){
   if(idx !== undefined && projects[idx]) projects[idx].updatedAt = new Date().toISOString();
   saveProjectsToStorage();
   if(window.StockFlowBackend && window.StockFlowBackend.enabled){
-    window.StockFlowBackend.syncCollection('projects', projects, 'id');
+    if(idx !== undefined && projects[idx] && projects[idx].id){
+      // Single-row write: far smaller statement than rewriting the whole
+      // collection, so it won't trip Supabase's statement timeout (57014).
+      window.StockFlowBackend.syncRow('projects', projects[idx], 'id');
+    } else {
+      // New project (no idx yet): persist it along with a full prune.
+      window.StockFlowBackend.syncCollection('projects', projects, 'id');
+    }
   }
 }
 
@@ -3340,7 +3347,15 @@ function saveProject(idx){
 
 async function deleteProject(idx){
   const ok = await showConfirm(lang==='en'?'Are you sure you want to delete this project?':'هل أنت متأكد من حذف هذا المشروع؟');
-  if(ok){ projects.splice(idx, 1); saveProjectsToStorage(); navigate('projects'); }
+  if(ok){
+    projects.splice(idx, 1);
+    saveProjectsToStorage();
+    // Full-array sync so the deleted project is pruned from Supabase too.
+    if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+      window.StockFlowBackend.syncCollection('projects', projects, 'id');
+    }
+    navigate('projects');
+  }
 }
 
 function addProjectNote(idx){
