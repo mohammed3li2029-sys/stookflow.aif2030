@@ -83,36 +83,69 @@ async function loadCollection(table) {
  * unique field (id/sku/name). Debounced so rapid edits don't spam writes.
  */
 const _timers = {};
+const _pendingSyncs = {};
+async function _doSyncTable(table, items, idField) {
+  const rows = items.map((item, i) => ({
+    id: safeKey(item[idField] ?? i),
+    data: item
+  }));
+  // Guard against duplicate ids within the same batch (Postgres
+  // rejects an upsert where two rows in one command share an id).
+  // If a duplicate slips through, keep the last occurrence, which
+  // reflects the most recent state of that item.
+  const deduped = Array.from(
+    rows.reduce((map, row) => map.set(row.id, row), new Map()).values()
+  );
+  const ids = deduped.map(r => r.id);
+  // Upsert current rows, then remove any rows no longer present.
+  // Kept in separate try/catch blocks so a failure in one step (e.g. a
+  // statement timeout while pruning) can never discard the data that the
+  // other step already wrote to the database.
+  try {
+    const { error: upsertErr } = await supabase.from(table).upsert(deduped);
+    if (upsertErr) throw upsertErr;
+  } catch (err) {
+    console.error(`[StockFlow] Failed to upsert Supabase table "${table}":`, err);
+  }
+  try {
+    let query = supabase.from(table).delete();
+    if (ids.length) {
+      query = query.not("id", "in", `(${ids.map(id => `"${id}"`).join(",")})`);
+    } else {
+      // Empty collection: prune everything (a NOT IN () would be invalid SQL).
+      query = query.neq("id", "___stockflow_prune_all___");
+    }
+    const { error: deleteErr } = await query;
+    if (deleteErr) throw deleteErr;
+  } catch (err) {
+    console.error(`[StockFlow] Failed to prune Supabase table "${table}":`, err);
+  }
+}
 function syncCollection(table, items, idField) {
   if (!supabase) return; // demo mode: nothing to sync
   clearTimeout(_timers[table]);
-  _timers[table] = setTimeout(async () => {
-    try {
-      const rows = items.map((item, i) => ({
-        id: safeKey(item[idField] ?? i),
-        data: item
-      }));
-      // Guard against duplicate ids within the same batch (Postgres
-      // rejects an upsert where two rows in one command share an id).
-      // If a duplicate slips through, keep the last occurrence, which
-      // reflects the most recent state of that item.
-      const deduped = Array.from(
-        rows.reduce((map, row) => map.set(row.id, row), new Map()).values()
-      );
-      const ids = deduped.map(r => r.id);
-      // Upsert current rows, then remove any rows no longer present.
-      const { error: upsertErr } = await supabase.from(table).upsert(deduped);
-      if (upsertErr) throw upsertErr;
-      const { error: deleteErr } = await supabase
-        .from(table)
-        .delete()
-        .not("id", "in", `(${ids.map(id => `"${id}"`).join(",")})`);
-      if (deleteErr) throw deleteErr;
-    } catch (err) {
-      console.error(`[StockFlow] Failed to sync Supabase table "${table}":`, err);
-    }
+  _pendingSyncs[table] = () => _doSyncTable(table, items, idField);
+  _timers[table] = setTimeout(() => {
+    delete _timers[table];
+    const run = _pendingSyncs[table];
+    delete _pendingSyncs[table];
+    if (run) run();
   }, 500);
 }
+/** Run every pending debounced write immediately. Called when the page is
+    being hidden/unloaded so a refresh or navigation that happens inside
+    the debounce window doesn't silently drop the last edit. */
+function flushPendingSyncs() {
+  Object.keys(_timers).forEach(table => {
+    clearTimeout(_timers[table]);
+    delete _timers[table];
+    const run = _pendingSyncs[table];
+    delete _pendingSyncs[table];
+    if (run) { try { run(); } catch (err) { console.error('[StockFlow] Failed to flush sync:', err); } }
+  });
+}
+window.addEventListener('pagehide', flushPendingSyncs);
+window.addEventListener('beforeunload', flushPendingSyncs);
 
 /**
  * Subscribe to realtime changes (insert/update/delete) on a table.

@@ -102,10 +102,21 @@ async function loadAllStockFlowData(skipRender){
     if(inv && inv.length) silentReplace(inventoryData, inv);
     if(wh && wh.length) silentReplace(warehouseData, wh);
     if(reqs && reqs.length) silentReplace(reqsData, reqs);
-    if(projs && projs.length) silentReplace(projects, projs);
     if(quotes && quotes.length) silentReplace(quotations, quotes);
     if(pos && pos.length) silentReplace(purchaseOrders, pos);
     if(tasksArr && tasksArr.length) silentReplace(tasksData, tasksArr);
+    if(projs && projs.length){
+      /* Smart merge: keep whichever copy of each project is newest. If a
+         local edit couldn't be written to Supabase (timeout, etc.) the
+         local copy carries a newer updatedAt and wins, so the edit isn't
+         silently lost. Projects that only exist locally are preserved too. */
+      const srvIds = new Set(projs.map(s => s.id));
+      const merged = projs.map(srv => {
+        const local = projects.find(p => p.id === srv.id);
+        return (local && (local.updatedAt||'') > (srv.updatedAt||'')) ? local : srv;
+      }).concat(projects.filter(p => !srvIds.has(p.id)));
+      silentReplace(projects, merged);
+    }
 
     if(profiles && profiles.length){
       Object.assign(profileData, profiles[0]);
@@ -651,7 +662,9 @@ function nextProjectId(){
   projCounter = maxExisting + 2;
   return 'PRJ-'+String(maxExisting+1).padStart(3,'0');
 }
-const projects = withFirestoreSync([
+function loadProjectsFromStorage(){
+  try{ const s=localStorage.getItem('stockflow_projects'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)&&a.length) return a; } }catch(e){}
+  return [
   {id:'PRJ-001',name:'Factory Automation Line A',nameAr:'خط الأتمتة أ',client:'Saudi Manufacturing Co.',clientAr:'شركة التصنيع السعودية',type:'Industrial',typeAr:'صناعي',location:'Dammam 2nd Industrial City',locationAr:'الدمام المدينة الصناعية الثانية',coords:'26.4207°N, 50.0888°E',manager:'Ahmed Al-Faraj',engineer:'Khalid Nasser',contractNo:'CON-2026-001',contractFile:'',contractValue:2850000,contractDate:'2026-01-15',startDate:'2026-02-01',duration:150,progress:65,status:'active',priority:'high',notes:'Second phase expansion project',notesAr:'مشروع التوسعة المرحلة الثانية',
     phases:[
       {id:'P1',status:'completed',start:'2026-01-15',end:'2026-01-20',resp:'Sarah Chen',notes:'Signed on time',notesAr:'تم التوقيع',progress:100},
@@ -743,14 +756,26 @@ const projects = withFirestoreSync([
     risks:[{name:'Raw material price fluctuation',nameAr:'تقلب أسعار المواد الخام',level:'high',status:'active',date:'2026-05-01'}],
     issueOrders:[],poRefs:[],
   },
-], 'projects', 'id');
+];
+}
+function saveProjectsToStorage(){
+  try{ localStorage.setItem('stockflow_projects', JSON.stringify(projects)); }catch(e){}
+}
+const projects = withFirestoreSync(loadProjectsFromStorage(), 'projects', 'id');
 
-/* Nested edits inside a project (images, notes, tasks, team, docs, risks)
+/* Nested edits inside a project (phases, images, notes, team, docs, risks)
    mutate a sub-array/object inside a project record, not the `projects`
    array itself — so the withFirestoreSync proxy on `projects` never
    fires for them. Call this manually right after any such nested edit
-   to force a re-sync of the current project state to Supabase. */
-function syncCurrentProject(){
+   to force a re-sync of the current project state to Supabase.
+
+   `idx` (when given) stamps that project's updatedAt so the smart merge
+   on next load can tell a local edit from the server's (stale) copy.
+   Every write also goes to localStorage as a safety net, so an edit
+   never depends on a single (possibly failing) Supabase write. */
+function syncCurrentProject(idx){
+  if(idx !== undefined && projects[idx]) projects[idx].updatedAt = new Date().toISOString();
+  saveProjectsToStorage();
   if(window.StockFlowBackend && window.StockFlowBackend.enabled){
     window.StockFlowBackend.syncCollection('projects', projects, 'id');
   }
@@ -3086,7 +3111,7 @@ function openProjectDetail(idx){
           showToast(lang==='en'?'Not connected to Supabase (demo mode).':'غير متصل بـ Supabase (وضع تجريبي).');
           return;
         }
-        syncCurrentProject();
+        syncCurrentProject(idx);
         showToast(lang==='en'?'Project synced!':'تمت مزامنة المشروع!');
       });
     }
@@ -3308,13 +3333,14 @@ function saveProject(idx){
       materials:[], team:[], docs:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
     });
   }
+  syncCurrentProject(idx !== null ? idx : undefined);
   document.querySelectorAll('.modal-overlay.show').forEach(m => m.remove());
   showSuccessCheck(lang==='en'?'Project saved!':'تم حفظ المشروع!', ()=>{ navigate('projects'); });
 }
 
 async function deleteProject(idx){
   const ok = await showConfirm(lang==='en'?'Are you sure you want to delete this project?':'هل أنت متأكد من حذف هذا المشروع؟');
-  if(ok){ projects.splice(idx, 1); navigate('projects'); }
+  if(ok){ projects.splice(idx, 1); saveProjectsToStorage(); navigate('projects'); }
 }
 
 function addProjectNote(idx){
@@ -3323,7 +3349,7 @@ function addProjectNote(idx){
   if(!inp||!inp.value.trim()) return;
   p.notesLog = p.notesLog||[];
   p.notesLog.push({text:inp.value.trim(), textAr:inp.value.trim(), user:'admin', date:new Date().toISOString().split('T')[0]});
-  syncCurrentProject();
+  syncCurrentProject(idx);
   inp.value = '';
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjNotesTab(p, idx, STR[lang].projects);
@@ -3391,7 +3417,7 @@ function showAddTeamModal(idx){
       const roleMap = {manager:lang==='en'?'Project Manager':'مدير مشروع', engineer:lang==='en'?'Engineer':'مهندس', supervisor:lang==='en'?'Supervisor':'مراقب', storekeeper:lang==='en'?'Storekeeper':'مسؤول مستودع'};
       const roleArMap = {manager:'مدير مشروع', engineer:'مهندس', supervisor:'مراقب', storekeeper:'مسؤول مستودع'};
       p.team.push({name, role, roleAr: roleArMap[role]||role});
-      syncCurrentProject();
+      syncCurrentProject(idx);
       overlay.remove();
       const existing = document.getElementById('projDetailOverlay');
       if(existing) existing.remove();
@@ -3417,14 +3443,14 @@ function showAddDocModal(idx){
       if(file){
         const { url } = await uploadFileOrFallback(file, 'projects');
         p.docs.push({name, type:document.getElementById('docType')?.value||'PDF', date:document.getElementById('docDate')?.value||'', url, file:file.name});
-        syncCurrentProject();
+        syncCurrentProject(idx);
         overlay.remove();
         const existing = document.getElementById('projDetailOverlay');
         if(existing) existing.remove();
         openProjectDetail(idx);
       } else {
         p.docs.push({name, type:document.getElementById('docType')?.value||'PDF', date:document.getElementById('docDate')?.value||'', url:'', file:''});
-        syncCurrentProject();
+        syncCurrentProject(idx);
         overlay.remove();
         const existing = document.getElementById('projDetailOverlay');
         if(existing) existing.remove();
@@ -3443,7 +3469,7 @@ function showAddImageModal(idx){
   setTimeout(()=>{
     document.getElementById('imgSave')?.addEventListener('click', ()=>{
       p.images.push({src:'', cat:document.getElementById('imgCat')?.value||'before', date:new Date().toISOString().split('T')[0], desc:document.getElementById('imgDesc')?.value?.trim()||''});
-      syncCurrentProject();
+      syncCurrentProject(idx);
       overlay.remove();
       const existing = document.getElementById('projDetailOverlay');
       if(existing) existing.remove();
@@ -3464,7 +3490,7 @@ function showAddRiskModal(idx){
       const desc = document.getElementById('riskDesc')?.value?.trim();
       if(!desc) return;
       p.risks.push({name:desc, nameAr:desc, level:document.getElementById('riskLevel')?.value||'medium', status:document.getElementById('riskStatus')?.value||'active', date:new Date().toISOString().split('T')[0]});
-      syncCurrentProject();
+      syncCurrentProject(idx);
       overlay.remove();
       const existing = document.getElementById('projDetailOverlay');
       if(existing) existing.remove();
@@ -3508,7 +3534,7 @@ function saveNewPhase(idx){
   });
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjPhasesTab(projects[idx], idx, STR[lang].projects);
-  syncCurrentProject();
+  syncCurrentProject(idx);
 }
 function getPhaseProgressFromStatus(status){
   return status==='completed' ? 100 : status==='inProgress'||status==='delayed' ? 50 : 0;
@@ -3518,7 +3544,7 @@ function updatePhaseField(idx, pi, field, value){
   if(!p.phases[pi]) return;
   p.phases[pi][field] = value;
   if(field === 'status') p.phases[pi].progress = getPhaseProgressFromStatus(value);
-  syncCurrentProject();
+  syncCurrentProject(idx);
 }
 function deletePhase(idx, pi){
   const p = projects[idx]; if(!p) return;
@@ -3528,14 +3554,14 @@ function deletePhase(idx, pi){
   p.progress = total ? Math.round(completed/total*100) : 0;
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjPhasesTab(p, idx, STR[lang].projects);
-  syncCurrentProject();
+  syncCurrentProject(idx);
 }
 function savePhases(idx){
   const p = projects[idx]; if(!p) return;
   const total = p.phases.length;
   const completed = p.phases.filter(ph=>ph.status==='completed').length;
   p.progress = total ? Math.round(completed/total*100) : 0;
-  syncCurrentProject();
+  syncCurrentProject(idx);
   showSuccessCheck(lang==='en'?'Phases saved!':'تم حفظ المراحل!', ()=>{ 
     const body = document.getElementById('projDetailBody');
     if(body) body.innerHTML = renderProjPhasesTab(p, idx, STR[lang].projects);
@@ -3544,35 +3570,35 @@ function savePhases(idx){
 function deleteProjectTeamMember(idx, mi){
   const p = projects[idx]; if(!p) return;
   p.team.splice(mi, 1);
-  syncCurrentProject();
+  syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjTeamTab(p, idx, STR[lang].projects);
 }
 function deleteProjectDoc(idx, di){
   const p = projects[idx]; if(!p) return;
   p.docs.splice(di, 1);
-  syncCurrentProject();
+  syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjDocsTab(p, idx, STR[lang].projects);
 }
 function deleteProjectPO(idx, pi){
   const p = projects[idx]; if(!p) return;
   p.poRefs.splice(pi, 1);
-  syncCurrentProject();
+  syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjPurchasesTab(p, idx, STR[lang].projects);
 }
 function deleteProjectRisk(idx, ri){
   const p = projects[idx]; if(!p) return;
   p.risks.splice(ri, 1);
-  syncCurrentProject();
+  syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjRisksTab(p, idx, STR[lang].projects);
 }
 function deleteProjectImage(idx, imgIdx){
   const p = projects[idx]; if(!p) return;
   p.images.splice(imgIdx, 1);
-  syncCurrentProject();
+  syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjGalleryTab(p, idx, STR[lang].projects);
 }
@@ -3590,7 +3616,7 @@ function showAddPOModal(idx){
       const id = document.getElementById('poRefNum')?.value?.trim()||'PO-'+Date.now();
       p.poRefs = p.poRefs||[];
       p.poRefs.push({id, supplier:document.getElementById('poRefSupplier')?.value?.trim()||'', value:parseFloat(document.getElementById('poRefValue')?.value)||0, date:document.getElementById('poRefDate')?.value||'', delivery:document.getElementById('poRefDelivery')?.value||'', status:'pending'});
-      syncCurrentProject();
+      syncCurrentProject(idx);
       overlay.remove();
       const existing = document.getElementById('projDetailOverlay');
       if(existing) existing.remove();
@@ -3604,7 +3630,7 @@ function addProjectMaterial(idx){
   if(!name) return;
   const qty = parseInt(prompt(lang==='en'?'Required quantity:':'الكمية المطلوبة:')) || 0;
   p.materials.push({id:'M'+Date.now(), name, nameAr:name, qtyReq:qty, qtyIssued:0, qtyRemaining:qty, status:'notAvailable'});
-  syncCurrentProject();
+  syncCurrentProject(idx);
   const existing = document.getElementById('projDetailOverlay');
   if(existing) existing.remove();
   openProjectDetail(idx);
