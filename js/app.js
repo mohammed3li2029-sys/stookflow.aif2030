@@ -3745,14 +3745,45 @@ function bindTaskBoardEvents(container){
       w.classList.add('checked');
       w.querySelector('.task-checkbox').checked = true;
       const card = w.closest('.t-acc-card');
-      if(card) card.classList.add('completed');
+      if(card){
+        /* FLIP: animate the card gliding to its new position at the end */
+        const first=card.getBoundingClientRect();
+        card.classList.add('completed');
+        void card.offsetHeight;
+        const last=card.getBoundingClientRect();
+        const dx=first.left-last.left, dy=first.top-last.top;
+        const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if((dx||dy)&&!reduce){
+          card.style.transition='none';
+          card.style.transform=`translate(${dx}px,${dy}px)`;
+          void card.offsetHeight;
+          card.style.transition='transform 420ms var(--ease)';
+          card.style.transform='';
+          card.addEventListener('transitionend',()=>{card.style.transition='';card.style.transform='';},{once:true});
+        }
+      }
       showToast(L.taskCompleted);
     } else {
       w.classList.remove('checked');
       w.querySelector('.task-checkbox').checked = false;
       const card = w.closest('.t-acc-card');
-      if(card) card.classList.remove('completed');
-      navigate(currentPage);
+      if(card){
+        /* FLIP: animate the card gliding back to its original position */
+        const first=card.getBoundingClientRect();
+        card.classList.remove('completed');
+        void card.offsetHeight;
+        const last=card.getBoundingClientRect();
+        const dx=first.left-last.left, dy=first.top-last.top;
+        const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if((dx||dy)&&!reduce){
+          card.style.transition='none';
+          card.style.transform=`translate(${dx}px,${dy}px)`;
+          void card.offsetHeight;
+          card.style.transition='transform 420ms var(--ease)';
+          card.style.transform='';
+          card.addEventListener('transitionend',()=>{card.style.transition='';card.style.transform='';},{once:true});
+        }
+      }
     }
   }));
 }
