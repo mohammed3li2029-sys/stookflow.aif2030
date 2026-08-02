@@ -1373,9 +1373,9 @@ function openQuoteModal(idx=null){
         </table>
       </div>
       <div class="po-totals">
-        <div class="po-totals-row"><span>${lang==='en'?'Subtotal':'الإجمالي قبل الضريبة'}</span><span id="qSubtotal">${RYAL} 0.00</span></div>
-        <div class="po-totals-row"><span>${lang==='en'?'VAT (15%)':'ضريبة القيمة المضافة (15%)'}</span><span id="qVat">${RYAL} 0.00</span></div>
-        <div class="po-totals-row"><span style="font-weight:800;">${lang==='en'?'Grand Total':'الإجمالي شامل الضريبة'}</span><span id="qGrandTotal" style="font-weight:800;color:var(--blue);">${RYAL} 0.00</span></div>
+        <div class="po-totals-row"><span>${lang==='en'?'Subtotal':'الإجمالي قبل الضريبة'}</span><span id="qSubtotal">${lang==='en' ? RYAL+' 0.00' : '<span dir="rtl">0.00 '+RYAL+'</span>'}</span></div>
+        <div class="po-totals-row"><span>${lang==='en'?'VAT (15%)':'ضريبة القيمة المضافة (15%)'}</span><span id="qVat">${lang==='en' ? RYAL+' 0.00' : '<span dir="rtl">0.00 '+RYAL+'</span>'}</span></div>
+        <div class="po-totals-row"><span style="font-weight:800;">${lang==='en'?'Grand Total':'الإجمالي شامل الضريبة'}</span><span id="qGrandTotal" style="font-weight:800;color:var(--blue);">${lang==='en' ? RYAL+' 0.00' : '<span dir="rtl">0.00 '+RYAL+'</span>'}</span></div>
       </div>
       <div class="field" style="margin-top:15px;">
         <label>${lang==='en'?'Terms & Conditions':'الشروط والأحكام'}</label>
@@ -1436,9 +1436,9 @@ function updateQuoteTotals(){
   const vat = subtotal * 0.15;
   const total = subtotal + vat;
   const fmt = n => n.toLocaleString('en',{minimumFractionDigits:2});
-  document.getElementById('qSubtotal').innerHTML = lang==='en' ? fmt(subtotal)+' '+RYAL : RYAL+' '+fmt(subtotal);
-  document.getElementById('qVat').innerHTML = lang==='en' ? fmt(vat)+' '+RYAL : RYAL+' '+fmt(vat);
-  document.getElementById('qGrandTotal').innerHTML = lang==='en' ? fmt(total)+' '+RYAL : RYAL+' '+fmt(total);
+  document.getElementById('qSubtotal').innerHTML = lang==='en' ? fmt(subtotal)+' '+RYAL : '<span dir="rtl">'+fmt(subtotal)+' '+RYAL+'</span>';
+  document.getElementById('qVat').innerHTML = lang==='en' ? fmt(vat)+' '+RYAL : '<span dir="rtl">'+fmt(vat)+' '+RYAL+'</span>';
+  document.getElementById('qGrandTotal').innerHTML = lang==='en' ? fmt(total)+' '+RYAL : '<span dir="rtl">'+fmt(total)+' '+RYAL+'</span>';
 }
 
 function getTermsForDisplay(termsText){
@@ -1697,15 +1697,15 @@ function openQuoteView(idx){
         <div style="margin-bottom:12px;">
           <div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #eee; max-width:350px;">
             <span style="font-weight:700; color:#1a237e; font-size:12px;">${isAr?'الإجمالي قبل الضريبة':'Subtotal'}</span>
-            <span style="font-weight:800; font-size:12px;">${isAr ? spanBig(RYAL)+' '+(q.total/1.15).toLocaleString('en',{minimumFractionDigits:2}) : (q.total/1.15).toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
+            <span style="font-weight:800; font-size:12px;">${(q.total/1.15).toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
           </div>
           <div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #eee; max-width:350px;">
             <span style="font-weight:700; color:#1a237e; font-size:12px;">${isAr?'ضريبة القيمة المضافة (15%)':'VAT (15%)'}</span>
-            <span style="font-weight:800; font-size:12px;">${isAr ? spanBig(RYAL)+' '+(q.total - q.total/1.15).toLocaleString('en',{minimumFractionDigits:2}) : (q.total - q.total/1.15).toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
+            <span style="font-weight:800; font-size:12px;">${(q.total - q.total/1.15).toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
           </div>
           <div style="display:flex; justify-content:space-between; padding:8px 8px; background:#f0f2f5; border-radius:6px; margin-top:3px; max-width:350px;">
             <span style="font-weight:900; color:#d32f2f; font-size:14px;">${isAr?'الإجمالي شامل الضريبة':'Total (incl. VAT)'}</span>
-            <span style="font-weight:900; color:#1a237e; font-size:15px;">${isAr ? spanBig(RYAL)+' '+q.total.toLocaleString('en',{minimumFractionDigits:2}) : q.total.toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
+            <span style="font-weight:900; color:#1a237e; font-size:15px;">${q.total.toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
           </div>
         </div>
 
