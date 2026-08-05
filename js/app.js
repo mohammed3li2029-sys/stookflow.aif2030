@@ -1352,6 +1352,10 @@ function openQuoteModal(idx=null){
             <option value="نمر أحمد" ${isEdit&&q.salesperson==='نمر أحمد'?'selected':''}>نمر أحمد</option>
           </select>
         </div>
+        <div class="field">
+          <label>${lang==='en'?'Discount (SAR)':`الخصم (${RYAL})`}</label>
+          <input id="qDiscount" type="number" min="0" step="0.01" placeholder="0.00" value="${isEdit&&q.discount?q.discount:''}" oninput="updateQuoteTotals()">
+        </div>
       </div>
       <div style="margin-top:15px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -1374,6 +1378,7 @@ function openQuoteModal(idx=null){
       </div>
       <div class="po-totals">
         <div class="po-totals-row"><span>${lang==='en'?'Subtotal':'الإجمالي قبل الضريبة'}</span><span id="qSubtotal">${lang==='en' ? RYAL+' 0.00' : '<span dir="rtl">0.00 '+RYAL+'</span>'}</span></div>
+        <div class="po-totals-row"><span>${lang==='en'?'Discount':'الخصم'}</span><span id="qDiscountTotal">${lang==='en' ? '- '+RYAL+' 0.00' : '<span dir="rtl">- 0.00 '+RYAL+'</span>'}</span></div>
         <div class="po-totals-row"><span>${lang==='en'?'VAT (15%)':'ضريبة القيمة المضافة (15%)'}</span><span id="qVat">${lang==='en' ? RYAL+' 0.00' : '<span dir="rtl">0.00 '+RYAL+'</span>'}</span></div>
         <div class="po-totals-row"><span style="font-weight:800;">${lang==='en'?'Grand Total':'الإجمالي شامل الضريبة'}</span><span id="qGrandTotal" style="font-weight:800;color:var(--blue);">${lang==='en' ? RYAL+' 0.00' : '<span dir="rtl">0.00 '+RYAL+'</span>'}</span></div>
       </div>
@@ -1433,10 +1438,15 @@ function renderQuoteLines(){
 
 function updateQuoteTotals(){
   const subtotal = quoteLines.reduce((s, l)=> s + (l.qty * l.price), 0);
-  const vat = subtotal * 0.15;
-  const total = subtotal + vat;
+  const discountEl = document.getElementById('qDiscount');
+  const discount = discountEl ? Math.min(parseFloat(discountEl.value) || 0, subtotal) : 0;
+  const net = subtotal - discount;
+  const vat = net * 0.15;
+  const total = net + vat;
   const fmt = n => n.toLocaleString('en',{minimumFractionDigits:2});
   document.getElementById('qSubtotal').innerHTML = lang==='en' ? fmt(subtotal)+' '+RYAL : '<span dir="rtl">'+fmt(subtotal)+' '+RYAL+'</span>';
+  const discEl = document.getElementById('qDiscountTotal');
+  if(discEl) discEl.innerHTML = lang==='en' ? '- '+fmt(discount)+' '+RYAL : '<span dir="rtl">- '+fmt(discount)+' '+RYAL+'</span>';
   document.getElementById('qVat').innerHTML = lang==='en' ? fmt(vat)+' '+RYAL : '<span dir="rtl">'+fmt(vat)+' '+RYAL+'</span>';
   document.getElementById('qGrandTotal').innerHTML = lang==='en' ? fmt(total)+' '+RYAL : '<span dir="rtl">'+fmt(total)+' '+RYAL+'</span>';
 }
@@ -1470,7 +1480,8 @@ function saveQuotation(){
   }
   
   const subtotal = quoteLines.reduce((s, l)=> s + (l.qty * l.price), 0);
-  const vat = subtotal * 0.15;
+  const discount = Math.min(parseFloat(document.getElementById('qDiscount') ? document.getElementById('qDiscount').value : 0) || 0, subtotal);
+  const vat = (subtotal - discount) * 0.15;
   
   const status = document.getElementById('qStatus') ? document.getElementById('qStatus').value : 'review';
   
@@ -1484,7 +1495,8 @@ function saveQuotation(){
     validity,
     salesperson,
     status,
-    total: subtotal + vat,
+    discount,
+    total: (subtotal - discount) + vat,
     terms: terms || 'الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.',
     payments,
     items: JSON.parse(JSON.stringify(quoteLines)),
@@ -1697,8 +1709,12 @@ function openQuoteView(idx){
         <div style="margin-bottom:12px;">
           <div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #eee; max-width:350px;">
             <span style="font-weight:700; color:#1a237e; font-size:12px;">${isAr?'الإجمالي قبل الضريبة':'Subtotal'}</span>
-            <span style="font-weight:800; font-size:12px;">${(q.total/1.15).toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
+            <span style="font-weight:800; font-size:12px;">${(q.total/1.15 + (q.discount||0)).toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
           </div>
+          ${(q.discount>0) ? `<div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #eee; max-width:350px;">
+            <span style="font-weight:700; color:#1a237e; font-size:12px;">${isAr?'الخصم':'Discount'}</span>
+            <span style="font-weight:800; font-size:12px; color:#d32f2f;">- ${q.discount.toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
+          </div>` : ''}
           <div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #eee; max-width:350px;">
             <span style="font-weight:700; color:#1a237e; font-size:12px;">${isAr?'ضريبة القيمة المضافة (15%)':'VAT (15%)'}</span>
             <span style="font-weight:800; font-size:12px;">${(q.total - q.total/1.15).toLocaleString('en',{minimumFractionDigits:2})+' '+spanBig(RYAL)}</span>
