@@ -1330,7 +1330,7 @@ function openQuoteModal(idx=null){
         </div>
         <div class="field">
           <label>${lang==='en'?'E-mail':'البريد الإلكتروني'}</label>
-          <input id="qEmail" placeholder="info@..." value="${isEdit&&q.email?q.email:'info@elbraq.com'}">
+          <input id="qEmail" placeholder="info@..." value="${isEdit&&q.email?q.email:''}">
         </div>
         <div class="field">
           <label>${lang==='en'?'Address':'الموقع'}</label>
@@ -1654,10 +1654,10 @@ function openQuoteView(idx){
               <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="10" fill="#1a237e"/><path d="M8 7h8c1.1 0 1.5.5 1.5 1v8c0 .5-.4 1-1.5 1H8c-1.1 0-1.5-.5-1.5-1V8c0-.5.4-1 1.5-1z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path d="M10.5 8.5h3" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M10.5 15.5h3" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
               <span>${q.phone || '+966 54 634 2735'}</span>
             </div>
-            <div style="display:flex; align-items:center; gap:6px; font-size:12px; text-align:${al}; direction:${dir};">
+            ${q.email ? `<div style="display:flex; align-items:center; gap:6px; font-size:12px; text-align:${al}; direction:${dir};">
               <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="10" fill="#1a237e"/><rect x="7" y="7.5" width="10" height="9" rx="1.5" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 7.5l5 4.5 5-4.5" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span>${q.email || 'info@elbraq.com'}</span>
-            </div>
+              <span>${q.email}</span>
+            </div>` : ''}
           </div>
         </div>
 
