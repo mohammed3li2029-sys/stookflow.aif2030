@@ -1033,22 +1033,23 @@ function renderDashCal(){
   if(titleEl) titleEl.textContent = L.calendar.monthNames[month] + ' ' + year;
 
   let html = '';
+  let ci = 0;
   L.calendar.dayNames.forEach(n=>{ html += '<div class="cal-day" style="padding:3px 0;font-size:10px;">'+n+'</div>'; });
   for(let i=startDay-1; i>=0; i--){
     const day = daysInPrev - i;
-    html += '<div class="cal-cell other" data-date="" style="padding:4px 0;font-size:11px;">'+day+'</div>';
+    html += '<div class="cal-cell other" data-date="" style="padding:4px 0;font-size:11px;animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
   }
   for(let day=1; day<=daysInMonth; day++){
     const dateStr = fmtDate(new Date(year, month, day));
     const isToday = dateStr===todayStr;
     const hasEvent = getEventsForDate(dateStr).length>0;
     const isSelected = dateStr===dashCalSelected;
-    html += '<div class="cal-cell'+(isToday?' today':'')+(hasEvent?' has-event':'')+(isSelected?' selected':'')+'" data-date="'+dateStr+'" style="padding:4px 0;font-size:11px;">'+day+'</div>';
+    html += '<div class="cal-cell'+(isToday?' today':'')+(hasEvent?' has-event':'')+(isSelected?' selected':'')+'" data-date="'+dateStr+'" style="padding:4px 0;font-size:11px;animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
   }
   const totalCells = startDay + daysInMonth;
   const remaining = (7 - totalCells%7)%7;
   for(let i=1; i<=remaining; i++){
-    html += '<div class="cal-cell other" data-date="" style="padding:4px 0;font-size:11px;">'+i+'</div>';
+    html += '<div class="cal-cell other" data-date="" style="padding:4px 0;font-size:11px;animation-delay:'+(ci*8)+'ms">'+i+'</div>'; ci++;
   }
   const grid = document.getElementById('dashCalGrid');
   if(grid) grid.innerHTML = html;
@@ -5680,6 +5681,7 @@ function renderCalendar(){
   document.getElementById('calTitle').textContent = L.calendar.monthNames[month] + ' ' + year;
 
   let html = '';
+  let ci = 0;
   // day names
   L.calendar.dayNames.forEach(n=>{ html += '<div class="cal-day">'+n+'</div>'; });
   // prev month cells
@@ -5687,7 +5689,7 @@ function renderCalendar(){
     const day = daysInPrev - i;
     const m = month===0?11:month-1;
     const y = month===0?year-1:year;
-    html += '<div class="cal-cell other" data-date="">'+day+'</div>';
+    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
   }
   // current month cells
   for(let day=1; day<=daysInMonth; day++){
@@ -5696,13 +5698,13 @@ function renderCalendar(){
     const isToday = dateStr===todayStr;
     const hasEvent = getEventsForDate(dateStr).length>0;
     const isSelected = dateStr===calSelected;
-    html += '<div class="cal-cell'+(isToday?' today':'')+(hasEvent?' has-event':'')+(isSelected?' selected':'')+'" data-date="'+dateStr+'">'+day+'</div>';
+    html += '<div class="cal-cell'+(isToday?' today':'')+(hasEvent?' has-event':'')+(isSelected?' selected':'')+'" data-date="'+dateStr+'" style="animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
   }
   // next month cells
   const totalCells = startDay + daysInMonth;
   const remaining = (7 - totalCells%7)%7;
   for(let i=1; i<=remaining; i++){
-    html += '<div class="cal-cell other" data-date="">'+i+'</div>';
+    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms">'+i+'</div>'; ci++;
   }
   document.getElementById('calGrid').innerHTML = html;
 
@@ -5718,7 +5720,7 @@ function renderCalEvents(){
   const bodyEl = document.getElementById('calEventsBody');
   if(titleEl) titleEl.textContent = calSelected===fmtDate(new Date()) ? (L.notif.todayTitle||'Today') : (calSelected||'—');
   if(bodyEl) bodyEl.innerHTML = events.length
-    ? events.map(e=>'<div class="cal-event-item"><div class="cal-event-dot"></div><div class="cal-event-name">'+escapeHtml(e.name)+'</div><div class="cal-event-time">'+(e.time||'—')+'</div><button class="cal-event-del" data-id="'+e.id+'">×</button></div>').join('')
+    ? events.map((e,ei)=>'<div class="cal-event-item" style="animation-delay:'+(ei*40)+'ms"><div class="cal-event-dot"></div><div class="cal-event-name">'+escapeHtml(e.name)+'</div><div class="cal-event-time">'+(e.time||'—')+'</div><button class="cal-event-del" data-id="'+e.id+'">×</button></div>').join('')
     : '<div class="cal-no-events">'+L.calendar.noEvents+'</div>';
 }
 

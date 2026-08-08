@@ -195,7 +195,7 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius-md);box-shadow:0 12px 40px rgba(0,0,0,.18);
   z-index:101;display:none;overflow:hidden;
-  animation:notifSlideIn .2s var(--ease);font-size:12.5px;
+  animation:calDropIn .28s var(--ease);font-size:12.5px;
 }
 .cal-dropdown.open{display:block;}
 .cal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px;}
@@ -240,6 +240,27 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
 .cal-form-cancel:hover{background:var(--border);}
 .cal-form-save{background:var(--blue);color:#fff;}
 .cal-form-save:hover{background:var(--blue-hover,#5591ff);}
+
+/* ---------- Calendar Animations ---------- */
+@keyframes calDropIn{
+  from{opacity:0;transform:translateY(-10px) scale(.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes calCellPop{
+  from{opacity:0;transform:scale(.6);}
+  to{opacity:1;transform:scale(1);}
+}
+@keyframes calEventIn{
+  from{opacity:0;transform:translateX(12px);}
+  to{opacity:1;transform:translateX(0);}
+}
+@keyframes calFormIn{
+  from{opacity:0;transform:translateY(-8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.cal-grid .cal-cell{animation:calCellPop .3s var(--ease) backwards;}
+.cal-event-item{animation:calEventIn .28s var(--ease) backwards;}
+.cal-add-form.open{display:flex;animation:calFormIn .25s var(--ease);}
 
 .dash-customize-bar{
   display:flex;align-items:center;justify-content:center;gap:12px;
