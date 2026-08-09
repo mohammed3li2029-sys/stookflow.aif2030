@@ -1687,8 +1687,8 @@ function openQuoteView(idx){
               <th style="padding:8px; border:1px solid #1a237e;">${isAr?'المواصفات':'Description'}</th>
               <th style="padding:8px; border:1px solid #1a237e; width:55px;">${isAr?'الوحدة':'Unit'}</th>
               <th style="padding:8px; border:1px solid #1a237e; width:55px;">${isAr?'الكمية':'Qty'}</th>
-              <th style="padding:8px; border:1px solid #1a237e; width:90px;">${isAr?`سعر الوحدة (${RYAL})`:'Unit Price'}</th>
-              <th style="padding:8px; border:1px solid #1a237e; width:105px;">${isAr?`الإجمالي (${RYAL})`:'Total'}</th>
+              <th style="padding:8px; border:1px solid #1a237e; width:90px; text-align:center;">${isAr?'سعر الوحدة':'Unit Price'}</th>
+              <th style="padding:8px; border:1px solid #1a237e; width:105px; text-align:center;">${isAr?'الإجمالي':'Total'}</th>
             </tr>
           </thead>
           <tbody>
