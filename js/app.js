@@ -382,7 +382,7 @@ en:{
   notif:{markAll:'Mark all as read',lowStockMsg:'fell below minimum stock level',expiryMsg:'is approaching its expiry date',approvalMsg:'is waiting for your approval',systemMsg:'Scheduled maintenance completed successfully',todayTitle:'Today',upcomingTitle:'Upcoming'},
   calendar:{title:'Calendar',btnAdd:'Add Event',btnCancel:'Cancel',eventName:'Event Name',eventDate:'Date',eventTime:'Time',addTitle:'New Event',noEvents:'No events',today:'Today',monthNames:['January','February','March','April','May','June','July','August','September','October','November','December'],dayNames:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],eventNotifPrefix:'Upcoming event',todayEvents:'events today'},
   settings:{
-    appearance:'Appearance',darkMode:'Dark Mode',darkModeSub:'Switch between light and dark interface',language:'Language & Region',langSub:'Interface language and text direction',notifGroup:'Notifications',lowStockAlerts:'Low Stock Alerts',lowStockSub:'Notify when items fall below minimum level',expiryAlerts:'Expiry Alerts',expirySub:'Notify before items reach expiry date',approvalNotif:'Approval Requests',approvalSub:'Notify on pending approval workflow items',system:'System',backup:'Backup & Restore',backupSub:'Automatic daily backup of local database',offline:'Offline Mode',offlineSub:'Continue working without an internet connection',light:'Light',dark:'Dark',auto:'Auto'
+    appearance:'Appearance',darkMode:'Dark Mode',darkModeSub:'Switch between light and dark interface',language:'Language & Region',langSub:'Interface language and text direction',notifGroup:'Notifications',lowStockAlerts:'Low Stock Alerts',lowStockSub:'Notify when items fall below minimum level',expiryAlerts:'Expiry Alerts',expirySub:'Notify before items reach expiry date',approvalNotif:'Approval Requests',approvalSub:'Notify on pending approval workflow items',system:'System',backup:'Backup & Restore',backupSub:'Automatic daily backup of local database',offline:'Offline Mode',offlineSub:'Continue working without an internet connection',light:'Light',dark:'Dark',auto:'Auto',dataCard:'Data & Backup',exportAll:'Export All Data',importAll:'Import All Data',exportNote:'Full JSON backup of every module (inventory, warehouses, projects, quotations, POs, tasks, users, calendar, profile & settings)',importConfirm:'This will replace ALL current data with the backup contents. Continue?',importError:'Invalid or corrupt backup file.',imported:'All data restored successfully.'
   },
   projects:{list:'Projects List',dashboard:'Projects Dashboard',plan:'Automation Plan',newProject:'New Project',editProject:'Edit Project',deleteProject:'Delete Project',deleteConfirm:'Are you sure you want to delete this project?',projectName:'Project Name',projectNumber:'Project #',client:'Client',type:'Type',location:'Location',manager:'Project Manager',contractValue:'Contract Value',contractDate:'Contract Date',startDate:'Start Date',duration:'Duration (days)',endDate:'Expected End Date',progress:'Progress',status:'Status',priority:'Priority',contractNo:'Contract No.',contractFile:'Contract (PDF)',coordinates:'Coordinates',engineer:'Responsible Engineer',notes:'Notes',phases:'Phases',materials:'Materials',purchases:'Purchases',team:'Team',documents:'Documents',gallery:'Gallery',activityLog:'Activity Log',risks:'Risks',alerts:'Alerts',addMaterial:'Add Material',editMaterial:'Edit Material',importExcel:'Import from Excel',importBOM:'Import BOM',materialName:'Material Name',qtyRequired:'Qty Required',qtyIssued:'Qty Issued',qtyRemaining:'Qty Remaining',qtyAvailable:'Available in Stock',materialStatus:'Status',statusProvided:'Provided',statusOrdered:'On Order',statusNotAvailable:'Not Available',issueDate:'Issue Date',issueRef:'Issue Ref',receivedBy:'Received By',issuedBy:'Issued By',poNumber:'PO #',supplier:'Supplier',orderValue:'Order Value',orderDate:'Order Date',deliveryDate:'Delivery Date',orderStatus:'Order Status',teamMember:'Team Member',role:'Role',addMember:'Add Member',documentName:'Document Name',docType:'Document Type',uploadDate:'Upload Date',addDocument:'Add Document',imageCategory:'Image Category',beforeExec:'Before Execution',duringExec:'During Execution',afterExec:'After Execution',addImage:'Add Image',logEntry:'Log Entry',addNote:'Add Note',riskName:'Risk',riskLevel:'Risk Level',addRisk:'Add Risk',activeProjects:'Active Projects',completedProjects:'Completed Projects',overdueProjects:'Overdue Projects',totalProjectsValue:'Total Projects Value',upcomingDeadlines:'Upcoming Deadlines',overdueList:'Overdue Projects',mostUsedMaterials:'Most Used Materials',topProgress:'Top Progress',daysRemaining:'days remaining',phase:'Phase',startDatePhase:'Start Date',endDatePhase:'End Date',responsible:'Responsible',phaseStatus:'Phase Status',phaseNotStarted:'Not Started',phaseInProgress:'In Progress',phaseCompleted:'Completed',phaseDelayed:'Delayed',alertNearDeadline:'Project deadline approaching',alertOverdue:'Project is overdue',alertMaterialShortage:'Material shortage',alertContractEnding:'Contract ending soon',alertMaterialArrived:'Materials arrived',alertSupplierDelay:'Supplier delay',searchProjects:'Search by name, client or number...',allStatus:'All Statuses',allPriority:'All Priorities',filter:'Filter',export:'Export',exportExcel:'Export to Excel',overall:'Overall Completion',totalMaterials:'Total Materials',provided:'Provided',onOrder:'Under Order',notAvailable:'Not Available',materialSummary:'Material Summary',issueOrders:'Issue Orders',purchaseOrders:'Purchase Orders',teamMembers:'Team Members',documentsList:'Documents',imageGallery:'Image Gallery',activityHistory:'Activity History',riskRegistry:'Risk Registry',alertsList:'Alerts',noData:'No projects found',noMaterials:'No materials added',noPhases:'No phases defined',noTeam:'No team members',noDocs:'No documents uploaded',noImages:'No images uploaded',noNotes:'No activity recorded',noRisks:'No risks registered',noAlerts:'No alerts',unknown:'Unknown','Phase 1':'Contract Signing','Phase 2':'Plan Approval','Phase 3':'Material Preparation','Phase 4':'Manufacturing','Phase 5':'Painting','Phase 6':'Transport','Phase 7':'Installation','Phase 8':'Preliminary Handover','Phase 9':'Final Handover'},
   units:{days:'days'},
@@ -453,7 +453,7 @@ ar:{
   notif:{markAll:'تعليم الكل كمقروء',lowStockMsg:'انخفض عن الحد الأدنى للمخزون',expiryMsg:'يقترب من تاريخ انتهاء الصلاحية',approvalMsg:'بانتظار موافقتك',systemMsg:'اكتملت الصيانة المجدولة بنجاح',todayTitle:'اليوم',upcomingTitle:'القادم'},
   calendar:{title:'التقويم',btnAdd:'إضافة موعد',btnCancel:'إلغاء',eventName:'اسم الموعد',eventDate:'التاريخ',eventTime:'الوقت',addTitle:'موعد جديد',noEvents:'لا توجد مواعيد',today:'اليوم',monthNames:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],dayNames:['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],eventNotifPrefix:'موعد قادم',todayEvents:'موعد اليوم'},
   settings:{
-    appearance:'المظهر',darkMode:'الوضع الداكن',darkModeSub:'التبديل بين الواجهة الفاتحة والداكنة',language:'اللغة والمنطقة',langSub:'لغة الواجهة واتجاه النص',notifGroup:'التنبيهات',lowStockAlerts:'تنبيهات انخفاض المخزون',lowStockSub:'التنبيه عند انخفاض الصنف عن الحد الأدنى',expiryAlerts:'تنبيهات انتهاء الصلاحية',expirySub:'التنبيه قبل وصول الصنف لتاريخ الانتهاء',approvalNotif:'طلبات الموافقة',approvalSub:'التنبيه عند وجود عناصر بانتظار الموافقة',system:'النظام',backup:'النسخ الاحتياطي والاستعادة',backupSub:'نسخ احتياطي يومي تلقائي لقاعدة البيانات المحلية',offline:'وضع عدم الاتصال',offlineSub:'الاستمرار بالعمل دون اتصال بالإنترنت',light:'فاتح',dark:'داكن',auto:'تلقائي'
+    appearance:'المظهر',darkMode:'الوضع الداكن',darkModeSub:'التبديل بين الواجهة الفاتحة والداكنة',language:'اللغة والمنطقة',langSub:'لغة الواجهة واتجاه النص',notifGroup:'التنبيهات',lowStockAlerts:'تنبيهات انخفاض المخزون',lowStockSub:'التنبيه عند انخفاض الصنف عن الحد الأدنى',expiryAlerts:'تنبيهات انتهاء الصلاحية',expirySub:'التنبيه قبل وصول الصنف لتاريخ الانتهاء',approvalNotif:'طلبات الموافقة',approvalSub:'التنبيه عند وجود عناصر بانتظار الموافقة',system:'النظام',backup:'النسخ الاحتياطي والاستعادة',backupSub:'نسخ احتياطي يومي تلقائي لقاعدة البيانات المحلية',offline:'وضع عدم الاتصال',offlineSub:'الاستمرار بالعمل دون اتصال بالإنترنت',light:'فاتح',dark:'داكن',auto:'تلقائي',dataCard:'البيانات والنسخ الاحتياطي',exportAll:'تصدير كل البيانات',importAll:'استيراد كل البيانات',exportNote:'نسخة احتياطية كاملة (JSON) لكل الوحدات: المخزون، المستودعات، المشاريع، عروض الأسعار، المشتريات، المهام، المستخدمين، التقويم، الملف الشخصي والإعدادات',importConfirm:'سيتم استبدال جميع البيانات الحالية بمحتويات النسخة الاحتياطية. هل تريد المتابعة؟',importError:'ملف النسخ الاحتياطي غير صالح أو تالف.',imported:'تمت استعادة جميع البيانات بنجاح.'
   },
   projects:{list:'قائمة المشاريع',dashboard:'لوحة المشاريع',plan:'خطة الأتمتة',newProject:'مشروع جديد',editProject:'تعديل المشروع',deleteProject:'حذف المشروع',deleteConfirm:'هل أنت متأكد من حذف هذا المشروع؟',projectName:'اسم المشروع',projectNumber:'رقم المشروع',client:'العميل',type:'النوع',location:'الموقع',manager:'مدير المشروع',contractValue:'قيمة العقد',contractDate:'تاريخ العقد',startDate:'تاريخ البداية',duration:'المدة (أيام)',endDate:'تاريخ الانتهاء المتوقع',progress:'نسبة الإنجاز',status:'الحالة',priority:'الأولوية',contractNo:'رقم العقد',contractFile:'العقد (PDF)',coordinates:'الإحداثيات',engineer:'المهندس المسؤول',notes:'ملاحظات',phases:'المراحل',materials:'المواد',purchases:'المشتريات',team:'الفريق',documents:'المستندات',gallery:'معرض الصور',activityLog:'سجل النشاط',risks:'المخاطر',alerts:'التنبيهات',addMaterial:'إضافة مادة',editMaterial:'تعديل المادة',importExcel:'استيراد من Excel',importBOM:'استيراد BOM',materialName:'اسم المادة',qtyRequired:'الكمية المطلوبة',qtyIssued:'الكمية المصروفة',qtyRemaining:'الكمية المتبقية',qtyAvailable:'المتاح في المستودع',materialStatus:'الحالة',statusProvided:'متوفرة',statusOrdered:'قيد الطلب',statusNotAvailable:'غير متوفرة',issueDate:'تاريخ الصرف',issueRef:'رقم الإذن',receivedBy:'المستلم',issuedBy:'تم الصرف بواسطة',poNumber:'رقم أمر الشراء',supplier:'المورد',orderValue:'قيمة الطلب',orderDate:'تاريخ الطلب',deliveryDate:'تاريخ التوريد',orderStatus:'حالة الطلب',teamMember:'عضو الفريق',role:'الدور',addMember:'إضافة عضو',documentName:'اسم المستند',docType:'نوع المستند',uploadDate:'تاريخ الرفع',addDocument:'إضافة مستند',imageCategory:'تصنيف الصورة',beforeExec:'قبل التنفيذ',duringExec:'أثناء التنفيذ',afterExec:'بعد التنفيذ',addImage:'إضافة صورة',logEntry:'حدث',addNote:'إضافة ملاحظة',riskName:'المخاطرة',riskLevel:'مستوى المخاطرة',addRisk:'إضافة مخاطرة',activeProjects:'المشاريع النشطة',completedProjects:'المشاريع المكتملة',overdueProjects:'المشاريع المتأخرة',totalProjectsValue:'إجمالي قيمة المشاريع',upcomingDeadlines:'المواعيد القريبة',overdueList:'المشاريع المتأخرة',mostUsedMaterials:'أكثر المواد استخداماً',topProgress:'أعلى إنجاز',daysRemaining:'يوم متبقي',phase:'المرحلة',startDatePhase:'تاريخ البدء',endDatePhase:'تاريخ النهاية',responsible:'المسؤول',phaseStatus:'حالة المرحلة',phaseNotStarted:'لم تبدأ',phaseInProgress:'قيد التنفيذ',phaseCompleted:'مكتملة',phaseDelayed:'متأخرة',alertNearDeadline:'اقتراب موعد انتهاء المشروع',alertOverdue:'تأخر المشروع عن الجدول',alertMaterialShortage:'نقص في المواد',alertContractEnding:'اقتراب انتهاء العقد',alertMaterialArrived:'وصول المواد',alertSupplierDelay:'تأخر الموردين',searchProjects:'ابحث بالاسم أو العميل أو الرقم...',allStatus:'جميع الحالات',allPriority:'جميع الأولويات',filter:'تصفية',export:'تصدير',exportExcel:'تصدير إلى Excel',overall:'الإنجاز الإجمالي',totalMaterials:'إجمالي المواد',provided:'متوفرة',onOrder:'قيد الطلب',notAvailable:'غير متوفرة',materialSummary:'ملخص المواد',issueOrders:'أوامر الصرف',purchaseOrders:'أوامر الشراء',teamMembers:'أعضاء الفريق',documentsList:'المستندات',imageGallery:'معرض الصور',activityHistory:'سجل النشاط',riskRegistry:'سجل المخاطر',alertsList:'التنبيهات',noData:'لا توجد مشاريع',noMaterials:'لا توجد مواد',noPhases:'لا توجد مراحل',noTeam:'لا يوجد أعضاء',noDocs:'لا توجد مستندات',noImages:'لا توجد صور',noNotes:'لا توجد أحداث',noRisks:'لا توجد مخاطر',noAlerts:'لا توجد تنبيهات',unknown:'غير معروف','Phase 1':'توقيع العقد','Phase 2':'اعتماد المخططات','Phase 3':'تجهيز المواد','Phase 4':'التصنيع','Phase 5':'الدهان','Phase 6':'النقل','Phase 7':'التركيب','Phase 8':'الاستلام الابتدائي','Phase 9':'الاستلام النهائي'},
   units:{days:'يوم'},
@@ -2862,7 +2862,128 @@ function renderSettings(){
       <div class="setting-row"><div><div class="setting-title">${L.settings.backup}</div><div class="setting-sub">${L.settings.backupSub}</div></div><div class="switch ${settings.backup?'on':''}" id="backupSwitch"><div class="knob"></div></div></div>
       <div class="setting-row"><div><div class="setting-title">${L.settings.offline}</div><div class="setting-sub">${L.settings.offlineSub}</div></div><div class="switch ${settings.offline?'on':''}" id="offlineSwitch"><div class="knob"></div></div></div>
     </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:6px;">${L.settings.dataCard}</div>
+      <div class="setting-row" style="align-items:center;">
+        <div style="flex:1;"><div class="setting-title">${L.settings.exportAll}</div><div class="setting-sub">${L.settings.exportNote}</div></div>
+        <button class="btn" onclick="exportAllData()" style="flex-shrink:0;">${ICONS.download} ${L.settings.exportAll}</button>
+      </div>
+      <div class="setting-row" style="align-items:center;">
+        <div style="flex:1;"><div class="setting-title">${L.settings.importAll}</div><div class="setting-sub">${L.settings.backupSub}</div></div>
+        <button class="btn btn-primary" onclick="importAllData()" style="flex-shrink:0;">${ICONS.plusCircle} ${L.settings.importAll}</button>
+      </div>
+    </div>
   </div>`;
+}
+
+/* ===================================================================
+   FULL DATA BACKUP (JSON export / import)
+   =================================================================== */
+function collectAllData(){
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    app: 'stockflow',
+    collections: {
+      inventory: JSON.parse(JSON.stringify(inventoryData)),
+      warehouses: JSON.parse(JSON.stringify(warehouseData)),
+      materialRequests: JSON.parse(JSON.stringify(reqsData)),
+      projects: JSON.parse(JSON.stringify(projects)),
+      quotations: JSON.parse(JSON.stringify(quotations)),
+      purchaseOrders: JSON.parse(JSON.stringify(purchaseOrders)),
+      tasks: JSON.parse(JSON.stringify(tasksData)),
+      users: JSON.parse(JSON.stringify(usersData.map(({password, ...rest}) => rest))),
+      calendarEvents: JSON.parse(JSON.stringify(CAL_EVENTS)),
+      profile: JSON.parse(JSON.stringify(profileData)),
+      settings: JSON.parse(JSON.stringify(settings)),
+    }
+  };
+}
+
+function exportAllData(){
+  const L = STR[lang];
+  try{
+    const data = collectAllData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'stockflow-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    showToast(L.settings.exportAll + ' ✓');
+  }catch(e){
+    console.error('[StockFlow] Export failed:', e);
+    showToast(L.settings.importError);
+  }
+}
+
+async function importAllData(){
+  const L = STR[lang];
+  const ok = await showConfirm(L.settings.importConfirm);
+  if(!ok) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = function(){
+    const file = input.files && input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        applyImportedData(JSON.parse(reader.result));
+      }catch(e){
+        console.error('[StockFlow] Import parse failed:', e);
+        showToast(L.settings.importError);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function applyImportedData(data){
+  const L = STR[lang];
+  const c = data && data.collections;
+  if(!c || typeof c !== 'object'){ showToast(L.settings.importError); return; }
+  if(Array.isArray(c.inventory)) silentReplace(inventoryData, c.inventory);
+  if(Array.isArray(c.warehouses)) silentReplace(warehouseData, c.warehouses);
+  if(Array.isArray(c.materialRequests)) silentReplace(reqsData, c.materialRequests);
+  if(Array.isArray(c.projects)){ silentReplace(projects, c.projects); saveProjectsToStorage(); }
+  if(Array.isArray(c.quotations)) silentReplace(quotations, c.quotations);
+  if(Array.isArray(c.purchaseOrders)) silentReplace(purchaseOrders, c.purchaseOrders);
+  if(Array.isArray(c.tasks)){ silentReplace(tasksData, c.tasks); saveTasksToStorage(); }
+  if(Array.isArray(c.users)){
+    silentReplace(usersData, c.users.map(u => ({...u, password: u.password || encodePW('')})));
+    syncLoginUsers();
+    syncUsers();
+  }
+  if(Array.isArray(c.calendarEvents)){ CAL_EVENTS = c.calendarEvents; saveCalEvents(); }
+  if(c.profile && typeof c.profile === 'object') Object.assign(profileData, c.profile);
+  if(c.settings && typeof c.settings === 'object') Object.assign(settings, c.settings);
+  saveSettings();
+  pushImportedToBackend();
+  showSuccessCheck(L.settings.imported, ()=>{ navigate('settings'); });
+}
+
+function pushImportedToBackend(){
+  const B = window.StockFlowBackend;
+  if(!B || !B.enabled) return;
+  const tables = [
+    ['inventory', inventoryData, 'sku'],
+    ['warehouses', warehouseData, 'name'],
+    ['material_requests', reqsData, 'id'],
+    ['projects', projects, 'id'],
+    ['quotations', quotations, 'id'],
+    ['purchase_orders', purchaseOrders, 'id'],
+    ['tasks', tasksData, 'id'],
+    ['profile', [profileData], 'id'],
+  ];
+  tables.forEach(([table, arr, idField])=>{
+    try{ B.syncCollection(table, arr, idField); }catch(e){ console.error('[StockFlow] Push after import failed:', table, e); }
+  });
 }
 
 /* ===================================================================
