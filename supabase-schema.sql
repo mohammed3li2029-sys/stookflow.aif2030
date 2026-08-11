@@ -87,25 +87,151 @@ begin
 end $$;
 
 -- ----------------------------------------------------------------------------
--- Row Level Security: only signed-in users (via Supabase Auth) may read
--- or write. This matches the app's current permission model (all logged-in
--- staff share full access). Tighten later with a `role` column if needed.
+-- Row Level Security (strict): data is ONLY accessible to people who are on
+-- the staff list (present in the `users` table) or on the root admins list.
+-- A bare Supabase Auth account that isn't in `users` can do nothing — this
+-- is the defence against open signups: even if someone creates an account,
+-- they get zero rows.
+--
+-- Staff list management (INSERT/UPDATE/DELETE on `users`) is reserved for
+-- root admins, so nobody can grant themselves a higher role.
 -- ----------------------------------------------------------------------------
 
+-- Root administrators. Set the emails of the people who own the system here.
+create table if not exists root_admins (
+  email text primary key,
+  note text default ''
+);
+insert into root_admins (email, note)
+values ('mohammed3li.2029@gmail.com', 'System owner')
+on conflict (email) do nothing;
+
+-- Seed every root admin into the staff directory (the `users` table) so the
+-- owner is a full admin AND a "staff" member from the very first login.
+-- Without this, RLS would block the owner from reading any data until they
+-- manually added themselves — and doing that from the app would then prune
+-- the existing staff rows. Only inserts the row if it doesn't already exist,
+-- and never overwrites an existing staff record.
+insert into users (id, data)
+select ra.email,
+       jsonb_build_object(
+         'name', split_part(ra.email, '@', 1),
+         'email', ra.email,
+         'role', 'admin',
+         'dept', 'Management',
+         'deptAr', 'الإدارة',
+         'init', upper(left(split_part(ra.email, '@', 1), 2)),
+         'permissions', '["dashboard","inventory","warehouses","sales","purchasing","issues","movements","reports","projects","tasks","users","notifications","settings"]'::jsonb
+       )
+from root_admins ra
+where not exists (select 1 from users u where u.id = ra.email)
+on conflict (id) do nothing;
+
+-- True when the signed-in user has a row in the staff directory.
+create or replace function public.is_staff()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.users
+    where lower(data ->> 'email') = lower(coalesce(auth.email(), ''))
+  );
+$$;
+
+-- True when the signed-in user is on the root admins list.
+create or replace function public.is_root()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.root_admins
+    where lower(email) = lower(coalesce(auth.email(), ''))
+  );
+$$;
+
+-- True when the signed-in user may access the given app section. Admins and
+-- root admins always have access; every other staff member must have the
+-- section key in their `permissions` array (data -> 'permissions'). Legacy
+-- staff rows created before per-employee sections keep full access (the old
+-- "any staff reads everything" behaviour) until an admin opens their record
+-- and saves a section list — from that point RLS enforces the chosen list.
+create or replace function public.has_perm(perm text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.users
+    where lower(data ->> 'email') = lower(coalesce(auth.email(), ''))
+      and (
+        data ->> 'role' = 'admin'
+        or ((data -> 'permissions') ? perm)
+        or not (data ? 'permissions')
+      )
+  ) or public.is_root();
+$$;
+
+-- Per-section access: each business table is gated by the matching section
+-- key so a staff member who isn't allowed to see a section can neither read
+-- nor write its rows (this is real enforcement — the sidebar hiding alone is
+-- cosmetic). Section keys: inventory, warehouses, issues (material_requests),
+-- projects, sales (quotations), purchasing (purchase_orders), tasks.
 do $$
 declare
-  t text;
+  r record;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks']
+  for r in select * from (values
+    ('inventory'::text, 'inventory'::text),
+    ('warehouses'::text, 'warehouses'::text),
+    ('material_requests'::text, 'issues'::text),
+    ('projects'::text, 'projects'::text),
+    ('quotations'::text, 'sales'::text),
+    ('purchase_orders'::text, 'purchasing'::text),
+    ('tasks'::text, 'tasks'::text)
+  ) as m(tbl, section)
   loop
-    execute format('alter table %I enable row level security;', t);
-    execute format('drop policy if exists "Authenticated read/write %s" on %I;', t, t);
+    execute format('alter table %I enable row level security;', r.tbl);
+    execute format('drop policy if exists "Authenticated read/write %s" on %I;', r.tbl, r.tbl);
+    execute format('drop policy if exists "Staff read/write %s" on %I;', r.tbl, r.tbl);
     execute format(
-      'create policy "Authenticated read/write %s" on %I for all using (auth.role() = %L) with check (auth.role() = %L);',
-      t, t, 'authenticated', 'authenticated'
+      'create policy "Staff read/write %s" on %I for all using (public.is_staff() and public.has_perm(%L)) with check (public.is_staff() and public.has_perm(%L));',
+      r.tbl, r.tbl, r.section, r.section
     );
   end loop;
 end $$;
+
+-- profile is a single shared row; only registered staff may touch it.
+alter table profile enable row level security;
+drop policy if exists "Authenticated read/write profile" on profile;
+drop policy if exists "Staff read/write profile" on profile;
+create policy "Staff read/write profile" on profile for all
+  using (public.is_staff()) with check (public.is_staff());
+
+-- Staff directory: any staff member may read it, but only root admins may
+-- add / edit / remove staff. This is what blocks role self-escalation.
+alter table users enable row level security;
+drop policy if exists "Authenticated read/write users" on users;
+drop policy if exists "Staff read users" on users;
+drop policy if exists "Root write users" on users;
+create policy "Staff read users" on users for select
+  using (public.is_staff());
+create policy "Root write users" on users for all
+  using (public.is_root()) with check (public.is_root());
+
+-- The root admins list itself is only visible to root admins.
+alter table root_admins enable row level security;
+drop policy if exists "Root read root_admins" on root_admins;
+create policy "Root read root_admins" on root_admins for select
+  using (public.is_root());
+
 
 -- ----------------------------------------------------------------------------
 -- Realtime: add every table to Supabase's realtime publication so that
@@ -146,16 +272,19 @@ create policy "Public read stockflow-files"
   using (bucket_id = 'stockflow-files');
 
 drop policy if exists "Authenticated upload stockflow-files" on storage.objects;
-create policy "Authenticated upload stockflow-files"
+drop policy if exists "Staff upload stockflow-files" on storage.objects;
+create policy "Staff upload stockflow-files"
   on storage.objects for insert
-  with check (bucket_id = 'stockflow-files' and auth.role() = 'authenticated');
+  with check (bucket_id = 'stockflow-files' and public.is_staff());
 
 drop policy if exists "Authenticated update stockflow-files" on storage.objects;
-create policy "Authenticated update stockflow-files"
+drop policy if exists "Staff update stockflow-files" on storage.objects;
+create policy "Staff update stockflow-files"
   on storage.objects for update
-  using (bucket_id = 'stockflow-files' and auth.role() = 'authenticated');
+  using (bucket_id = 'stockflow-files' and public.is_staff());
 
 drop policy if exists "Authenticated delete stockflow-files" on storage.objects;
-create policy "Authenticated delete stockflow-files"
+drop policy if exists "Staff delete stockflow-files" on storage.objects;
+create policy "Staff delete stockflow-files"
   on storage.objects for delete
-  using (bucket_id = 'stockflow-files' and auth.role() = 'authenticated');
+  using (bucket_id = 'stockflow-files' and public.is_staff());

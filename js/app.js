@@ -130,6 +130,27 @@ async function loadAllStockFlowData(skipRender){
       if(typeof syncLoginUsers === 'function') syncLoginUsers();
     }
 
+    // If the signed-in user lacks permission for a section, drop the local
+    // copy of that table. RLS already blocks reading/writing it server-side,
+    // and clearing the local array guarantees a stale copy can never be
+    // pushed back over real data later (syncCollection prunes locally-missing
+    // rows). Without this, an employee who once had access could lose it and
+    // their browser would still hold an old snapshot that could clobber the
+    // live server rows the next time their app syncs.
+    if(!currentUserIsRoot){
+      [
+        [inventoryData,'inventory'],
+        [warehouseData,'warehouses'],
+        [reqsData,'issues'],
+        [quotations,'sales'],
+        [purchaseOrders,'purchasing'],
+        [tasksData,'tasks'],
+        [projects,'projects'],
+      ].forEach(([arr, perm])=>{
+        if(!currentUserPerms.includes(perm)) silentReplace(arr, []);
+      });
+    }
+
     // Re-render whichever page is currently on screen so freshly-loaded
     // data (inventory, warehouses, requests, projects, quotations, POs)
     // is reflected immediately, regardless of load timing. Skipped during
@@ -277,9 +298,22 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
 
   if(session && session.user){
     const email = session.user.email || '';
-    profileData.name = session.user.user_metadata?.full_name || email.split('@')[0];
+    const fbName = session.user.user_metadata?.full_name || email.split('@')[0];
+    const auth = await resolveAuthUser(email, fbName);
+    if(!auth){
+      // This browser has a Supabase session but the account is not on the
+      // staff list — revoke it and show the login screen (the account is
+      // not authorized to use this app).
+      window.StockFlowBackend.signOutUser().catch(()=>{});
+      revealLoginScreen();
+      return;
+    }
+    profileData.name = auth.name;
     profileData.email = email;
-    profileData.initials = getInitials(profileData.name);
+    profileData.role = auth.role;
+    profileData.roleAr = auth.roleAr;
+    profileData.initials = getInitials(auth.name);
+    applyCurrentUserPerms(auth);
     await loadAllStockFlowData(true);
     revealMainApp();
     setupRealtimeSync();
@@ -2705,21 +2739,25 @@ function renderUsersRows(){
   if(!tbody) return;
   tbody.innerHTML = usersData.map((u, idx)=>{
     const time = lang==='en'?'Just now':'الآن';
+    const actions = isRootUser() ? `<div class="row-actions">
+        <button title="${lang==='en'?'Edit':'تعديل'}" data-action="edituser" data-idx="${idx}">${ICONS.edit}</button>
+        <button title="${lang==='en'?'Delete':'حذف'}" data-action="deleteuser" data-idx="${idx}">${ICONS.trash}</button>
+      </div>` : '<span class="text-3" style="font-size:12px;">—</span>';
     return `<tr>
       <td><div class="item-cell"><div class="avatar" style="width:32px;height:32px;font-size:11px;">${u.init}</div><div class="item-name">${u.name}</div><div class="item-sku">${u.email}</div></div></td>
       <td><span class="cat-tag">${getRoleLabel(u.role)}</span></td><td>${lang==='en'?u.dept:u.deptAr}</td><td>${time}</td>
-      <td><div class="row-actions">
-        <button title="${lang==='en'?'Edit':'تعديل'}" data-action="edituser" data-idx="${idx}">${ICONS.edit}</button>
-        <button title="${lang==='en'?'Delete':'حذف'}" data-action="deleteuser" data-idx="${idx}">${ICONS.trash}</button>
-      </div></td>
+      <td>${actions}</td>
     </tr>`;
   }).join('');
 }
 
 function renderUsers(){
   const L = STR[lang];
+  const addBtn = isRootUser()
+    ? `<div class="toolbar"><button class="btn btn-primary" id="addUserBtn">${ICONS.plus}${L.users.addUser}</button></div>`
+    : '';
   return `
-  <div class="toolbar"><button class="btn btn-primary" id="addUserBtn">${ICONS.plus}${L.users.addUser}</button></div>
+  ${addBtn}
   <div class="table-card">
     <table><thead><tr><th>${lang==='en'?'Name':'الاسم'}</th><th>${L.users.role}</th><th>${lang==='en'?'Department':'القسم'}</th><th>${L.users.lastActive}</th><th>${L.table.actions}</th></tr></thead>
     <tbody id="usersTbody"></tbody></table>
@@ -2738,7 +2776,9 @@ function openUserModal(idx){
   document.getElementById('userLblPassword').textContent = lang==='en'?'Password':'كلمة المرور';
   document.getElementById('userLblRole').textContent = lang==='en'?'Role':'الدور';
   document.getElementById('userLblDept').textContent = lang==='en'?'Department':'القسم';
+  document.getElementById('userLblPerms').textContent = lang==='en'?'Section Access':'أقسام مسموح رؤيتها';
   document.getElementById('userCancel').textContent = L.modal.cancel;
+  userPermDirty = false;
   if(userEditIdx>=0){
     const u = usersData[userEditIdx];
     document.getElementById('userInputName').value = u.name;
@@ -2754,7 +2794,31 @@ function openUserModal(idx){
     document.getElementById('userDept').value = '';
   }
   document.getElementById('userModalOverlay').style.display = 'flex';
+  const savedPerms = userEditIdx>=0 && Array.isArray(usersData[userEditIdx].permissions) && usersData[userEditIdx].permissions.length
+    ? usersData[userEditIdx].permissions : null;
+  renderUserPermsGrid(savedPerms || defaultPermsForRole(document.getElementById('userRole').value));
 }
+
+function renderUserPermsGrid(perms){
+  const grid = document.getElementById('userPermsGrid');
+  if(!grid) return;
+  const L = STR[lang];
+  const selectable = PAGES.filter(p=>p!=='dashboard' && p!=='notifications');
+  const set = new Set(perms||[]);
+  grid.innerHTML = selectable.map(p=>`
+    <label class="perm-chip ${set.has(p)?'on':''}">
+      <input type="checkbox" value="${p}" ${set.has(p)?'checked':''}>
+      <span>${L.nav[p]||p}</span>
+    </label>`).join('');
+}
+
+function readUserPerms(){
+  const s = new Set(['dashboard','notifications']);
+  document.querySelectorAll('#userPermsGrid input:checked').forEach(cb=>s.add(cb.value));
+  return [...s];
+}
+
+let userPermDirty = false;
 
 function closeUserModal(){
   document.getElementById('userModalOverlay').style.display = 'none';
@@ -2774,6 +2838,11 @@ function syncUsers(){
 }
 
 function saveUser(){
+  if(!isRootUser()){
+    showToast(lang==='en'?'Only the owner can manage staff':'مدير النظام فقط يمكنه إدارة المستخدمين');
+    closeUserModal();
+    return;
+  }
   const name = document.getElementById('userInputName').value.trim();
   const email = document.getElementById('userInputEmail').value.trim();
   const password = document.getElementById('userInputPassword').value.trim();
@@ -2789,8 +2858,10 @@ function saveUser(){
     const u = usersData[userEditIdx];
     u.name = name; u.email = email; u.password = encodePW(password); u.role = role;
     u.dept = dept; u.deptAr = dept; u.init = init;
+    u.permissions = readUserPerms();
   } else {
-    usersData.unshift({name, email, password:encodePW(password), role, dept, deptAr:dept, init});
+    const perms = readUserPerms();
+    usersData.unshift({name, email, password:encodePW(password), role, dept, deptAr:dept, init, permissions:perms});
   }
   syncLoginUsers();
   syncUsers();
@@ -2799,6 +2870,10 @@ function saveUser(){
 }
 
 async function deleteUser(idx){
+  if(!isRootUser()){
+    showToast(lang==='en'?'Only the owner can manage staff':'مدير النظام فقط يمكنه إدارة المستخدمين');
+    return;
+  }
   const L = STR[lang];
   const ok = await showConfirm(lang==='en'?`Delete user "${usersData[idx].name}"?`:`هل تريد حذف المستخدم "${usersData[idx].name}"؟`);
   if(!ok) return;
@@ -4395,6 +4470,51 @@ function deleteTask(idx){
 
 
 const PAGES = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','users','notifications','settings'];
+
+// ---------------------------------------------------------------------------
+// SECTION PERMISSIONS
+// Each staff member has a `permissions` array (stored in the users table)
+// listing which app sections they can see. Root admins always get full
+// access. `dashboard` and `notifications` are always allowed.
+// ---------------------------------------------------------------------------
+const ALL_SECTIONS = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','users','notifications','settings'];
+const SECTION_DEFAULT_PERMS = {
+  admin: ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','users','notifications','settings'],
+  manager: ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','notifications','settings'],
+  supervisor: ['dashboard','inventory','warehouses','issues','movements','tasks','projects','notifications'],
+  employee: ['dashboard','inventory','issues','tasks','notifications'],
+};
+let currentUserIsRoot = false;
+let currentUserPerms = ALL_SECTIONS.slice(); // demo mode: full access
+
+function defaultPermsForRole(roleKey){
+  return (SECTION_DEFAULT_PERMS[roleKey] || SECTION_DEFAULT_PERMS.employee).slice();
+}
+
+function canAccessPage(page){
+  if(currentUserIsRoot) return true;
+  if(page === 'dashboard' || page === 'notifications') return true;
+  return currentUserPerms.includes(page);
+}
+
+// True when the signed-in user has owner-level privileges. With no backend
+// configured the app runs in demo mode where the single operator is the
+// owner. With a backend, only the real root admins (ROOT_ADMIN_EMAILS) get
+// these rights — matching the "Root write users" RLS policy exactly.
+function isRootUser(){
+  if(currentUserIsRoot) return true;
+  if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return true;
+  return false;
+}
+
+function applyCurrentUserPerms(user){
+  currentUserIsRoot = !!user.isRoot;
+  currentUserPerms = user.isRoot
+    ? ALL_SECTIONS.slice()
+    : (Array.isArray(user.permissions) && user.permissions.length
+        ? user.permissions.slice()
+        : defaultPermsForRole(user.roleKey || 'employee'));
+}
 const RENDERERS = {
   dashboard:renderDashboard, inventory:renderInventory, warehouses:renderWarehouses,
   purchasing:renderPurchasing, issues:renderIssues, movements:renderMovements, projects:renderProjects,
@@ -4410,7 +4530,7 @@ function buildNav(){
     sales:'sales', purchasing:'purchase', issues:'issue', movements:'movements',
     reports:'reports', projects:'projects', tasks:'tasks', users:'users', notifications:'notifications', settings:'settings'
   };
-  navList.innerHTML = PAGES.map(p=>`
+  navList.innerHTML = PAGES.filter(canAccessPage).map(p=>`
     <button class="nav-item ${p===currentPage?'active':''}" data-page="${p}" data-tooltip="${L.nav[p]||p}">
       ${ICONS[iconKey[p]]||''}<span>${L.nav[p]||p}</span>
       ${p==='notifications'?'<span class="dot"></span>':''}
@@ -4421,6 +4541,7 @@ function buildNav(){
 }
 
 function navigate(page){
+  if(!canAccessPage(page)) page = 'dashboard';
   currentPage = page;
   try{ localStorage.setItem('stockflow_last_page', page); }catch(e){}
   const L = STR[lang];
@@ -4845,6 +4966,11 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
 document.getElementById('userCancel').addEventListener('click', closeUserModal);
 document.getElementById('userModalOverlay').addEventListener('click', e=>{ if(e.target.id==='userModalOverlay') closeUserModal(); });
 document.getElementById('userSave').addEventListener('click', saveUser);
+document.getElementById('userPermsGrid').addEventListener('change', ()=> userPermDirty = true);
+document.getElementById('userRole').addEventListener('change', ()=>{
+  if(userPermDirty) return;
+  renderUserPermsGrid(defaultPermsForRole(document.getElementById('userRole').value));
+});
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.getElementById('userModalOverlay').style.display==='flex') closeUserModal(); });
 
 /* ===================================================================
@@ -6300,12 +6426,53 @@ document.getElementById('content').addEventListener('click', function(e){
 /* ===================================================================
    LOGIN
 =================================================================== */
+
+// Root system administrators. Everyone on this list is treated as a
+// full Administrator regardless of what the `users` table says. Anyone
+// logging in through Supabase who is NOT on this list and NOT present in
+// the `users` table is denied access (see resolveAuthUser below).
+const ROOT_ADMIN_EMAILS = ['mohammed3li.2029@gmail.com'];
+
+// Maps a role key (as stored in the users table) to its display labels.
+function getRoleInfo(roleKey){
+  const L = STR[lang];
+  const ar = ({admin:'مدير النظام',manager:'مدير',supervisor:'مشرف',employee:'موظف'})[roleKey] || roleKey;
+  const en = ({admin: L.users.admin, manager: L.users.manager, supervisor: L.users.supervisor, employee: L.users.employee})[roleKey] || roleKey;
+  return { key: roleKey, label: en, labelAr: ar };
+}
+
+// Resolve who this authenticated Supabase user really is:
+//  - Root admins (ROOT_ADMIN_EMAILS) get the admin role unconditionally.
+//  - Everyone else must have a record in the `users` table (matched by
+//    email) and gets that record's role. If there is no record, the user
+//    is not authorized to use the app and `null` is returned.
+async function resolveAuthUser(email, fallbackName){
+  const norm = String(email||'').trim().toLowerCase();
+  if(!norm) return null;
+  if(ROOT_ADMIN_EMAILS.some(e => String(e).trim().toLowerCase() === norm)){
+    const info = getRoleInfo('admin');
+    return { name: fallbackName || email.split('@')[0], email, roleKey:'admin', role: info.label, roleAr: info.labelAr, isRoot:true, permissions: ALL_SECTIONS.slice() };
+  }
+  if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return null;
+  try{
+    const list = await window.StockFlowBackend.loadCollection('users');
+    const rec = (list || []).find(u => String(u.email||'').trim().toLowerCase() === norm);
+    if(!rec) return null;
+    const key = ['admin','manager','supervisor','employee'].includes(rec.role) ? rec.role : 'employee';
+    const info = getRoleInfo(key);
+    return { name: rec.name || fallbackName || email.split('@')[0], email, roleKey:key, role: info.label, roleAr: info.labelAr, isRoot:false, permissions: rec.permissions };
+  }catch(err){
+    console.error('[StockFlow] resolveAuthUser failed:', err);
+    return null;
+  }
+}
+
 const LOGIN_USERS = [{ username:'admin', password:encodePW('123456'), name:'Sarah Chen', role:'Administrator', roleAr:'مدير النظام' }];
 syncLoginUsers();
 
 const loginI18n = {
-  en:{ title:'StockFlow', sub:'Smart Warehouse & Inventory Management', user:'Username', pass:'Password', btn:'Sign In', loading:'Signing in...', error:'Invalid username or password', hintUser:'Username:', hintPass:'Password:', lang:'العربية', remember:'Remember me' },
-  ar:{ title:'ستوك فلو', sub:'إدارة المستودعات والمخزون الذكية', user:'اسم المستخدم', pass:'كلمة المرور', btn:'تسجيل الدخول', loading:'جارٍ التسجيل...', error:'اسم المستخدم أو كلمة المرور غير صحيحة', hintUser:'اسم المستخدم:', hintPass:'كلمة المرور:', lang:'English', remember:'تذكرني' },
+  en:{ title:'StockFlow', sub:'Smart Warehouse & Inventory Management', user:'Username', pass:'Password', btn:'Sign In', loading:'Signing in...', error:'Invalid username or password', notAuthorized:'This account is not authorized. Contact the administrator.', hintUser:'Username:', hintPass:'Password:', lang:'العربية', remember:'Remember me' },
+  ar:{ title:'ستوك فلو', sub:'إدارة المستودعات والمخزون الذكية', user:'اسم المستخدم', pass:'كلمة المرور', btn:'تسجيل الدخول', loading:'جارٍ التسجيل...', error:'اسم المستخدم أو كلمة المرور غير صحيحة', notAuthorized:'هذا الحساب غير مصرّح له. تواصل مع مدير النظام.', hintUser:'اسم المستخدم:', hintPass:'كلمة المرور:', lang:'English', remember:'تذكرني' },
 };
 
 function applyLoginLang(){
@@ -6354,6 +6521,7 @@ function doLogin(){
   const btn = document.getElementById('loginBtn');
   const errBox = document.getElementById('loginError');
   errBox.classList.remove('show');
+  document.getElementById('loginErrorMsg').textContent = loginI18n[lang].error;
   document.getElementById('loginUsername').classList.remove('error');
   document.getElementById('loginPassword').classList.remove('error');
   if(!uname || !upass){
@@ -6365,74 +6533,104 @@ function doLogin(){
   btn.classList.add('loading');
   btn.disabled = true;
 
-  // If a backend (Supabase) is configured and the entered username looks
-  // like an email, try real backend sign-in first. Otherwise (or on
-  // failure), fall back to the built-in demo credentials so the app still
-  // works out of the box with no backend project set up.
-  const tryBackendAuth = window.StockFlowBackend && window.StockFlowBackend.enabled && uname.includes('@');
-  const backendAttempt = tryBackendAuth
+  const backendOn = window.StockFlowBackend && window.StockFlowBackend.enabled;
+
+  // When a real backend (Supabase) is configured, ALWAYS authenticate
+  // against it. The built-in demo credentials are deliberately disabled
+  // in that mode so nobody can log in with `admin/123456` and impersonate
+  // the demo administrator. Demo mode only applies when no backend is set.
+  const backendAttempt = backendOn
     ? window.StockFlowBackend.signInWithEmail(uname, upass)
-        .then(data => ({
-          username: uname,
-          password: encodePW(upass),
-          name: (data.user && data.user.user_metadata && data.user.user_metadata.full_name) || uname.split('@')[0],
-          role: 'Administrator',
-          roleAr: 'مدير النظام'
-        }))
+        .then(async data => {
+          const email = (data.user && data.user.email) || uname;
+          const fbName = (data.user && data.user.user_metadata && data.user.user_metadata.full_name) || email.split('@')[0];
+          const auth = await resolveAuthUser(email, fbName);
+          if(!auth){
+            // Authenticated by Supabase Auth but not on the staff list —
+            // revoke the fresh session immediately and refuse access.
+            window.StockFlowBackend.signOutUser().catch(()=>{});
+            return { denied: true };
+          }
+          return {
+            username: email,
+            password: encodePW(upass),
+            name: auth.name,
+            role: auth.role,
+            roleAr: auth.roleAr,
+            roleKey: auth.roleKey,
+            email,
+            isRoot: auth.isRoot,
+            permissions: auth.permissions,
+          };
+        })
         .catch(() => null)
-    : Promise.resolve(undefined); // undefined = "didn't try", null = "tried and failed"
+    : Promise.resolve(undefined); // demo mode: resolved locally below
 
   backendAttempt
     .then(fbUser => new Promise(resolve => setTimeout(() => resolve(fbUser), 500)))
     .then(fbUser => {
-    const user = fbUser !== undefined
-      ? fbUser
-      : LOGIN_USERS.find(u=> u.username===uname && u.password===encodePW(upass));
-    btn.classList.remove('loading');
-    btn.disabled = false;
-    if(user){
-      // remember me
-      if(document.getElementById('rememberMe').checked){
-        localStorage.setItem('stockflow_remember', uname);
-      } else {
-        localStorage.removeItem('stockflow_remember');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      if(fbUser && fbUser.denied){
+        document.getElementById('loginErrorMsg').textContent = loginI18n[lang].notAuthorized;
+        errBox.classList.add('show');
+        document.getElementById('loginPassword').value='';
+        const card = document.querySelector('.login-card');
+        card.style.animation='none';
+        card.offsetHeight;
+        card.style.animation='shake .4s var(--ease)';
+        return;
       }
-      // For a real Supabase login (not the local demo account), load this
-      // account's saved data now — a page refresh already does this via
-      // the session-restore flow, but a fresh manual login needs it too.
-      if(fbUser){ loadAllStockFlowData(); setupRealtimeSync(); }
-      // update profile with logged-in user
-      profileData.name = user.name;
-      profileData.role = user.role;
-      profileData.roleAr = user.roleAr;
-      profileData.initials = (user.name.split(' ').map(w=>w[0]).join('').slice(0,2)).toUpperCase();
-      // hide login, show loading
-      const ls = document.getElementById('loginScreen');
-      ls.style.opacity='0';
-      ls.style.transform='scale(1.03)';
-      ls.style.transition='opacity .4s ease, transform .4s ease';
-      setTimeout(()=>{
-        ls.style.display='none';
-        const loadingEl = document.getElementById('loadingScreen');
-        loadingEl.style.display='flex';
+      const user = backendOn
+        ? (fbUser || null)
+        : LOGIN_USERS.find(u=> u.username===uname && u.password===encodePW(upass));
+      if(user){
+        // remember me
+        if(document.getElementById('rememberMe').checked){
+          localStorage.setItem('stockflow_remember', uname);
+        } else {
+          localStorage.removeItem('stockflow_remember');
+        }
+        // For a real Supabase login, load this account's saved data now —
+        // a page refresh already does this via the session-restore flow,
+        // but a fresh manual login needs it too.
+        if(backendOn){
+          applyCurrentUserPerms(user);
+          loadAllStockFlowData(); setupRealtimeSync();
+        }
+        // update profile with logged-in user
+        profileData.name = user.name;
+        profileData.role = user.role;
+        profileData.roleAr = user.roleAr;
+        profileData.email = user.email || profileData.email;
+        profileData.initials = (user.name.split(' ').map(w=>w[0]).join('').slice(0,2)).toUpperCase();
+        // hide login, show loading
+        const ls = document.getElementById('loginScreen');
+        ls.style.opacity='0';
+        ls.style.transform='scale(1.03)';
+        ls.style.transition='opacity .4s ease, transform .4s ease';
         setTimeout(()=>{
-          loadingEl.style.display='none';
-          document.getElementById('mainApp').style.display='flex';
-          buildNav(); applyStaticI18n(); navigate('dashboard'); refreshTopbarProfile();
-        }, 1800);
-      }, 380);
-    } else {
-      errBox.classList.add('show');
-      document.getElementById('loginUsername').classList.add('error');
-      document.getElementById('loginPassword').classList.add('error');
-      document.getElementById('loginPassword').value='';
-      // shake card
-      const card = document.querySelector('.login-card');
-      card.style.animation='none';
-      card.offsetHeight;
-      card.style.animation='shake .4s var(--ease)';
-    }
-  });
+          ls.style.display='none';
+          const loadingEl = document.getElementById('loadingScreen');
+          loadingEl.style.display='flex';
+          setTimeout(()=>{
+            loadingEl.style.display='none';
+            document.getElementById('mainApp').style.display='flex';
+            buildNav(); applyStaticI18n(); navigate('dashboard'); refreshTopbarProfile();
+          }, 1800);
+        }, 380);
+      } else {
+        errBox.classList.add('show');
+        document.getElementById('loginUsername').classList.add('error');
+        document.getElementById('loginPassword').classList.add('error');
+        document.getElementById('loginPassword').value='';
+        // shake card
+        const card = document.querySelector('.login-card');
+        card.style.animation='none';
+        card.offsetHeight;
+        card.style.animation='shake .4s var(--ease)';
+      }
+    });
 }
 
 // shake keyframe
