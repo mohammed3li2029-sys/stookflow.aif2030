@@ -103,7 +103,8 @@ create table if not exists root_admins (
   note text default ''
 );
 insert into root_admins (email, note)
-values ('mohammed3li.2029@gmail.com', 'System owner')
+values ('taha@abuduhair.com.sa', 'System owner'),
+       ('mohammed3li.2029@gmail.com', 'System owner')
 on conflict (email) do nothing;
 
 -- Seed every root admin into the staff directory (the `users` table) so the

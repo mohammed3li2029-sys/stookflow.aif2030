@@ -6431,7 +6431,7 @@ document.getElementById('content').addEventListener('click', function(e){
 // full Administrator regardless of what the `users` table says. Anyone
 // logging in through Supabase who is NOT on this list and NOT present in
 // the `users` table is denied access (see resolveAuthUser below).
-const ROOT_ADMIN_EMAILS = ['mohammed3li.2029@gmail.com'];
+const ROOT_ADMIN_EMAILS = ['taha@abuduhair.com.sa','mohammed3li.2029@gmail.com'];
 
 // Maps a role key (as stored in the users table) to its display labels.
 function getRoleInfo(roleKey){
