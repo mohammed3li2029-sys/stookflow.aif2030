@@ -1338,6 +1338,14 @@ function openQuoteModal(idx=null){
   editingQuoteIdx = idx;
   const isEdit = idx !== null;
   const q = isEdit ? quotations[idx] : null;
+
+  // Validity dropdown options (1..15) plus the saved value if it's outside
+  // that range (e.g. legacy quotes with validity 20). The saved value is
+  // selected ONLY when editing; a brand-new quote defaults to 15.
+  const validityOptions = Array.from({length:15}, (_,i)=>i+1);
+  const savedValidity = isEdit ? parseInt(q && q.validity, 10) : null;
+  if(savedValidity && !validityOptions.includes(savedValidity)) validityOptions.push(savedValidity);
+  const activeValidity = isEdit && savedValidity ? savedValidity : 15;
   
   // Create Modal HTML
   const modalHTML = `
@@ -1387,7 +1395,7 @@ function openQuoteModal(idx=null){
         <div class="field">
           <label>${lang==='en'?'Validity (days)':'مدة العرض (أيام)'}</label>
           <select id="qValidity">
-            ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => `<option value="${d}" ${isEdit&&q.validity==d?'selected':d===15?'selected':''}>${d}</option>`).join('')}
+            ${validityOptions.map(d => `<option value="${d}" ${d===activeValidity?'selected':''}>${d}</option>`).join('')}
           </select>
         </div>
         <div class="field">
