@@ -1205,6 +1205,19 @@ function getQuoteStatusPill(status){
   return 'pill-ok';
 }
 
+// Bilingual salesperson names: stored in Arabic (the `<option>` value) so
+// existing data stays untouched; the label shown depends on the UI language.
+const SALESPERSON_NAMES = {
+  'محمد علي':  { en:'Mohammed Ali',  ar:'محمد علي' },
+  'عبدالباسط': { en:'Abdul Basit',   ar:'عبدالباسط' },
+  'نمر أحمد':  { en:'Nimer Ahmed',   ar:'نمر أحمد' },
+};
+function getSalespersonLabel(name){
+  if(!name) return lang==='en' ? 'Mohammed Ali' : 'محمد علي';
+  const m = SALESPERSON_NAMES[name];
+  return lang==='en' ? (m ? m.en : name) : (m ? m.ar : name);
+}
+
 function toggleQuoteStatus(idx){
   const q = quotations[idx];
   if(!q) return;
@@ -1401,9 +1414,7 @@ function openQuoteModal(idx=null){
         <div class="field">
           <label>${lang==='en'?'Salesperson':'المندوب'}</label>
           <select id="qSalesperson">
-            <option value="محمد علي" ${isEdit&&q.salesperson==='محمد علي'?'selected':''}>محمد علي</option>
-            <option value="عبدالباسط" ${isEdit&&q.salesperson==='عبدالباسط'?'selected':''}>عبدالباسط</option>
-            <option value="نمر أحمد" ${isEdit&&q.salesperson==='نمر أحمد'?'selected':''}>نمر أحمد</option>
+            ${Object.keys(SALESPERSON_NAMES).map(n => `<option value="${n}" ${isEdit&&q.salesperson===n?'selected':''}>${getSalespersonLabel(n)}</option>`).join('')}
           </select>
         </div>
         <div class="field">
@@ -1714,7 +1725,7 @@ function openQuoteView(idx){
             </div>
             <div style="display:flex; align-items:center;">
               <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'المبيعات:':'Salesperson:'}</span>
-              <span style="font-size:12px;">${q.salesperson || (isAr?'محمد علي':'Mohammed Ali')}</span>
+              <span style="font-size:12px;">${getSalespersonLabel(q.salesperson)}</span>
             </div>
           </div>
           
