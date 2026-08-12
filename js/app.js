@@ -1461,14 +1461,21 @@ function renderQuoteLines(){
   body.innerHTML = quoteLines.map((l, idx)=>`
     <tr>
       <td><input value="${l.name}" oninput="quoteLines[${idx}].name=this.value" placeholder="${lang==='en'?'Item name':'اسم الصنف'}"></td>
-      <td><input value="${l.desc}" oninput="quoteLines[${idx}].desc=this.value" placeholder="${lang==='en'?'Specifications':'المواصفات'}"></td>
+      <td><textarea rows="1" class="auto-grow" oninput="quoteLines[${idx}].desc=this.value; autoGrow(this)" placeholder="${lang==='en'?'Specifications':'المواصفات'}">${l.desc||''}</textarea></td>
       <td><input type="number" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" style="text-align:center;"></td>
       <td><input value="${l.unit}" oninput="quoteLines[${idx}].unit=this.value" style="text-align:center;"></td>
       <td><span style="font-weight:700;color:var(--text-2);margin-inline-end:4px;">${RYAL}</span><input type="number" value="${l.price}" oninput="quoteLines[${idx}].price=parseFloat(this.value)||0; updateQuoteTotals()" style="text-align:end;width:80px;"></td>
       <td><button onclick="removeQuoteLine(${idx})" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="${lang==='en'?'Delete item':'حذف الصنف'}">${ICONS.trash}</button></td>
     </tr>
   `).join('');
+  document.querySelectorAll('#qLinesBody .auto-grow').forEach(autoGrow);
   updateQuoteTotals();
+}
+
+function autoGrow(el){
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
 }
 
 function updateQuoteTotals(){
