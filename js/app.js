@@ -1208,14 +1208,18 @@ function getQuoteStatusPill(status){
 // Bilingual salesperson names: stored in Arabic (the `<option>` value) so
 // existing data stays untouched; the label shown depends on the UI language.
 const SALESPERSON_NAMES = {
-  'محمد علي':  { en:'Mohammed Ali',  ar:'محمد علي' },
-  'عبدالباسط': { en:'Abdul Basit',   ar:'عبدالباسط' },
-  'نمر أحمد':  { en:'Nimer Ahmed',   ar:'نمر أحمد' },
+  'محمد علي':  { en:'Mohammed Ali',  ar:'محمد علي',  phone:'0550300993' },
+  'عبدالباسط': { en:'Abdul Basit',   ar:'عبدالباسط', phone:'0539003704' },
+  'نمر أحمد':  { en:'Nimer Ahmed',   ar:'نمر أحمد',  phone:'0509887700' },
 };
 function getSalespersonLabel(name){
   if(!name) return lang==='en' ? 'Mohammed Ali' : 'محمد علي';
   const m = SALESPERSON_NAMES[name];
   return lang==='en' ? (m ? m.en : name) : (m ? m.ar : name);
+}
+function getSalespersonPhone(name){
+  const m = SALESPERSON_NAMES[name];
+  return m ? m.phone : '';
 }
 
 function toggleQuoteStatus(idx){
@@ -1414,7 +1418,7 @@ function openQuoteModal(idx=null){
         <div class="field">
           <label>${lang==='en'?'Salesperson':'المندوب'}</label>
           <select id="qSalesperson">
-            ${Object.keys(SALESPERSON_NAMES).map(n => `<option value="${n}" ${isEdit&&q.salesperson===n?'selected':''}>${getSalespersonLabel(n)}</option>`).join('')}
+            ${Object.keys(SALESPERSON_NAMES).map(n => `<option value="${n}" ${isEdit&&q.salesperson===n?'selected':''}>${getSalespersonLabel(n)} - ${SALESPERSON_NAMES[n].phone}</option>`).join('')}
           </select>
         </div>
         <div class="field">
@@ -1725,7 +1729,7 @@ function openQuoteView(idx){
             </div>
             <div style="display:flex; align-items:center;">
               <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'المبيعات:':'Salesperson:'}</span>
-              <span style="font-size:12px;">${getSalespersonLabel(q.salesperson)}</span>
+              <span style="font-size:12px;">${getSalespersonLabel(q.salesperson)}${getSalespersonPhone(q.salesperson) ? ' - ' + getSalespersonPhone(q.salesperson) : ''}</span>
             </div>
           </div>
           
