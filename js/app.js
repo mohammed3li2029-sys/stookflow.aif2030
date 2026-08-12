@@ -87,7 +87,7 @@ async function uploadFileOrFallback(file, folder){
 async function loadAllStockFlowData(skipRender){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
-    const [inv, wh, reqs, projs, quotes, pos, tasksArr, profiles, users] = await Promise.all([
+    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users] = await Promise.all([
       window.StockFlowBackend.loadCollection('inventory'),
       window.StockFlowBackend.loadCollection('warehouses'),
       window.StockFlowBackend.loadCollection('material_requests'),
@@ -95,7 +95,6 @@ async function loadAllStockFlowData(skipRender){
       window.StockFlowBackend.loadCollection('quotations'),
       window.StockFlowBackend.loadCollection('purchase_orders'),
       window.StockFlowBackend.loadCollection('tasks'),
-      window.StockFlowBackend.loadCollection('profile'),
       window.StockFlowBackend.loadCollection('users'),
     ]);
 
@@ -118,16 +117,28 @@ async function loadAllStockFlowData(skipRender){
       silentReplace(projects, merged);
     }
 
-    if(profiles && profiles.length){
-      Object.assign(profileData, profiles[0]);
-      if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
-    }
-
     if(users && users.length){
       // Password isn't stored server-side (see syncUsers()); restore with
       // a local placeholder so the edit form still has a value to show.
       silentReplace(usersData, users.map(u => ({...u, password: encodePW('')})));
       if(typeof syncLoginUsers === 'function') syncLoginUsers();
+    }
+
+    // The top bar must show the signed-in user's OWN staff record (from
+    // User Management), not the shared `profile` row — every user would
+    // otherwise see the same name/role. Look the current account up in the
+    // freshly-loaded staff list and apply its name/role/initials.
+    if(users && users.length && profileData.email){
+      const myEmail = String(profileData.email||'').trim().toLowerCase();
+      const me = users.find(u => String(u.email||'').trim().toLowerCase() === myEmail);
+      if(me){
+        profileData.name = me.name || profileData.name;
+        profileData.role = me.role || profileData.role;
+        const rk = ['admin','manager','supervisor','employee'].includes(me.role) ? me.role : 'employee';
+        profileData.roleAr = getRoleInfo(rk).labelAr;
+        profileData.initials = getInitials(me.name || profileData.name);
+        if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
+      }
     }
 
     // If the signed-in user lacks permission for a section, drop the local
@@ -5775,6 +5786,10 @@ function getInitials(name){
 function refreshTopbarProfile(){
   const nameEl=document.getElementById('userName');
   if(nameEl) nameEl.textContent=profileData.name;
+  const rk=['admin','manager','supervisor','employee'].includes(profileData.role)?profileData.role:'employee';
+  const ri=getRoleInfo(rk);
+  const roleEl=document.querySelector('.topbar .user-role');
+  if(roleEl) roleEl.textContent=lang==='ar'?ri.labelAr:ri.label;
   const av=document.querySelector('.topbar .avatar');
   if(av){
     if(profileData.image){
@@ -5798,7 +5813,7 @@ function refreshTopbarProfile(){
   const mobName=document.getElementById('mobName');
   if(mobName) mobName.textContent=profileData.name;
   const mobRole=document.getElementById('mobRole');
-  if(mobRole) mobRole.textContent=profileData.role==='admin'?(lang==='en'?'Administrator':'مدير نظام'):(lang==='en'?'Employee':'موظف');
+  if(mobRole) mobRole.textContent=lang==='ar'?ri.labelAr:ri.label;
 }
 
 function setProfilePreview(src){
