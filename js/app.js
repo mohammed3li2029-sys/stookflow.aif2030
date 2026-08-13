@@ -1708,7 +1708,7 @@ function openQuoteView(idx){
             <span style="font-size:36px; font-weight:900; color:#1a237e; letter-spacing:2px;">${isAr?'عرض سعر':'QUOTATION'}</span>
           </div>
           
-          <div style="position:absolute; left:25px; top:30px; width:220px; height:222px; opacity:0.08; z-index:0; pointer-events:none;">
+          <div style="position:absolute; inset-inline-end:25px; top:30px; width:220px; height:222px; opacity:0.08; z-index:0; pointer-events:none;">
             <svg viewBox="0 0 1622 1635" style="width:100%;height:100%;display:block;fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
               <g transform="matrix(1.926173,0,0,2.745828,0,0)">
                 <g transform="matrix(2.163184,0,0,1.517454,0,0)">
