@@ -1796,7 +1796,7 @@ function openQuoteView(idx){
         </div>
 
         <!-- Items Table -->
-        <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:12px;">
+        <table style="width:100%; margin-bottom:15px; font-size:12px;">
           <thead>
             <tr style="background:#1a237e; color:#fff;">
               <th style="padding:8px; border:1px solid #1a237e; width:35px;">${isAr?'م':'#'}</th>
@@ -1893,6 +1893,16 @@ function openQuoteView(idx){
     </div>
   </div>
   <style>
+    #printableQuote table { border-collapse:separate; border-spacing:0; }
+    #printableQuote table th, #printableQuote table td { border:none !important; }
+    #printableQuote table th { border-top:1px solid #1a237e !important; border-bottom:1px solid #1a237e !important; border-inline-end:1px solid #1a237e !important; }
+    #printableQuote table th:first-child { border-inline-start:1px solid #1a237e !important; }
+    #printableQuote table td { border-bottom:1px solid #e0e0e0 !important; border-inline-end:1px solid #e0e0e0 !important; }
+    #printableQuote table td:first-child { border-inline-start:1px solid #e0e0e0 !important; }
+    #printableQuote table thead th:first-child { border-start-start-radius:8px; }
+    #printableQuote table thead th:last-child { border-start-end-radius:8px; }
+    #printableQuote table tbody tr:last-child td:first-child { border-end-start-radius:8px; }
+    #printableQuote table tbody tr:last-child td:last-child { border-end-end-radius:8px; }
     @media print {
       body > *:not(#quoteViewOverlay) { display: none !important; visibility: hidden !important; }
       #quoteViewOverlay { 
