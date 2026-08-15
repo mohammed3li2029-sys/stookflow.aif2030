@@ -189,6 +189,20 @@ async function loadAllStockFlowData(skipRender){
 =================================================================== */
 let _realtimeUnsubscribers = [];
 const _realtimeTimers = {};
+// Tracks the last realtime-triggered page re-render so that a burst of echoes
+// (e.g. saveAllData() syncing several tables at once) only animates the FIRST
+// render. Follow-up echoes within 1.5s re-render the same page quietly,
+// otherwise every save would visibly flicker once per table.
+let _lastEchoNavPage = null;
+let _lastEchoNavTime = 0;
+
+function _realtimeNavigate(page){
+  const now = Date.now();
+  const quiet = page === _lastEchoNavPage && (now - _lastEchoNavTime) < 1500;
+  _lastEchoNavPage = page;
+  _lastEchoNavTime = now;
+  navigate(page, quiet ? {quiet:true} : undefined);
+}
 
 function _debouncedReload(table, reloadFn){
   clearTimeout(_realtimeTimers[table]);
@@ -216,7 +230,7 @@ async function setupRealtimeSync(){
         if(items){
           silentReplace(arr, items);
           if(typeof navigate === 'function' && typeof currentPage !== 'undefined'){
-            navigate(currentPage);
+            _realtimeNavigate(currentPage);
           }
         }
       });
@@ -243,7 +257,7 @@ async function setupRealtimeSync(){
         if(items){
           silentReplace(usersData, items.map(u => ({...u, password: encodePW('')})));
           if(typeof syncLoginUsers === 'function') syncLoginUsers();
-          if(currentPage === 'users' && typeof navigate === 'function') navigate(currentPage);
+          if(currentPage === 'users' && typeof navigate === 'function') _realtimeNavigate(currentPage);
         }
       });
     })
@@ -1591,14 +1605,14 @@ function saveQuotation(){
   }
   
   closeQuoteModal();
-  showSuccessCheck(lang==='en'?'Quotation saved!':'تم حفظ عرض السعر!', ()=>{ navigate('sales'); });
+  showSuccessCheck(lang==='en'?'Quotation saved!':'تم حفظ عرض السعر!', ()=>{ navigate('sales', {quiet:true}); });
 }
 
 async function deleteQuote(idx){
   const ok = await showConfirm(lang==='en'?'Are you sure you want to delete this quote?':'هل أنت متأكد من حذف هذا العرض؟');
   if(ok){
     quotations.splice(idx, 1);
-    navigate('sales');
+    navigate('sales', {quiet:true});
   }
 }
 
@@ -1627,7 +1641,7 @@ async function deleteQuoteAttachment(quoteIdx, attachIdx){
   if(!q || !q.attachments) return;
   q.attachments.splice(attachIdx, 1);
   syncQuotations();
-  navigate('sales');
+  navigate('sales', {quiet:true});
   showToast(lang==='en'?'Attachment deleted!':'تم حذف المرفق!');
 }
 
@@ -1662,7 +1676,7 @@ function uploadQuoteAttachment(quoteIdx){
         quotations[idx].attachments.push({name: f.name, data: url, type: f.type});
       }
       syncQuotations();
-      navigate('sales');
+      navigate('sales', {quiet:true});
       showToast(lang==='en'?'File uploaded!':'تم رفع الملف!');
       this.value = '';
       _uploadQuoteIdx = null;
@@ -3136,7 +3150,7 @@ function applyImportedData(data){
   if(c.settings && typeof c.settings === 'object') Object.assign(settings, c.settings);
   saveSettings();
   pushImportedToBackend();
-  showSuccessCheck(L.settings.imported, ()=>{ navigate('settings'); });
+  showSuccessCheck(L.settings.imported, ()=>{ navigate('settings', {quiet:true}); });
 }
 
 function pushImportedToBackend(){
@@ -3651,7 +3665,7 @@ function saveProject(idx){
   }
   syncCurrentProject(idx !== null ? idx : undefined);
   document.querySelectorAll('.modal-overlay.show').forEach(m => m.remove());
-  showSuccessCheck(lang==='en'?'Project saved!':'تم حفظ المشروع!', ()=>{ navigate('projects'); });
+  showSuccessCheck(lang==='en'?'Project saved!':'تم حفظ المشروع!', ()=>{ navigate('projects', {quiet:true}); });
 }
 
 async function deleteProject(idx){
@@ -3663,7 +3677,7 @@ async function deleteProject(idx){
     if(window.StockFlowBackend && window.StockFlowBackend.enabled){
       window.StockFlowBackend.syncCollection('projects', projects, 'id');
     }
-    navigate('projects');
+    navigate('projects', {quiet:true});
   }
 }
 
@@ -3706,10 +3720,10 @@ function toggleProjectStatus(idx){
   const cur = PROJECT_STATUSES.indexOf(p.status);
   p.status = PROJECT_STATUSES[(cur+1) % PROJECT_STATUSES.length];
   syncCurrentProject(idx);
-  if(currentPage === 'projects') navigate('projects');
+  if(currentPage === 'projects') navigate('projects', {quiet:true});
 }
 function refreshProjectsPageIfNeeded(){
-  if(currentPage === 'projects') navigate('projects');
+  if(currentPage === 'projects') navigate('projects', {quiet:true});
 }
 function deleteProjectMaterial(idx, mid){
   const p = projects[idx]; if(!p) return;
@@ -4470,7 +4484,7 @@ function saveTask(idx){
   }
   saveTasksToStorage();
   closeTaskModal();
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 
 function addTaskComment(idx){
@@ -4484,14 +4498,14 @@ function addTaskComment(idx){
   saveTasksToStorage();
   input.value='';
   taskDetailIdx=idx;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
   showToast(L.commentAdded);
 }
 function deleteTaskComment(ti,ci){
   tasksData[ti].comments.splice(ci,1);
   saveTasksToStorage();
   taskDetailIdx=ti;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 function addTaskChecklist(idx){
   const input=document.getElementById('taskCheckInput');
@@ -4502,25 +4516,25 @@ function addTaskChecklist(idx){
   saveTasksToStorage();
   input.value='';
   taskDetailIdx=idx;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 function toggleTaskCheck(ti,ci){
   tasksData[ti].checklist[ci].checked=!tasksData[ti].checklist[ci].checked;
   saveTasksToStorage();
   taskDetailIdx=ti;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 function deleteTaskCheck(ti,ci){
   tasksData[ti].checklist.splice(ci,1);
   saveTasksToStorage();
   taskDetailIdx=ti;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 function deleteTaskFile(ti,fi){
   tasksData[ti].files.splice(fi,1);
   saveTasksToStorage();
   taskDetailIdx=ti;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 function uploadTaskFile(ti){
   const input=document.getElementById('taskFileInput');
@@ -4534,7 +4548,7 @@ function uploadTaskFile(ti){
       tasksData[ti].activityLog.push({action:(lang==='en'?'File uploaded: ':'تم رفع الملف: ')+f.name,user:profileData.name,date:now.toISOString().slice(0,10),time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')});
       saveTasksToStorage();
       taskDetailIdx=ti;
-      navigate(currentPage);
+      navigate(currentPage, {quiet:true});
     };
     reader.readAsDataURL(f);
   });
@@ -4553,7 +4567,7 @@ function taskAction(idx,action){
   saveTasksToStorage();
   if(action==='complete') showToast(L.taskCompleted);
   taskDetailIdx=idx;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 function deleteTask(idx){
   const L=STR[lang].tasks;
@@ -4562,7 +4576,7 @@ function deleteTask(idx){
   saveTasksToStorage();
   showToast(L.taskDeleted);
   taskDetailIdx=null;
-  navigate(currentPage);
+  navigate(currentPage, {quiet:true});
 }
 
 
@@ -4637,7 +4651,7 @@ function buildNav(){
   });
 }
 
-function navigate(page){
+function navigate(page, opts){
   if(!canAccessPage(page)) page = 'dashboard';
   currentPage = page;
   try{ localStorage.setItem('stockflow_last_page', page); }catch(e){}
@@ -4646,10 +4660,15 @@ function navigate(page){
   const iconKey = {dashboard:'dashboard',inventory:'inventory',warehouses:'warehouse',sales:'sales',purchasing:'purchase',issues:'issue',movements:'movements',reports:'reports',projects:'projects',tasks:'tasks',users:'users',notifications:'notifications',settings:'settings'};
   document.getElementById('pageTitle').innerHTML = `<span class="page-title-icon">${ICONS[iconKey[page]]||''}</span><span class="page-title-text">${L.page[page][0]}</span>`;
   document.getElementById('pageSub').textContent = L.page[page][1];
+  // Quiet mode re-renders the page WITHOUT the enter animation. Used after
+  // save/edit/status changes: the realtime echo already triggers one full
+  // animated navigate, so a second animated one would make the page flicker
+  // twice. Inventory already avoided this via its light renderInvRows()
+  // callback; extending the same idea here keeps every section to one flicker.
   contentEl.classList.remove('page-enter');
-  void contentEl.offsetWidth;
+  if(!opts || !opts.quiet) void contentEl.offsetWidth;
   contentEl.innerHTML = RENDERERS[page]();
-  contentEl.classList.add('page-enter');
+  if(!opts || !opts.quiet) contentEl.classList.add('page-enter');
   buildNav();
   postRenderHooks(page);
   ['inv','quote','po','req','proj'].forEach(p => updateBulkBar(p));
@@ -4794,7 +4813,7 @@ function postRenderHooks(page){
         if(from===to) return;
         const item = projects.splice(from,1)[0];
         projects.splice(to,0,item);
-        navigate('projects');
+        navigate('projects', {quiet:true});
       };
       planGrid.ondragover = e => e.preventDefault();
     }
@@ -5408,7 +5427,7 @@ document.getElementById('poSave').addEventListener('click', ()=>{
   else { purchaseOrders.unshift(po); }
   closePOModal();
   if(typeof saveAllData==='function') saveAllData();
-  showSuccessCheck(lang==='en'?'Purchase order saved!':'تم حفظ طلب الشراء!', ()=>{ navigate('purchasing'); });
+  showSuccessCheck(lang==='en'?'Purchase order saved!':'تم حفظ طلب الشراء!', ()=>{ navigate('purchasing', {quiet:true}); });
 });
 
 /* ── View PO Document ── */
@@ -5574,7 +5593,7 @@ document.getElementById('poDeleteConfirm').addEventListener('click', ()=>{
   closePODelete();
   showToast(lang==='en'?'Purchase order deleted.':'تم حذف طلب الشراء.');
   if(typeof saveAllData==='function') saveAllData();
-  navigate('purchasing');
+  navigate('purchasing', {quiet:true});
 });
 
 /* ===================================================================
@@ -5718,7 +5737,7 @@ async function deleteIssue(idx){
   const ok = await showConfirm(lang==='en'?`Delete request "${r.id}"?`:`حذف الطلب "${r.id}"؟`);
   if(!ok) return;
   reqsData.splice(idx, 1);
-  navigate('issues');
+  navigate('issues', {quiet:true});
   showToast(lang==='en'?'Request deleted!':'تم حذف الطلب!');
 }
 
@@ -5793,7 +5812,7 @@ document.getElementById('issueSave').addEventListener('click',()=>{
   closeIssueModal();
   const _reqMsg = editingReqIdx!==null?(lang==='en'?'Request updated!':'تم تحديث الطلب!'):L.issues.requestAdded||(lang==='en'?'Material request submitted!':'تم إرسال طلب الصرف بنجاح!');
   editingReqIdx = null;
-  showSuccessCheck(_reqMsg, ()=>{ navigate('issues'); });
+  showSuccessCheck(_reqMsg, ()=>{ navigate('issues', {quiet:true}); });
 });
 
 /* ===================================================================
@@ -5848,7 +5867,7 @@ document.getElementById('whSave').addEventListener('click',()=>{
     warehouseData[editingWhIndex]=w;
   }
   closeWhModal();
-  showSuccessCheck(lang==='en'?'Warehouse saved!':'تم حفظ المستودع بنجاح!', ()=>{ navigate('warehouses'); });
+  showSuccessCheck(lang==='en'?'Warehouse saved!':'تم حفظ المستودع بنجاح!', ()=>{ navigate('warehouses', {quiet:true}); });
 });
 
 /* ===================================================================
@@ -6269,7 +6288,7 @@ document.getElementById('transferSubmit').addEventListener('click', ()=>{
   closeTransferModal();
   showToast(L.wh.transferDone||(lang==='en'?'Transfer completed successfully!':'تم التحويل بنجاح!'));
   if(typeof saveAllData === 'function') saveAllData();
-  navigate('warehouses');
+  navigate('warehouses', {quiet:true});
 });
 
 /* ===================================================================
@@ -6298,7 +6317,7 @@ document.getElementById('whDeleteConfirm').addEventListener('click', ()=>{
   closeWhDeleteModal();
   showToast(lang==='en'?'Warehouse deleted.':'تم حذف المستودع.');
   if(typeof saveAllData === 'function') saveAllData();
-  navigate('warehouses');
+  navigate('warehouses', {quiet:true});
 });
 
 function orderNow(sku){
@@ -6427,8 +6446,8 @@ updateTableScrollHints();
 window.addEventListener('resize', updateTableScrollHints);
 // recheck after page navigation
 const _origNav = navigate;
-navigate = function(page){
-  _origNav(page);
+navigate = function(page, opts){
+  _origNav(page, opts);
   setTimeout(updateTableScrollHints, 50);
 };
 
