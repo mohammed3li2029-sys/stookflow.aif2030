@@ -1227,6 +1227,9 @@ function toggleQuoteStatus(idx){
   if(!q) return;
   const cycle = {review:'approved', approved:'sent', sent:'review'};
   q.status = cycle[q.status] || 'review';
+  // Reassign through the proxy so the status change is persisted to Supabase
+  // (deep mutation of q alone wouldn't trigger the array's sync proxy).
+  quotations[idx] = q;
   renderQuoteRows(document.getElementById('quoteSearch')?.value||'', document.getElementById('quoteFilterStatus')?.value||'');
 }
 
@@ -3702,6 +3705,7 @@ function toggleProjectStatus(idx){
   const p = projects[idx]; if(!p) return;
   const cur = PROJECT_STATUSES.indexOf(p.status);
   p.status = PROJECT_STATUSES[(cur+1) % PROJECT_STATUSES.length];
+  syncCurrentProject(idx);
   if(currentPage === 'projects') navigate('projects');
 }
 function refreshProjectsPageIfNeeded(){
