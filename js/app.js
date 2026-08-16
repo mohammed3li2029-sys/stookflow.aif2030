@@ -1954,11 +1954,17 @@ function openQuoteView(idx){
         background: white !important;
         overflow: visible !important;
       }
+      #quoteViewOverlay .modal,
+      #quoteViewOverlay .modal-xl {
+        max-height: none !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
       #printableQuote { 
         visibility: visible !important; 
         position: relative !important; 
         width: 210mm !important; 
-        padding: 30px 30px 140px !important; 
+        padding: 30px 30px 100px !important; 
         margin: 0 auto !important;
         background: white !important;
         color: black !important;
@@ -1966,8 +1972,9 @@ function openQuoteView(idx){
       #printableQuote > div:last-child { 
         position: fixed !important; 
         bottom: 0 !important; 
-        left: 30px !important; 
-        right: 30px !important; 
+        left: 0 !important; 
+        right: 0 !important; 
+        padding: 12px 30px 10px !important;
         background: white !important;
       }
       #printableQuote * { 
