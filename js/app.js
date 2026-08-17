@@ -1453,9 +1453,9 @@ function openQuoteModal(idx=null){
             <tr>
               <th style="width:25%;">${lang==='en'?'Item':'الصنف'}</th>
               <th style="width:35%;">${lang==='en'?'Description':'المواصفات'}</th>
-              <th style="width:10%;">${lang==='en'?'Qty':'الكمية'}</th>
-              <th style="width:10%;">${lang==='en'?'Unit':'الوحدة'}</th>
-              <th style="width:15%;">${lang==='en'?'Price (SAR)':`السعر (${RYAL})`}</th>
+              <th style="width:10%;text-align:center;">${lang==='en'?'Qty':'الكمية'}</th>
+              <th style="width:10%;text-align:center;">${lang==='en'?'Unit':'الوحدة'}</th>
+              <th style="width:15%;text-align:center;">${lang==='en'?'Price (SAR)':`السعر (${RYAL})`}</th>
               <th style="width:5%;"></th>
             </tr>
           </thead>
@@ -1506,6 +1506,22 @@ function removeQuoteLine(idx){
   updateQuoteTotals();
 }
 
+function qtyInc(idx, delta){
+  const el = document.getElementById('qty-'+idx);
+  let v = (parseFloat(el.value)||0) + delta;
+  if(v < 0) v = 0;
+  el.value = v;
+  quoteLines[idx].qty = v;
+  updateQuoteTotals();
+}
+function priceInc(idx, delta){
+  const el = document.getElementById('price-'+idx);
+  let v = (parseFloat(el.value)||0) + delta;
+  if(v < 0) v = 0;
+  el.value = v;
+  quoteLines[idx].price = v;
+  updateQuoteTotals();
+}
 function renderQuoteLines(){
   const body = document.getElementById('qLinesBody');
   if(!body) return;
@@ -1513,9 +1529,9 @@ function renderQuoteLines(){
     <tr>
       <td><input value="${l.name}" oninput="quoteLines[${idx}].name=this.value" placeholder="${lang==='en'?'Item name':'اسم الصنف'}"></td>
       <td><textarea rows="1" class="auto-grow" oninput="quoteLines[${idx}].desc=this.value; autoGrow(this)" placeholder="${lang==='en'?'Specifications':'المواصفات'}">${l.desc||''}</textarea></td>
-      <td><input type="number" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" style="text-align:center;"></td>
+      <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="qtyInc(${idx},-1)">−</button><input type="number" id="qty-${idx}" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input"><button type="button" class="qty-btn" onclick="qtyInc(${idx},1)">+</button></div></td>
       <td><input value="${l.unit}" oninput="quoteLines[${idx}].unit=this.value" style="text-align:center;"></td>
-      <td><span style="font-weight:700;color:var(--text-2);margin-inline-end:4px;">${RYAL}</span><input type="number" value="${l.price}" oninput="quoteLines[${idx}].price=parseFloat(this.value)||0; updateQuoteTotals()" style="text-align:end;width:80px;"></td>
+      <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="priceInc(${idx},-1)">−</button><input type="number" id="price-${idx}" value="${l.price}" oninput="quoteLines[${idx}].price=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input" style="width:70px;"><button type="button" class="qty-btn" onclick="priceInc(${idx},1)">+</button></div></td>
       <td><button onclick="removeQuoteLine(${idx})" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="${lang==='en'?'Delete item':'حذف الصنف'}">${ICONS.trash}</button></td>
     </tr>
   `).join('');
