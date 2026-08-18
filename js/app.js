@@ -1995,6 +1995,8 @@ function openQuoteView(idx){
       }
       #printableQuote * { 
         visibility: visible !important; 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
       }
       .po-print-actions { 
         display: none !important; 
