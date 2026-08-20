@@ -1900,7 +1900,7 @@ function openQuoteView(idx){
         <div style="position:absolute; bottom:30px; left:30px; right:30px; border-top:2px solid #e0e0e0; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#666;">
               <div style="display:flex; align-items:center; gap:16px;">
               <div style="display:flex; flex-direction:column; gap:4px;">
-              ${footerContactRow('0144290444', 'phone')}
+              ${footerContactRow('0144320699', 'phone')}
               ${footerContactRow('info@abuduhair.com.sa', 'email')}
               ${footerContactRow('www.abuduhair.com.sa', 'globe')}
             </div>
