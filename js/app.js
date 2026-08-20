@@ -1882,6 +1882,9 @@ function openQuoteView(idx){
           <div id="quotePaymentsDisplay" contenteditable="true" style="font-size:11px; color:#444; line-height:1.5; white-space:pre-wrap; padding:4px; border:1px dashed #ccc; border-radius:4px; min-height:24px;" onblur="savePaymentsText(${idx}, this.innerText)">${q.payments || (isAr?'(نص الدفعات)':'(Payment terms)')}</div>
         </div>
 
+        <!-- Terms + Signature (kept together across pages) -->
+        <div class="terms-signature-group" style="page-break-inside:avoid; break-inside:avoid;">
+
         <!-- Terms -->
         <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:10px 12px; margin-bottom:15px;">
           <div style="font-weight:900; color:#d32f2f; border-bottom:2px solid #d32f2f; display:inline-block; margin-bottom:6px; padding-bottom:2px; font-size:13px;">${isAr?'الشروط والأحكام :':'Terms & Conditions:'}</div>
@@ -1894,6 +1897,8 @@ function openQuoteView(idx){
         <div style="display:flex; flex-direction:column; align-items:flex-end; margin-top:8px;">
            <div style="font-size:11px; font-weight:700; color:#666; margin-bottom:30px;">${isAr?'توقيع العميل (الموافقة)':'Customer Signature (Approval)'}</div>
            <div style="width:120px; border-bottom:1px solid #ccc;"></div>
+        </div>
+
         </div>
 
         <!-- Footer (Fixed at bottom of A4) -->
@@ -2014,6 +2019,17 @@ function openQuoteView(idx){
   </style>`;
   
   document.body.insertAdjacentHTML('beforeend', viewHTML);
+  setTimeout(()=>{
+    const pq = document.getElementById('printableQuote');
+    if(!pq) return;
+    const grp = pq.querySelector('.terms-signature-group');
+    if(!grp) return;
+    const a4H = 842*96/72;
+    if(pq.scrollHeight > a4H*1.15){
+      grp.style.marginTop = '50px';
+      grp.style.paddingTop = '20px';
+    }
+  },150);
 }
 
 function printQuotation(idx){
