@@ -1713,6 +1713,7 @@ function footerContactRow(text, type){
   return isAr ? '<div style="display:flex; align-items:center; gap:4px;">' + span + icons[type] + '</div>'
               : '<div style="display:flex; align-items:center; gap:4px;">' + icons[type] + span + '</div>';
 }
+function closeQuoteView(){ var o=document.getElementById('quoteViewOverlay'); if(!o)return; o.classList.remove('show'); o.classList.add('closing'); setTimeout(function(){o.remove();},250); }
 function openQuoteView(idx){
   const q = quotations[idx];
   const isAr = lang === 'ar';
@@ -1724,13 +1725,13 @@ function openQuoteView(idx){
   
   const viewHTML = `
   <div class="modal-overlay show" id="quoteViewOverlay" data-theme="light" style="background:rgba(0,0,0,0.85);">
+    <!-- Actions Bar (Hidden during print) -->
+    <div class="po-print-actions" style="position:fixed; top:20px; inset-inline-end:20px; z-index:1000; display:flex; gap:10px;">
+      <button class="btn" onclick="closeQuoteView()" style="background:#fff;">✕ ${L.notif.viewAll||(isAr?'إغلاق':'Close')}</button>
+      ${q.attachments && q.attachments.length ? `<button class="btn" onclick="downloadAllQuoteAttachments(${idx})" style="background:#fff;">📎 ${isAr?'تحميل المرفقات':'Download Attachments'} (${q.attachments.length})</button>` : ''}
+      <button class="btn btn-primary" onclick="printQuotation(${idx})">🖨 ${isAr?'حفظ PDF / طباعة':'Save PDF / Print'}</button>
+    </div>
     <div class="modal modal-xl" style="padding:0; overflow:auto; background:#fff; color:#1a1a1a; border-radius:0; width:95%; max-width:210mm; min-height:auto; height:auto; margin:10px auto; position:relative; box-shadow:0 0 50px rgba(0,0,0,0.5); transform-origin:top center;">
-      <!-- Actions Bar (Hidden during print) -->
-      <div class="po-print-actions" style="position:fixed; top:20px; inset-inline-end:20px; z-index:1000; display:flex; gap:10px;">
-        <button class="btn" onclick="document.getElementById('quoteViewOverlay').remove()" style="background:#fff;">✕ ${L.notif.viewAll||(isAr?'إغلاق':'Close')}</button>
-        ${q.attachments && q.attachments.length ? `<button class="btn" onclick="downloadAllQuoteAttachments(${idx})" style="background:#fff;">📎 ${isAr?'تحميل المرفقات':'Download Attachments'} (${q.attachments.length})</button>` : ''}
-        <button class="btn btn-primary" onclick="printQuotation(${idx})">🖨 ${isAr?'حفظ PDF / طباعة':'Save PDF / Print'}</button>
-      </div>
       
       <!-- QUOTATION DOCUMENT START -->
       <div id="printableQuote" style="padding:30px 30px 140px; font-family:'Tajawal','Inter',sans-serif; color:#1a1a1a; direction:${dir}; text-align:${al}; background:#fff; position:relative; min-height:297mm;">
@@ -1931,6 +1932,14 @@ function openQuoteView(idx){
     </div>
   </div>
   <style>
+    @keyframes overlayFadeIn{ from{ opacity:0 } to{ opacity:1 } }
+    @keyframes modalSlideIn{ from{ opacity:0; transform:translateY(30px) scale(0.97) } to{ opacity:1; transform:translateY(0) scale(1) } }
+    @keyframes overlayFadeOut{ from{ opacity:1 } to{ opacity:0 } }
+    @keyframes modalSlideOut{ from{ opacity:1; transform:translateY(0) scale(1) } to{ opacity:0; transform:translateY(30px) scale(0.97) } }
+    #quoteViewOverlay.show{ animation:overlayFadeIn .25s ease both; }
+    #quoteViewOverlay.show .modal{ animation:modalSlideIn .3s ease both; }
+    #quoteViewOverlay.closing{ animation:overlayFadeOut .2s ease both; pointer-events:none; }
+    #quoteViewOverlay.closing .modal{ animation:modalSlideOut .2s ease both; }
     #printableQuote table { border-collapse:separate; border-spacing:0; }
     #printableQuote table th, #printableQuote table td { border:none !important; }
     #printableQuote table th { border-top:1px solid #1a237e !important; border-bottom:1px solid #1a237e !important; border-inline-end:1px solid #1a237e !important; }
