@@ -1710,8 +1710,7 @@ function footerContactRow(text, type){
     globe: '<svg viewBox="0 0 24 24" width="13" height="13" style="flex-shrink:0;"><circle cx="12" cy="12" r="10" fill="#1a237e"/><circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M12 7c-2 2.5-2 7.5 0 10" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M7 12h10" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>'
   };
   const span = '<span style="direction:ltr; unicode-bidi:embed;">' + text + '</span>';
-  return isAr ? '<div style="display:flex; align-items:center; gap:4px;">' + span + icons[type] + '</div>'
-              : '<div style="display:flex; align-items:center; gap:4px;">' + icons[type] + span + '</div>';
+  return '<div style="display:flex; align-items:center; gap:4px; direction:ltr;">' + icons[type] + span + '</div>';
 }
 function closeQuoteView(){ var o=document.getElementById('quoteViewOverlay'); if(!o)return; o.classList.remove('show'); o.classList.add('closing'); setTimeout(function(){o.remove();},250); }
 function openQuoteView(idx){
@@ -1906,7 +1905,7 @@ function openQuoteView(idx){
         <div style="position:absolute; bottom:30px; left:30px; right:30px; border-top:2px solid #e0e0e0; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#666;">
               <div style="display:flex; align-items:center; gap:16px;">
               <div style="display:flex; flex-direction:column; gap:4px;">
-              ${footerContactRow('0144320699', 'phone')}
+              ${footerContactRow('00966144320699', 'phone')}
               ${footerContactRow('info@abuduhair.com.sa', 'email')}
               ${footerContactRow('www.abuduhair.com.sa', 'globe')}
             </div>
