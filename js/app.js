@@ -1476,6 +1476,10 @@ function openQuoteModal(idx=null){
         <label>${lang==='en'?'Payments':'الدفعات'}</label>
         <textarea id="qPayments" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg,var(--surface));color:var(--text);font-family:inherit;font-size:13px;resize:vertical;">${isEdit && q.payments ? q.payments : ''}</textarea>
       </div>
+      <div class="field" style="margin-top:10px;">
+        <label>${lang==='en'?'Notes':'ملاحظات'}</label>
+        <textarea id="qNotes" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg,var(--surface));color:var(--text);font-family:inherit;font-size:13px;resize:vertical;">${isEdit && q.notes ? q.notes : ''}</textarea>
+      </div>
       <div class="modal-actions">
         <button class="btn" onclick="closeQuoteModal()">${STR[lang].modal.cancel}</button>
         <button class="btn btn-primary" onclick="saveQuotation()">${STR[lang].modal.save}</button>
@@ -1577,6 +1581,7 @@ function saveQuotation(){
   const date = document.getElementById('qDate').value;
   const terms = document.getElementById('qTerms').value.trim();
   const payments = document.getElementById('qPayments') ? document.getElementById('qPayments').value.trim() : '';
+  const notes = document.getElementById('qNotes') ? document.getElementById('qNotes').value.trim() : '';
   const phone = document.getElementById('qPhone') ? document.getElementById('qPhone').value.trim() : '';
   const email = document.getElementById('qEmail') ? document.getElementById('qEmail').value.trim() : '';
   const address = document.getElementById('qAddress') ? document.getElementById('qAddress').value.trim() : '';
@@ -1608,6 +1613,7 @@ function saveQuotation(){
     total: (subtotal - discount) + vat,
     terms: terms || 'الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.',
     payments,
+    notes,
     items: JSON.parse(JSON.stringify(quoteLines)),
     attachments: editingQuoteIdx !== null && quotations[editingQuoteIdx]?.attachments
       ? JSON.parse(JSON.stringify(quotations[editingQuoteIdx].attachments))
@@ -1893,6 +1899,14 @@ function openQuoteView(idx){
           </ul>
         </div>
 
+        ${q.notes ? `
+        <!-- Notes -->
+        <div style="background:#f8f9fa; border:1px solid #f0e68c; border-radius:8px; padding:10px 12px; margin-bottom:15px;">
+          <div style="font-weight:900; color:#f9a825; border-bottom:2px solid #f9a825; display:inline-block; margin-bottom:6px; padding-bottom:2px; font-size:13px;">${isAr?'ملاحظات :':'Notes:'}</div>
+          <div style="font-size:11px; color:#444; line-height:1.5; white-space:pre-wrap;">${q.notes}</div>
+        </div>
+        ` : ''}
+
         <!-- Signature -->
         <div style="display:flex; flex-direction:column; align-items:flex-end; margin-top:8px;">
            <div style="font-size:11px; font-weight:700; color:#666; margin-bottom:30px;">${isAr?'توقيع العميل (الموافقة)':'Customer Signature (Approval)'}</div>
@@ -1943,8 +1957,8 @@ function openQuoteView(idx){
     #printableQuote table th, #printableQuote table td { border:none !important; }
     #printableQuote table th { border-top:1px solid #1a237e !important; border-bottom:1px solid #1a237e !important; border-inline-end:1px solid #1a237e !important; }
     #printableQuote table th:first-child { border-inline-start:1px solid #1a237e !important; }
-    #printableQuote table td { border-bottom:1px solid #e0e0e0 !important; border-inline-end:1px solid #e0e0e0 !important; }
-    #printableQuote table td:first-child { border-inline-start:1px solid #e0e0e0 !important; }
+    #printableQuote table td { border-bottom:1px solid #1a237e !important; border-inline-end:1px solid #1a237e !important; }
+    #printableQuote table td:first-child { border-inline-start:1px solid #1a237e !important; }
     #printableQuote table thead th:first-child { border-start-start-radius:8px; }
     #printableQuote table thead th:last-child { border-start-end-radius:8px; }
     #printableQuote table tbody tr:last-child td:first-child { border-end-start-radius:8px; }
