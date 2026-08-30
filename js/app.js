@@ -1393,6 +1393,7 @@ function openQuoteModal(idx=null){
             <span style="font-weight:700;color:var(--text-2);">AIF-F</span>
             <input id="qIdSuffix" style="flex:1;" placeholder="25-19" value="${isEdit ? q.id.replace('AIF-F','') : ''}">
           </div>
+          <div id="qIdSuffixError" style="display:none; margin-top:4px; font-size:11px; font-weight:700; color:#e53935;"></div>
         </div>
         <div class="field">
           <label>${lang==='en'?'Customer Name':'اسم العميل'}</label>
@@ -1530,12 +1531,12 @@ function renderQuoteLines(){
   const body = document.getElementById('qLinesBody');
   if(!body) return;
   body.innerHTML = quoteLines.map((l, idx)=>`
-    <tr>
-      <td><input value="${l.name}" oninput="quoteLines[${idx}].name=this.value" placeholder="${lang==='en'?'Item name':'اسم الصنف'}"></td>
+    <tr data-idx="${idx}">
+      <td><input class="q-item-name" value="${l.name}" oninput="quoteLines[${idx}].name=this.value" placeholder="${lang==='en'?'Item name':'اسم الصنف'}"></td>
       <td><textarea rows="1" class="auto-grow" oninput="quoteLines[${idx}].desc=this.value; autoGrow(this)" placeholder="${lang==='en'?'Specifications':'المواصفات'}">${l.desc||''}</textarea></td>
-      <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="qtyInc(${idx},-1)">−</button><input type="number" id="qty-${idx}" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input"><button type="button" class="qty-btn" onclick="qtyInc(${idx},1)">+</button></div></td>
+      <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="qtyInc(${idx},-1)">−</button><input type="number" id="qty-${idx}" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input q-item-qty"><button type="button" class="qty-btn" onclick="qtyInc(${idx},1)">+</button></div></td>
       <td><input value="${l.unit}" oninput="quoteLines[${idx}].unit=this.value" style="text-align:center;"></td>
-      <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="priceInc(${idx},-1)">−</button><input type="number" id="price-${idx}" value="${l.price}" oninput="quoteLines[${idx}].price=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input" style="width:70px;"><button type="button" class="qty-btn" onclick="priceInc(${idx},1)">+</button></div></td>
+      <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="priceInc(${idx},-1)">−</button><input type="number" id="price-${idx}" value="${l.price}" oninput="quoteLines[${idx}].price=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input q-item-price" style="width:70px;"><button type="button" class="qty-btn" onclick="priceInc(${idx},1)">+</button></div></td>
       <td><button onclick="removeQuoteLine(${idx})" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="${lang==='en'?'Delete item':'حذف الصنف'}">${ICONS.trash}</button></td>
     </tr>
   `).join('');
@@ -1575,6 +1576,27 @@ function savePaymentsText(idx, text){
   }
 }
 
+function scrollQuoteModalTo(el){
+  if(!el) return;
+  const modal = document.getElementById('quoteModalOverlay') && document.querySelector('#quoteModalOverlay .modal');
+  if(!modal) return;
+  const elRect = el.getBoundingClientRect();
+  const modalRect = modal.getBoundingClientRect();
+  const target = modal.scrollTop + ((elRect.top - modalRect.top) - (modalRect.height / 2));
+  const maxScroll = modal.scrollHeight - modal.clientHeight;
+  const finalTop = Math.max(0, Math.min(target, maxScroll));
+  const startTop = modal.scrollTop;
+  const dist = finalTop - startTop;
+  if(Math.abs(dist) < 1) return;
+  const dur = Math.min(450, 150 + Math.abs(dist) * 0.25);
+  const t0 = performance.now();
+  const ease = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+  (function step(now){
+    const p = Math.min(1, (now - t0) / dur);
+    modal.scrollTop = startTop + dist * ease(p);
+    if(p < 1) requestAnimationFrame(step);
+  })(t0);
+}
 function saveQuotation(){
   const suffix = document.getElementById('qIdSuffix').value.trim();
   const customer = document.getElementById('qCustomer').value.trim();
@@ -1588,8 +1610,65 @@ function saveQuotation(){
   const validity = parseInt(document.getElementById('qValidity') ? document.getElementById('qValidity').value : 15) || 15;
   const salesperson = document.getElementById('qSalesperson') ? document.getElementById('qSalesperson').value : 'محمد علي';
   
-  if(!suffix || !customer){
-    showToast(lang==='en'?'Please fill all fields':'يرجى ملء جميع الحقول');
+  const require = () => {};
+  const clearInvalid = () => {
+    document.querySelectorAll('#quoteModalOverlay #qIdSuffix, #quoteModalOverlay #qCustomer').forEach(el => {
+      el.style.border = '';
+      el.style.boxShadow = '';
+    });
+    document.querySelectorAll('#qLinesBody .q-item-name, #qLinesBody .q-item-qty, #qLinesBody .q-item-price').forEach(el => {
+      el.style.border = '';
+      el.style.boxShadow = '';
+    });
+    const errEl = document.getElementById('qIdSuffixError');
+    if(errEl){ errEl.style.display = 'none'; errEl.textContent = ''; }
+  };
+
+  clearInvalid();
+  let firstErrEl = null;
+  const markErr = (el) => {
+    if(!el) return;
+    el.style.border = '2px solid #e53935';
+    el.style.boxShadow = '0 0 0 2px rgba(229,57,53,0.25)';
+    if(!firstErrEl) firstErrEl = el;
+  };
+  let invalid = false;
+  if(!suffix){ markErr(document.getElementById('qIdSuffix')); invalid = true; }
+  if(!customer){ markErr(document.getElementById('qCustomer')); invalid = true; }
+  if(quoteLines.length === 0) invalid = true;
+  quoteLines.forEach((l, i) => {
+    if(!l.name.trim() || !(l.qty > 0) || !(l.price >= 0)) invalid = true;
+  });
+  
+  if(invalid){
+    quoteLines.forEach((l, i) => {
+      const row = document.querySelector(`#qLinesBody tr[data-idx="${i}"]`);
+      if(!row) return;
+      if(!l.name.trim()) markErr(row.querySelector('.q-item-name'));
+      if(!(l.qty > 0)) markErr(row.querySelector('.q-item-qty'));
+      if(!(l.price >= 0)) markErr(row.querySelector('.q-item-price'));
+    });
+    showToast(lang==='en'?'Please fill the highlighted required fields':'يرجى تعبئة الخانات الأساسية المظللة بالأحمر');
+    scrollQuoteModalTo(firstErrEl);
+    return;
+  }
+
+  const candidateId = 'AIF-F' + suffix;
+  const duplicate = quotations.findIndex((evalQ, qi) =>
+    qi !== editingQuoteIdx && evalQ.id === candidateId
+  );
+  if(duplicate !== -1){
+    const sufEl = document.getElementById('qIdSuffix');
+    sufEl.style.border = '2px solid #e53935';
+    sufEl.style.boxShadow = '0 0 0 2px rgba(229,57,53,0.25)';
+    const errEl = document.getElementById('qIdSuffixError');
+    if(errEl){
+      errEl.textContent = lang==='en'
+        ? 'This quote number is already used'
+        : 'رقم العرض مستخدم سابقاً';
+      errEl.style.display = 'block';
+    }
+    scrollQuoteModalTo(sufEl);
     return;
   }
   
