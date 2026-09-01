@@ -6170,12 +6170,22 @@ let CAL_EVENTS = [];
 try { const s = localStorage.getItem('stockflow_cal_events'); if(s) CAL_EVENTS = JSON.parse(s); } catch(e){}
 function saveCalEvents(){ localStorage.setItem('stockflow_cal_events', JSON.stringify(CAL_EVENTS)); }
 
+const CAL_CATEGORIES = [
+  { key:'meeting',  color:'#4f7cff', label:{en:'Meeting',ar:'اجتماع'} },
+  { key:'ship',     color:'#22c07a', label:{en:'Ship',ar:'شحن'} },
+  { key:'review',   color:'#f0a63f', label:{en:'Review',ar:'مراجعة'} },
+  { key:'focus',    color:'#a879f2', label:{en:'Focus',ar:'تركيز'} },
+  { key:'personal', color:'#ef4f9c', label:{en:'Personal',ar:'شخصي'} }
+];
+const CAL_CAT_MAP = Object.fromEntries(CAL_CATEGORIES.map(c=>[c.key, c]));
+
 let calDate = new Date();
 let calSelected = null; // YYYY-MM-DD
+let calSelectedCat = null;
 
 function fmtDate(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return y+'-'+m+'-'+day; }
-
 function getEventsForDate(dateStr){ return CAL_EVENTS.filter(e=>e.date===dateStr); }
+function totalCalEventCount(){ return CAL_EVENTS.length; }
 
 function renderCalendar(){
   const L = STR[lang];
@@ -6188,32 +6198,47 @@ function renderCalendar(){
   const todayStr = fmtDate(new Date());
 
   document.getElementById('calTitle').textContent = L.calendar.monthNames[month] + ' ' + year;
+  const badge = document.getElementById('calEventBadge');
+  if(badge) badge.textContent = totalCalEventCount();
+
+  // weekday labels
+  const weekdaysEl = document.getElementById('calWeekdays');
+  if(weekdaysEl) weekdaysEl.innerHTML = L.calendar.dayNames.map(n=>'<span>'+n+'</span>').join('');
 
   let html = '';
   let ci = 0;
-  // day names
-  L.calendar.dayNames.forEach(n=>{ html += '<div class="cal-day">'+n+'</div>'; });
   // prev month cells
   for(let i=startDay-1; i>=0; i--){
     const day = daysInPrev - i;
-    const m = month===0?11:month-1;
-    const y = month===0?year-1:year;
-    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
+    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms"><div class="cal-num">'+day+'</div></div>'; ci++;
   }
   // current month cells
   for(let day=1; day<=daysInMonth; day++){
     const dateObj = new Date(year, month, day);
     const dateStr = fmtDate(dateObj);
     const isToday = dateStr===todayStr;
-    const hasEvent = getEventsForDate(dateStr).length>0;
     const isSelected = dateStr===calSelected;
-    html += '<div class="cal-cell'+(isToday?' today':'')+(hasEvent?' has-event':'')+(isSelected?' selected':'')+'" data-date="'+dateStr+'" style="animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
+    const dayEvents = getEventsForDate(dateStr);
+    let cls = 'cal-cell';
+    if(isToday) cls += ' is-today';
+    if(isSelected) cls += ' is-selected';
+    html += '<div class="'+cls+'" data-date="'+dateStr+'" style="animation-delay:'+(ci*8)+'ms">';
+    html += '<div class="cal-num">'+day+'</div>';
+    if(dayEvents.length){
+      html += '<div class="cal-dots">';
+      dayEvents.slice(0,3).forEach(ev=>{
+        const cat = CAL_CAT_MAP[ev.cat] || CAL_CATEGORIES[0];
+        html += '<span style="background:'+cat.color+'"></span>';
+      });
+      html += '</div>';
+    }
+    html += '</div>'; ci++;
   }
   // next month cells
   const totalCells = startDay + daysInMonth;
   const remaining = (7 - totalCells%7)%7;
   for(let i=1; i<=remaining; i++){
-    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms">'+i+'</div>'; ci++;
+    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms"><div class="cal-num">'+i+'</div></div>'; ci++;
   }
   document.getElementById('calGrid').innerHTML = html;
 
@@ -6224,16 +6249,70 @@ function renderCalendar(){
 
 function renderCalEvents(){
   const L = STR[lang];
-  const events = getEventsForDate(calSelected);
+  const events = getEventsForDate(calSelected).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const fullWeekdays = lang==='ar'?['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const selDate = calSelected ? new Date(calSelected+'T12:00:00') : new Date();
+  const label = fullWeekdays[selDate.getDay()].toUpperCase() + ', ' + L.calendar.monthNames[selDate.getMonth()].toUpperCase() + ' ' + selDate.getDate();
+
   const titleEl = document.getElementById('calEventsTitle');
+  if(titleEl) titleEl.textContent = events.length
+    ? label + ' · ' + events.length + ' EVENT' + (events.length>1?'S':'')
+    : label;
+
   const bodyEl = document.getElementById('calEventsBody');
-  if(titleEl) titleEl.textContent = calSelected===fmtDate(new Date()) ? (L.notif.todayTitle||'Today') : (calSelected||'—');
-  if(bodyEl) bodyEl.innerHTML = events.length
-    ? events.map((e,ei)=>'<div class="cal-event-item" style="animation-delay:'+(ei*40)+'ms"><div class="cal-event-dot"></div><div class="cal-event-name">'+escapeHtml(e.name)+'</div><div class="cal-event-time">'+(e.time||'—')+'</div><button class="cal-event-del" data-id="'+e.id+'">×</button></div>').join('')
-    : '<div class="cal-no-events">'+L.calendar.noEvents+'</div>';
+  if(!bodyEl) return;
+  if(!events.length){
+    bodyEl.innerHTML = '<div class="cal-no-events">'+L.calendar.noEvents+'</div>';
+    return;
+  }
+  bodyEl.innerHTML = events.map((ev,ei)=>{
+    const cat = CAL_CAT_MAP[ev.cat] || CAL_CATEGORIES[0];
+    return '<div class="cal-event-row" style="animation-delay:'+(ei*40)+'ms">'
+      +'<span class="cal-event-dot" style="background:'+cat.color+'"></span>'
+      +'<span class="cal-event-time">'+(ev.time||'—')+'</span>'
+      +'<span class="cal-event-title">'+escapeHtml(ev.name)+'</span>'
+      +'<span class="cal-event-tag" style="background:'+cat.color+'1f;color:'+cat.color+'">'+cat.label[lang]+'</span>'
+      +'</div>';
+  }).join('');
 }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];}); }
+
+function buildCalColorPicker(){
+  const picker = document.getElementById('calColorPicker');
+  if(!picker) return;
+  picker.innerHTML = '';
+  CAL_CATEGORIES.forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'cal-color-dot';
+    btn.style.background = cat.color;
+    btn.dataset.key = cat.key;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    btn.addEventListener('click', ()=>{
+      calSelectedCat = cat.key;
+      picker.querySelectorAll('.cal-color-dot').forEach(el=>el.classList.toggle('active', el.dataset.key===cat.key));
+      const catLabel = document.getElementById('calCategoryLabel');
+      if(catLabel){ catLabel.textContent = cat.label[lang]; catLabel.style.color = cat.color; }
+      updateCalSaveState();
+    });
+    picker.appendChild(btn);
+  });
+}
+
+function updateCalSaveState(){
+  const nameInput = document.getElementById('calEventName');
+  const saveBtn = document.getElementById('calSaveBtn');
+  if(!saveBtn) return;
+  const ready = nameInput && nameInput.value.trim().length > 0 && calSelectedCat;
+  saveBtn.classList.toggle('ready', ready);
+}
+
+function closeCalForm(){
+  const form = document.getElementById('calAddForm');
+  const addBtn = document.getElementById('calAddBtn');
+  if(form) form.classList.remove('open');
+  if(addBtn) addBtn.style.display = 'flex';
+}
 
 // calendar button toggle
 document.getElementById('calendarBtn').addEventListener('click', function(e){
@@ -6241,16 +6320,13 @@ document.getElementById('calendarBtn').addEventListener('click', function(e){
   const dd = document.getElementById('calDropdown');
   if(dd.classList.contains('open')){
     dd.classList.remove('open');
-    document.getElementById('calAddForm').classList.remove('open');
+    closeCalForm();
     return;
   }
-  // close notif dropdown if open
   document.getElementById('notifDropdown').classList.remove('open');
   renderCalendar();
   dd.classList.add('open');
 });
-
-// close calendar on outside click (consolidated handler above handles both dropdowns)
 
 document.getElementById('calPrev').addEventListener('click', function(e){
   e.stopPropagation();
@@ -6264,13 +6340,19 @@ document.getElementById('calNext').addEventListener('click', function(e){
   renderCalendar();
 });
 
+// Today button
+document.getElementById('calTodayBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  calDate = new Date();
+  calSelected = fmtDate(new Date());
+  renderCalendar();
+});
+
 document.getElementById('calGrid').addEventListener('click', function(e){
   const cell = e.target.closest('.cal-cell');
   if(!cell || !cell.dataset.date) return;
-  document.querySelectorAll('#calGrid .cal-cell').forEach(c=>c.classList.remove('selected'));
   calSelected = cell.dataset.date;
-  cell.classList.add('selected');
-  renderCalEvents();
+  renderCalendar();
 });
 
 // add event form toggle
@@ -6278,57 +6360,45 @@ document.getElementById('calAddBtn').addEventListener('click', function(e){
   e.stopPropagation();
   const L = STR[lang];
   const form = document.getElementById('calAddForm');
-  form.classList.toggle('open');
-  if(form.classList.contains('open')){
-    document.getElementById('calEventName').value = '';
-    document.getElementById('calEventDate').value = calSelected;
-    document.getElementById('calEventTime').value = '';
-    // update labels for selected date
-    const saveBtn = document.getElementById('calSaveBtn');
-    saveBtn.textContent = L.calendar.btnAdd;
-    document.getElementById('calCancelBtn').textContent = L.calendar.btnCancel;
-    document.getElementById('calEventName').placeholder = L.calendar.eventName;
-    document.getElementById('calEventName').focus();
-  }
+  const addBtn = document.getElementById('calAddBtn');
+  form.classList.add('open');
+  addBtn.style.display = 'none';
+  document.getElementById('calEventName').value = '';
+  document.getElementById('calEventTime').value = '09:00';
+  calSelectedCat = null;
+  const catLabel = document.getElementById('calCategoryLabel');
+  if(catLabel){ catLabel.textContent = ''; catLabel.style.color = ''; }
+  document.getElementById('calColorPicker').querySelectorAll('.cal-color-dot').forEach(el=>el.classList.remove('active'));
+  document.getElementById('calSaveBtn').textContent = L.calendar.btnAdd;
+  document.getElementById('calAddBtnLabel').textContent = L.calendar.btnAdd;
+  document.getElementById('calEventName').placeholder = lang==='ar'?'ما هو الموعد؟':"What's on?";
+  updateCalSaveState();
+  setTimeout(()=>document.getElementById('calEventName').focus(), 50);
 });
 
 document.getElementById('calCancelBtn').addEventListener('click', function(e){
   e.stopPropagation();
-  document.getElementById('calAddForm').classList.remove('open');
+  closeCalForm();
 });
 
 document.getElementById('calSaveBtn').addEventListener('click', function(e){
   e.stopPropagation();
   const L = STR[lang];
   const name = document.getElementById('calEventName').value.trim();
-  const date = document.getElementById('calEventDate').value;
   const time = document.getElementById('calEventTime').value;
   if(!name){ showToast(lang==='en'?'Please enter an event name':'الرجاء إدخال اسم الموعد'); return; }
-  if(!date){ showToast(lang==='en'?'Please select a date':'الرجاء اختيار التاريخ'); return; }
-  const ev = { id: Date.now()+'_'+Math.random().toString(36).slice(2,6), name: name, date: date, time: time };
+  if(!calSelectedCat){ showToast(lang==='en'?'Please select a category':'الرجاء اختيار الفئة'); return; }
+  const ev = { id: Date.now()+'_'+Math.random().toString(36).slice(2,6), name: name, date: calSelected, time: time, cat: calSelectedCat };
   CAL_EVENTS.push(ev);
   saveCalEvents();
-  document.getElementById('calAddForm').classList.remove('open');
-  calSelected = date;
+  closeCalForm();
   showSuccessCheck(lang==='en'?'Event added!':'تم إضافة الموعد!', ()=>{ renderCalendar(); });
 });
 
-document.getElementById('calEventsBody').addEventListener('click', function(e){
-  const del = e.target.closest('.cal-event-del');
-  if(!del) return;
-  e.stopPropagation();
-  const id = del.dataset.id;
-  CAL_EVENTS = CAL_EVENTS.filter(e=>String(e.id)!==String(id));
-  saveCalEvents();
-  renderCalEvents();
-  // re-render grid to update dots
-  const cells = document.querySelectorAll('#calGrid .cal-cell');
-  cells.forEach(c=>{
-    if(c.dataset.date){
-      c.classList.toggle('has-event', getEventsForDate(c.dataset.date).length>0);
-    }
-  });
-});
+document.getElementById('calEventName').addEventListener('input', updateCalSaveState);
+document.getElementById('calEventName').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('calSaveBtn').click(); });
+
+buildCalColorPicker();
 
 
 

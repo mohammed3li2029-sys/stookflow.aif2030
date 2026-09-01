@@ -212,27 +212,46 @@
     </div>
     <div class="cal-dropdown" id="calDropdown">
       <div class="cal-header">
-        <button class="cal-arrow" id="calPrev">â—€</button>
-        <span class="cal-title" id="calTitle">January 2026</span>
-        <button class="cal-arrow" id="calNext">â–¶</button>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <div class="cal-events">
-        <div class="cal-events-header">
-          <span id="calEventsTitle">Today</span>
-          <button class="cal-add-btn" id="calAddBtn">+</button>
+        <div class="cal-month-title">
+          <h1 class="cal-title" id="calTitle">January 2026</h1>
+          <span class="cal-event-badge" id="calEventBadge">0</span>
         </div>
-        <div class="cal-events-body" id="calEventsBody">
-          <div class="cal-no-events" id="calNoEvents">No events</div>
+        <div class="cal-nav-controls">
+          <button class="cal-pill-btn" id="calTodayBtn">Today</button>
+          <button class="cal-icon-btn" id="calPrev">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="cal-icon-btn" id="calNext">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
-      <div class="cal-add-form" id="calAddForm">
-        <input class="cal-input" id="calEventName" placeholder="Event Name" />
-        <input class="cal-input cal-input-half" id="calEventDate" type="date" />
-        <input class="cal-input cal-input-half" id="calEventTime" type="time" />
-        <div class="cal-form-actions">
-          <button class="cal-form-btn cal-form-cancel" id="calCancelBtn">Cancel</button>
-          <button class="cal-form-btn cal-form-save" id="calSaveBtn">Add Event</button>
+      <div class="cal-weekdays" id="calWeekdays"></div>
+      <div class="cal-days-grid" id="calGrid"></div>
+      <div class="cal-agenda">
+        <div class="cal-agenda-date" id="calEventsTitle">—</div>
+        <div class="cal-event-list" id="calEventsBody"></div>
+        <button class="cal-add-event-btn" id="calAddBtn">
+          <span class="cal-plus-circle">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </span>
+          <span id="calAddBtnLabel">Add event</span>
+        </button>
+        <div class="cal-add-form" id="calAddForm">
+          <div class="cal-add-form-row">
+            <input type="text" class="cal-form-input" id="calEventName" placeholder="What's on?" maxlength="60">
+            <input type="time" class="cal-form-time" id="calEventTime" value="09:00">
+          </div>
+          <div class="cal-add-form-controls">
+            <div class="cal-color-picker" id="calColorPicker"></div>
+            <span class="cal-category-label" id="calCategoryLabel"></span>
+            <div class="cal-form-actions">
+              <button class="cal-cancel-btn" id="calCancelBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <button class="cal-save-btn" id="calSaveBtn">Add</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
