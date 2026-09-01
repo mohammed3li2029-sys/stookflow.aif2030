@@ -6206,11 +6206,10 @@ function renderCalendar(){
   if(weekdaysEl) weekdaysEl.innerHTML = L.calendar.dayNames.map(n=>'<span>'+n+'</span>').join('');
 
   let html = '';
-  let ci = 0;
   // prev month cells
   for(let i=startDay-1; i>=0; i--){
     const day = daysInPrev - i;
-    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms"><div class="cal-num">'+day+'</div></div>'; ci++;
+    html += '<div class="cal-cell other" data-date=""><div class="cal-num">'+day+'</div></div>';
   }
   // current month cells
   for(let day=1; day<=daysInMonth; day++){
@@ -6222,7 +6221,7 @@ function renderCalendar(){
     let cls = 'cal-cell';
     if(isToday) cls += ' is-today';
     if(isSelected) cls += ' is-selected';
-    html += '<div class="'+cls+'" data-date="'+dateStr+'" style="animation-delay:'+(ci*8)+'ms">';
+    html += '<div class="'+cls+'" data-date="'+dateStr+'">';
     html += '<div class="cal-num">'+day+'</div>';
     if(dayEvents.length){
       html += '<div class="cal-dots">';
@@ -6232,13 +6231,13 @@ function renderCalendar(){
       });
       html += '</div>';
     }
-    html += '</div>'; ci++;
+    html += '</div>';
   }
   // next month cells
   const totalCells = startDay + daysInMonth;
   const remaining = (7 - totalCells%7)%7;
   for(let i=1; i<=remaining; i++){
-    html += '<div class="cal-cell other" data-date="" style="animation-delay:'+(ci*8)+'ms"><div class="cal-num">'+i+'</div></div>'; ci++;
+    html += '<div class="cal-cell other" data-date=""><div class="cal-num">'+i+'</div></div>';
   }
   document.getElementById('calGrid').innerHTML = html;
 
@@ -6349,6 +6348,7 @@ document.getElementById('calTodayBtn').addEventListener('click', function(e){
 });
 
 document.getElementById('calGrid').addEventListener('click', function(e){
+  e.stopPropagation();
   const cell = e.target.closest('.cal-cell');
   if(!cell || !cell.dataset.date) return;
   calSelected = cell.dataset.date;

@@ -340,7 +340,6 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
   from{opacity:0;transform:translateY(-6px);}
   to{opacity:1;transform:translateY(0);}
 }
-.cal-days-grid .cal-cell{animation:calCellPop .3s var(--ease) backwards;}
 .cal-event-row{animation:calEventIn .28s var(--ease) backwards;}
 .cal-add-form.open{animation:calFormIn .2s var(--ease);}
 
