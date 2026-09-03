@@ -2,6 +2,7 @@
   --blue:#0A66FF; --blue-dim:#3D8BFF; --blue-soft:#EAF1FF; --blue-soft-d:#16243F;
   --red:#E0282A; --red-soft:#FCEAEA; --red-soft-d:#3A1E1F;
   --green:#1FAE5C; --green-soft:#E8F8EE; --green-soft-d:#123322;
+  --yellow:#EAB308; --yellow-soft:#FEF9C3;
   --amber:#E2A335; --amber-soft:#FBF1DF; --amber-soft-d:#3A2C0F;
   --radius-lg:20px; --radius-md:14px; --radius-sm:10px;
   --ease:cubic-bezier(.4,0,.2,1);
@@ -1315,10 +1316,10 @@ html[dir="rtl"] .content.page-enter table tbody tr{
   color: var(--blue);
 }
 
-/* --- Delete trash jiggle --- */
-.row-actions button:nth-child(3):hover svg{
-  animation: iconJello .5s var(--ease) both;
-  color: var(--red);
+/* --- Duplicate copy bounce --- */
+.row-actions button[data-action="duplicate"]:hover svg{
+  animation: iconBounce .4s var(--ease) both;
+  color: var(--yellow);
 }
 
 /* --- Single delete buttons (detail tabs) --- */
