@@ -379,6 +379,7 @@ const ICONS = {
   filter:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"/></svg>',
   download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>',
   eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>',
   drill:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 17 12 7l2 2-10 10z"/><path d="m14 5 3-3 4 4-3 3M16 16l4 4"/></svg>',
@@ -895,20 +896,50 @@ function renderDashSection(key, cc){
         <div class="card">
           <div class="card-head">
             <div class="card-title">${L.calendar.title}</div>
-            <button class="cal-add-btn" id="dashCalAddBtn" title="${lang==='en'?'Add Event':'إضافة موعد'}" style="width:28px;height:28px;font-size:15px;">+</button>
           </div>
           <div class="dash-cal">
-            <div class="cal-header" style="padding:0 0 6px;">
-              <button class="cal-arrow" id="dashCalPrev">◀</button>
-              <span class="cal-title" id="dashCalTitle">${L.calendar.monthNames[new Date().getMonth()]} ${new Date().getFullYear()}</span>
-              <button class="cal-arrow" id="dashCalNext">▶</button>
-            </div>
-            <div class="cal-grid" id="dashCalGrid" style="padding:0 0 8px;"></div>
-            <div class="cal-events" style="border-top:1px solid var(--border);">
-              <div class="cal-events-header" style="padding:6px 0;">
-                <span id="dashCalDateLabel" style="font-size:11px;color:var(--text-2);">${todayStr}</span>
+            <div class="cal-header">
+              <div class="cal-month-title">
+                <h1 class="cal-title" id="dashCalTitle">${L.calendar.monthNames[new Date().getMonth()]} ${new Date().getFullYear()}</h1>
+                <span class="cal-event-badge" id="dashCalBadge">0</span>
               </div>
-              <div class="cal-events-body" id="dashCalBody" style="padding:0 0 4px;max-height:110px;"></div>
+              <div class="cal-nav-controls">
+                <button class="cal-pill-btn" id="dashCalTodayBtn">${lang==='en'?'Today':'اليوم'}</button>
+                <button class="cal-icon-btn" id="dashCalPrev">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="cal-icon-btn" id="dashCalNext">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="cal-weekdays" id="dashCalWeekdays"></div>
+            <div class="cal-days-grid" id="dashCalGrid"></div>
+            <div class="cal-agenda">
+              <div class="cal-agenda-date" id="dashCalDateLabel">—</div>
+              <div class="cal-event-list" id="dashCalBody"></div>
+              <button class="cal-add-event-btn" id="dashCalAddBtn">
+                <span class="cal-plus-circle">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                </span>
+                <span id="dashCalAddBtnLabel">${lang==='en'?'Add event':'إضافة موعد'}</span>
+              </button>
+              <div class="cal-add-form" id="dashCalAddForm">
+                <div class="cal-add-form-row">
+                  <input type="text" class="cal-form-input" id="dashCalEventName" placeholder="${lang==='ar'?'ما هو الموعد？':"What's on?"}" maxlength="60">
+                  <input type="time" class="cal-form-time" id="dashCalEventTime" value="09:00">
+                </div>
+                <div class="cal-add-form-controls">
+                  <div class="cal-color-picker" id="dashCalColorPicker"></div>
+                  <span class="cal-category-label" id="dashCalCategoryLabel"></span>
+                  <div class="cal-form-actions">
+                    <button class="cal-cancel-btn" id="dashCalCancelBtn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="cal-save-btn" id="dashCalSaveBtn">${lang==='en'?'Add':'إضافة'}</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1077,6 +1108,7 @@ function mountDashboardCharts(){
 
 let dashCalDate = new Date();
 let dashCalSelected = fmtDate(new Date());
+let dashCalSelectedCat = null;
 
 function renderDashCal(){
   const L = STR[lang];
@@ -1091,24 +1123,47 @@ function renderDashCal(){
   const titleEl = document.getElementById('dashCalTitle');
   if(titleEl) titleEl.textContent = L.calendar.monthNames[month] + ' ' + year;
 
+  const weekdaysEl = document.getElementById('dashCalWeekdays');
+  if(weekdaysEl) weekdaysEl.innerHTML = L.calendar.dayNames.map(n=>'<span>'+n+'</span>').join('');
+
+  const badgeEl = document.getElementById('dashCalBadge');
+  if(badgeEl){
+    const monthEvents = CAL_EVENTS.filter(ev=>{
+      const parts = ev.date.split('-');
+      return parseInt(parts[0])===year && parseInt(parts[1])-1===month;
+    });
+    badgeEl.textContent = monthEvents.length;
+  }
+
   let html = '';
-  let ci = 0;
-  L.calendar.dayNames.forEach(n=>{ html += '<div class="cal-day" style="padding:3px 0;font-size:10px;">'+n+'</div>'; });
   for(let i=startDay-1; i>=0; i--){
-    const day = daysInPrev - i;
-    html += '<div class="cal-cell other" data-date="" style="padding:4px 0;font-size:11px;animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
+    html += '<div class="cal-cell other">'+(daysInPrev - i)+'</div>';
   }
   for(let day=1; day<=daysInMonth; day++){
     const dateStr = fmtDate(new Date(year, month, day));
     const isToday = dateStr===todayStr;
     const hasEvent = getEventsForDate(dateStr).length>0;
     const isSelected = dateStr===dashCalSelected;
-    html += '<div class="cal-cell'+(isToday?' today':'')+(hasEvent?' has-event':'')+(isSelected?' selected':'')+'" data-date="'+dateStr+'" style="padding:4px 0;font-size:11px;animation-delay:'+(ci*8)+'ms">'+day+'</div>'; ci++;
+    let cls = 'cal-cell';
+    if(isToday) cls += ' is-today';
+    if(hasEvent) cls += ' has-event';
+    if(isSelected) cls += ' is-selected';
+    html += '<div class="'+cls+'" data-date="'+dateStr+'">';
+    html += '<div class="cal-num">'+day+'</div>';
+    if(hasEvent){
+      html += '<div class="cal-dots">';
+      getEventsForDate(dateStr).slice(0,3).forEach(ev=>{
+        const cat = CAL_CAT_MAP[ev.cat] || CAL_CATEGORIES[0];
+        html += '<span style="background:'+cat.color+'"></span>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
   }
   const totalCells = startDay + daysInMonth;
   const remaining = (7 - totalCells%7)%7;
   for(let i=1; i<=remaining; i++){
-    html += '<div class="cal-cell other" data-date="" style="padding:4px 0;font-size:11px;animation-delay:'+(ci*8)+'ms">'+i+'</div>'; ci++;
+    html += '<div class="cal-cell other">'+i+'</div>';
   }
   const grid = document.getElementById('dashCalGrid');
   if(grid) grid.innerHTML = html;
@@ -1118,56 +1173,132 @@ function renderDashCal(){
 
 function renderDashCalEvents(){
   const L = STR[lang];
-  const events = getEventsForDate(dashCalSelected);
-  const label = document.getElementById('dashCalDateLabel');
-  if(label) label.textContent = dashCalSelected;
-  const body = document.getElementById('dashCalBody');
-  if(body) body.innerHTML = events.length
-    ? events.map(e=>'<div class="cal-event-item" style="padding:4px 0;"><div class="cal-event-dot"></div><div class="cal-event-name" style="font-size:11px;">'+escapeHtml(e.name)+'</div><div class="cal-event-time" style="font-size:10px;">'+(e.time||'—')+'</div><button class="cal-event-del" data-id="'+e.id+'" style="font-size:12px;">×</button></div>').join('')
-    : '<div class="cal-no-events" style="font-size:11px;padding:6px 0;">'+L.calendar.noEvents+'</div>';
+  const events = getEventsForDate(dashCalSelected).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const fullWeekdays = lang==='ar'?['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const selDate = dashCalSelected ? new Date(dashCalSelected+'T12:00:00') : new Date();
+  const label = fullWeekdays[selDate.getDay()].toUpperCase() + ', ' + L.calendar.monthNames[selDate.getMonth()].toUpperCase() + ' ' + selDate.getDate();
+
+  const titleEl = document.getElementById('dashCalDateLabel');
+  if(titleEl) titleEl.textContent = events.length
+    ? label + ' · ' + events.length + ' EVENT' + (events.length>1?'S':'')
+    : label;
+
+  const bodyEl = document.getElementById('dashCalBody');
+  if(!bodyEl) return;
+  if(!events.length){
+    bodyEl.innerHTML = '<div class="cal-no-events">'+L.calendar.noEvents+'</div>';
+    return;
+  }
+  bodyEl.innerHTML = events.map((ev,ei)=>{
+    const cat = CAL_CAT_MAP[ev.cat] || CAL_CATEGORIES[0];
+    return '<div class="cal-event-row" style="animation-delay:'+(ei*40)+'ms">'
+      +'<span class="cal-event-dot" style="background:'+cat.color+'"></span>'
+      +'<span class="cal-event-time">'+(ev.time||'—')+'</span>'
+      +'<span class="cal-event-title">'+escapeHtml(ev.name)+'</span>'
+      +'<span class="cal-event-tag" style="background:'+cat.color+'1f;color:'+cat.color+'">'+cat.label[lang]+'</span>'
+      +'</div>';
+  }).join('');
 }
 
 function mountDashCal(){
+  const L = STR[lang];
   const prev = document.getElementById('dashCalPrev');
   const next = document.getElementById('dashCalNext');
+  const todayBtn = document.getElementById('dashCalTodayBtn');
   const grid = document.getElementById('dashCalGrid');
-  const body = document.getElementById('dashCalBody');
   const addBtn = document.getElementById('dashCalAddBtn');
+  const form = document.getElementById('dashCalAddForm');
+  const cancelBtn = document.getElementById('dashCalCancelBtn');
+  const saveBtn = document.getElementById('dashCalSaveBtn');
+  const nameInput = document.getElementById('dashCalEventName');
+  const timeInput = document.getElementById('dashCalEventTime');
   if(!grid) return;
   dashCalDate = new Date();
   dashCalSelected = fmtDate(new Date());
+  dashCalSelectedCat = null;
   renderDashCal();
+  buildDashCalColorPicker();
 
   if(prev) prev.onclick = function(e){ e.stopPropagation(); dashCalDate.setMonth(dashCalDate.getMonth()-1); renderDashCal(); };
   if(next) next.onclick = function(e){ e.stopPropagation(); dashCalDate.setMonth(dashCalDate.getMonth()+1); renderDashCal(); };
-  if(grid) grid.onclick = function(e){
+  if(todayBtn) todayBtn.onclick = function(e){
+    e.stopPropagation();
+    dashCalDate = new Date();
+    dashCalSelected = fmtDate(new Date());
+    renderDashCal();
+  };
+  grid.onclick = function(e){
+    e.stopPropagation();
     const cell = e.target.closest('.cal-cell');
     if(!cell || !cell.dataset.date) return;
-    grid.querySelectorAll('.cal-cell').forEach(c=>c.classList.remove('selected'));
     dashCalSelected = cell.dataset.date;
-    cell.classList.add('selected');
-    renderDashCalEvents();
-  };
-  if(body) body.onclick = function(e){
-    const del = e.target.closest('.cal-event-del');
-    if(!del) return;
-    e.stopPropagation();
-    const id = del.dataset.id;
-    CAL_EVENTS = CAL_EVENTS.filter(e=>String(e.id)!==String(id));
-    saveCalEvents();
-    renderDashCalEvents();
     renderDashCal();
-    const calGrid = document.getElementById('calGrid');
-    if(calGrid){
-      const cells = calGrid.querySelectorAll('.cal-cell');
-      cells.forEach(c=>{ if(c.dataset.date) c.classList.toggle('has-event', getEventsForDate(c.dataset.date).length>0); });
-    }
   };
+
+  function closeDashCalForm(){
+    if(form) form.classList.remove('open');
+    if(addBtn) addBtn.style.display = '';
+  }
+  function updateDashCalSaveState(){
+    const ready = !!(nameInput.value.trim() && dashCalSelectedCat);
+    if(saveBtn){ saveBtn.disabled = !ready; saveBtn.classList.toggle('ready', ready); }
+  }
+
   if(addBtn) addBtn.onclick = function(e){
     e.stopPropagation();
-    const headerCalBtn = document.getElementById('calendarBtn');
-    if(headerCalBtn) headerCalBtn.click();
+    form.classList.add('open');
+    addBtn.style.display = 'none';
+    nameInput.value = '';
+    timeInput.value = '09:00';
+    dashCalSelectedCat = null;
+    document.getElementById('dashCalCategoryLabel').textContent = '';
+    document.getElementById('dashCalCategoryLabel').style.color = '';
+    document.getElementById('dashCalColorPicker').querySelectorAll('.cal-color-dot').forEach(el=>el.classList.remove('active'));
+    saveBtn.textContent = L.calendar.btnAdd;
+    document.getElementById('dashCalAddBtnLabel').textContent = L.calendar.btnAdd;
+    nameInput.placeholder = lang==='ar'?'ما هو الموعد؟':"What's on?";
+    updateDashCalSaveState();
+    setTimeout(()=>nameInput.focus(), 50);
   };
+  if(cancelBtn) cancelBtn.onclick = function(e){ e.stopPropagation(); closeDashCalForm(); };
+  if(saveBtn) saveBtn.onclick = function(e){
+    e.stopPropagation();
+    const name = nameInput.value.trim();
+    const time = timeInput.value;
+    if(!name){ showToast(lang==='en'?'Please enter an event name':'الرجاء إدخال اسم الموعد'); return; }
+    if(!dashCalSelectedCat){ showToast(lang==='en'?'Please select a category':'الرجاء اختيار الفئة'); return; }
+    const ev = { id: Date.now()+'_'+Math.random().toString(36).slice(2,6), name: name, date: dashCalSelected, time: time, cat: dashCalSelectedCat };
+    CAL_EVENTS.push(ev);
+    saveCalEvents();
+    closeDashCalForm();
+    showSuccessCheck(lang==='en'?'Event added!':'تم إضافة الموعد!', ()=>{ renderDashCal(); renderCalendar(); });
+  };
+  if(nameInput){
+    nameInput.oninput = updateDashCalSaveState;
+    nameInput.onkeydown = function(e){ if(e.key==='Enter') saveBtn.click(); };
+  }
+}
+
+function buildDashCalColorPicker(){
+  const picker = document.getElementById('dashCalColorPicker');
+  if(!picker) return;
+  picker.innerHTML = '';
+  CAL_CATEGORIES.forEach(cat=>{
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'cal-color-dot';
+    dot.style.background = cat.color;
+    dot.title = cat.label[lang];
+    dot.onclick = function(e){
+      e.stopPropagation();
+      picker.querySelectorAll('.cal-color-dot').forEach(d=>d.classList.remove('active'));
+      dot.classList.add('active');
+      dashCalSelectedCat = cat.id;
+      const label = document.getElementById('dashCalCategoryLabel');
+      if(label){ label.textContent = cat.label[lang]; label.style.color = cat.color; }
+    };
+    picker.appendChild(dot);
+  });
 }
 
 /* ===================================================================
@@ -1296,6 +1427,7 @@ function renderQuoteRows(filter='', statusF=''){
       <td><div class="row-actions">
         <button title="${lang==='en'?'View/Print':'عرض/طباعة'}" onclick="openQuoteView(${idx})">${ICONS.eye}</button>
         <button title="${lang==='en'?'Edit':'تعديل'}" onclick="openQuoteModal(${idx})">${ICONS.edit}</button>
+        <button title="${lang==='en'?'Duplicate':'نسخ'}" onclick="duplicateQuotation(${idx})">${ICONS.copy}</button>
         <button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteQuote(${idx})">${ICONS.trash}</button>
       </div></td>
     </tr>
@@ -1798,6 +1930,30 @@ function footerContactRow(text, type){
   return '<div style="display:flex; align-items:center; gap:4px; direction:ltr;">' + icons[type] + span + '</div>';
 }
 function closeQuoteView(){ var o=document.getElementById('quoteViewOverlay'); if(!o)return; o.classList.remove('show'); o.classList.add('closing'); setTimeout(function(){o.remove();},250); }
+function duplicateQuotation(idx){
+  const src = quotations[idx];
+  closeQuoteView();
+  setTimeout(function(){
+    openQuoteModal(null);
+    setTimeout(function(){
+      document.getElementById('qIdSuffix').value = '';
+      document.getElementById('qCustomer').value = src.customer || '';
+      document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
+      if(document.getElementById('qPhone')) document.getElementById('qPhone').value = src.phone || '';
+      if(document.getElementById('qEmail')) document.getElementById('qEmail').value = src.email || '';
+      if(document.getElementById('qAddress')) document.getElementById('qAddress').value = src.address || '';
+      if(document.getElementById('qValidity') && src.validity) document.getElementById('qValidity').value = src.validity;
+      if(document.getElementById('qSalesperson') && src.salesperson) document.getElementById('qSalesperson').value = src.salesperson;
+      if(document.getElementById('qDiscount') && src.discount) document.getElementById('qDiscount').value = src.discount;
+      if(document.getElementById('qTerms')) document.getElementById('qTerms').value = src.terms || '';
+      if(document.getElementById('qPayments')) document.getElementById('qPayments').value = src.payments || '';
+      if(document.getElementById('qNotes')) document.getElementById('qNotes').value = src.notes || '';
+      quoteLines = JSON.parse(JSON.stringify(src.items || []));
+      renderQuoteLines();
+      updateQuoteTotals();
+    }, 50);
+  }, 280);
+}
 function openQuoteView(idx){
   const q = quotations[idx];
   const isAr = lang === 'ar';
@@ -1812,6 +1968,7 @@ function openQuoteView(idx){
     <!-- Actions Bar (Hidden during print) -->
     <div class="po-print-actions" style="position:fixed; top:20px; inset-inline-end:20px; z-index:1000; display:flex; gap:10px;">
       <button class="btn" onclick="closeQuoteView()" style="background:#fff;">✕ ${L.notif.viewAll||(isAr?'إغلاق':'Close')}</button>
+      <button class="btn" onclick="duplicateQuotation(${idx})" style="background:#fff;">📋 ${isAr?'نسخ العرض':'Duplicate'}</button>
       ${q.attachments && q.attachments.length ? `<button class="btn" onclick="downloadAllQuoteAttachments(${idx})" style="background:#fff;">📎 ${isAr?'تحميل المرفقات':'Download Attachments'} (${q.attachments.length})</button>` : ''}
       <button class="btn btn-primary" onclick="printQuotation(${idx})">🖨 ${isAr?'حفظ PDF / طباعة':'Save PDF / Print'}</button>
     </div>

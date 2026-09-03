@@ -315,13 +315,27 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
 }
 .cal-save-btn.ready{background:var(--text);color:#fff;cursor:pointer;}
 
-/* ---------- Dashboard/Task calendar fallback styles ---------- */
-.cal-day{text-align:center;padding:5px 0;font-size:11px;color:var(--text-2);font-weight:600;}
-.cal-cell.today{background:var(--blue);color:#fff;}
-.cal-cell.has-event{position:relative;}
-.cal-cell.has-event::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--blue);}
-.cal-cell.today.has-event::after{background:#fff;}
-.cal-cell.selected{background:var(--surface-2);outline:2px solid var(--blue);outline-offset:-2px;}
+/* ---------- Dashboard Calendar (matches dropdown style) ---------- */
+.dash-cal .cal-header{
+  padding:12px 14px 10px;
+}
+.dash-cal .cal-weekdays{
+  padding:10px 10px 6px;
+}
+.dash-cal .cal-days-grid{
+  padding:6px 10px 4px;
+}
+.dash-cal .cal-cell{
+  height:34px;min-height:0;gap:2px;border-radius:8px;
+}
+.dash-cal .cal-num{font-size:12px;}
+.dash-cal .cal-dots span{width:3.5px;height:3.5px;}
+.dash-cal .cal-agenda{padding:10px 14px 12px;}
+.dash-cal .cal-event-list{max-height:110px;}
+.dash-cal .cal-add-form{margin-top:4px;padding:7px;}
+.dash-cal .cal-form-input{font-size:12px;}
+.dash-cal .cal-form-time{font-size:11px;width:60px;}
+.dash-cal .cal-color-dot{width:14px;height:14px;}
 
 /* ---------- Calendar Animations ---------- */
 @keyframes calDropIn{
