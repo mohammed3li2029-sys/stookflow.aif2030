@@ -1424,11 +1424,11 @@ function renderQuoteRows(filter='', statusF=''){
           : `<span style="color:var(--text-3);font-size:11px;">—</span>`}
         <button class="btn-icon-sm upload-btn" onclick="uploadQuoteAttachment(${idx})" title="${lang==='en'?'Upload file':'رفع ملف'}" style="cursor:pointer;border:none;background:transparent;border-radius:8px;padding:4px;display:inline-flex;align-items:center;color:var(--blue);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="12"/><line x1="15" y1="15" x2="12" y2="12"/></svg></button>
       </td>
-      <td><div class="row-actions">
+      <td><div class="row-actions dw-actions">
         <button data-action="view" title="${lang==='en'?'View/Print':'عرض/طباعة'}" onclick="openQuoteView(${idx})">${ICONS.eye}</button>
         <button data-action="edit" title="${lang==='en'?'Edit':'تعديل'}" onclick="openQuoteModal(${idx})">${ICONS.edit}</button>
         <button data-action="duplicate" title="${lang==='en'?'Duplicate':'نسخ'}" onclick="duplicateQuotation(${idx})">${ICONS.copy}</button>
-        <button data-action="delete" title="${lang==='en'?'Delete':'حذف'}" onclick="deleteQuote(${idx})">${ICONS.trash}</button>
+        ${dwHtml(idx, 'quote')}
       </div></td>
     </tr>
   `).join('');
@@ -1841,12 +1841,78 @@ function saveQuotation(){
   showSuccessCheck(lang==='en'?'Quotation saved!':'تم حفظ عرض السعر!', ()=>{ navigate('sales', {quiet:true}); });
 }
 
-async function deleteQuote(idx){
-  const ok = await showConfirm(lang==='en'?'Are you sure you want to delete this quote?':'هل أنت متأكد من حذف هذا العرض؟');
-  if(ok){
-    quotations.splice(idx, 1);
-    navigate('sales', {quiet:true});
-  }
+function dwHtml(wIdx, wPage){
+  return `<div class="delete-widget" data-wpage="${wPage}" data-widx="${wIdx}">
+          <button class="action-btn cancel" type="button" aria-label="Cancel" onclick="dwCancel(this)"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2.1" stroke-linecap="round"/></svg></button>
+          <button class="action-btn confirm" type="button" aria-label="Confirm delete" onclick="dwConfirm(this)"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.6 3.6L16 5.5" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="icon-slot" type="button" aria-label="Delete" onclick="dwToggle(this)">
+            <svg class="trash-icon" viewBox="0 0 20 20" fill="none">
+              <line class="lid" x1="3" y1="6.2" x2="17" y2="6.2" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M7.2 6.2V4.6c0-.66.54-1.2 1.2-1.2h3.2c.66 0 1.2.54 1.2 1.2v1.6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5.4 6.2v9.2c0 .77.63 1.4 1.4 1.4h6.4c.77 0 1.4-.63 1.4-1.4V6.2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="success-check" viewBox="0 0 20 20" fill="none">
+              <path d="M4.5 10.5l3.5 3.5 7.5-7.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>`;
+}
+
+function dwToggle(btn){
+  const w = btn.closest('.delete-widget');
+  if(!w) return;
+  collapseOtherWidgets(w);
+  w.classList.toggle('expanded');
+}
+function dwCollapse(w){
+  if(!w) return;
+  w.classList.remove('expanded');
+  w.classList.remove('success');
+}
+function collapseOtherWidgets(keep){
+  document.querySelectorAll('.delete-widget').forEach(w=>{ if(w!==keep) dwCollapse(w); });
+}
+function dwCancel(btn){
+  const w = btn.closest('.delete-widget');
+  dwCollapse(w);
+}
+function dwConfirm(btn){
+  const w = btn.closest('.delete-widget');
+  if(!w) return;
+  dwCollapse(w);
+  const wpage = w.dataset.wpage || 'quote';
+  const idx = parseInt(w.dataset.widx, 10);
+  setTimeout(()=>{ w.classList.add('success'); }, 200);
+  setTimeout(()=>{
+    w.classList.remove('success');
+    if(wpage==='quote'){
+      if(quotations[idx]){
+        quotations.splice(idx, 1);
+        navigate('sales', {quiet:true});
+        showToast(lang==='en'?'Quotation deleted!':'تم حذف العرض!');
+      }
+    } else if(wpage==='inv'){
+      if(inventoryData[idx]){
+        inventoryData.splice(idx, 1);
+        renderInvRows(
+          document.getElementById('invSearch')?.value || '',
+          document.getElementById('invFilterStatus')?.value || '',
+          document.getElementById('invFilterCat')?.value || ''
+        );
+        showToast(lang==='en'?'Item deleted':'تم حذف الصنف');
+      }
+    } else if(wpage==='proj'){
+      if(projects[idx]){
+        projects.splice(idx, 1);
+        saveProjectsToStorage();
+        if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+          window.StockFlowBackend.syncCollection('projects', projects, 'id');
+        }
+        navigate('projects', {quiet:true});
+        showToast(lang==='en'?'Project deleted':'تم حذف المشروع');
+      }
+    }
+  }, 1300);
 }
 
 function downloadQuoteAttachment(quoteIdx, attachIdx){
@@ -2358,7 +2424,7 @@ function renderInventory(){
       <thead><tr>
         <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="invCheckAll" onchange="toggleAllSel('inv')"></th>
         <th>${L.table.item}</th><th>${L.table.sku}</th><th>${L.table.category}</th>
-        <th>${L.table.stock}</th><th>${L.table.location}</th><th>${L.table.status}</th><th>${L.table.actions}</th>
+        <th>${L.table.stock}</th><th>${L.table.location}</th><th>${L.table.status}</th><th style="min-width:190px;">${L.table.actions}</th>
       </tr></thead>
       <tbody id="invTbody"></tbody>
     </table>
@@ -2415,10 +2481,10 @@ function renderInvRows(filter='', statusF='', catF=''){
       <td>${i.stock}</td>
       <td>${i.loc}</td>
       <td><span class="status-dot" style="background:${st.dot}"></span><span class="pill ${st.cls}">${st.label}</span></td>
-      <td><div class="row-actions">
+      <td><div class="row-actions dw-actions dw-3">
         <button title="${lang==='en'?'View':'عرض'}" data-action="view" data-idx="${idx}">${ICONS.eye}</button>
         <button title="${lang==='en'?'Edit':'تعديل'}" data-action="edit" data-idx="${idx}">${ICONS.edit}</button>
-        <button title="${lang==='en'?'Delete':'حذف'}" data-action="delete" data-idx="${idx}">${ICONS.trash}</button>
+        ${dwHtml(idx, 'inv')}
       </div></td>
     </tr>`;
   }).join('');
@@ -2435,7 +2501,6 @@ function bindInvRowActions(){
     const action = btn.dataset.action;
     if(action==='view') openViewModal(idx);
     if(action==='edit') openModal(idx);
-    if(action==='delete') openDeleteModal(idx);
   });
 }
 
@@ -3678,7 +3743,7 @@ function renderProjectsList(){
     <button class="btn-mini" id="projFilterReset" style="background:var(--surface-2);color:var(--text);">${lang==='en'?'Reset':'إعادة'}</button>
   </div>
   <div class="bulk-bar" id="bulkBar-proj"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('proj')">${ICONS.checkSquare} ${STR[lang].sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('proj')">${ICONS.trash} ${STR[lang].sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('proj')">${ICONS.close} ${STR[lang].sel.cancelSelect}</button></div>
-  <div class="table-card"><table><thead><tr><th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="projCheckAll" onchange="toggleAllSel('proj')"></th><th>${L.projectNumber}</th><th>${L.projectName}</th><th>${L.client}</th><th>${L.type}</th><th>${L.manager}</th><th>${L.contractValue}</th><th>${L.progress}</th><th>${L.status}</th><th>${L.priority}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>
+  <div class="table-card"><table><thead><tr><th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="projCheckAll" onchange="toggleAllSel('proj')"></th><th>${L.projectNumber}</th><th>${L.projectName}</th><th>${L.client}</th><th>${L.type}</th><th>${L.manager}</th><th>${L.contractValue}</th><th>${L.progress}</th><th>${L.status}</th><th>${L.priority}</th><th style="min-width:190px;">${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>
   ${filtered.length ? (()=>{
     return filtered.map(p=>{
     const idx=projects.indexOf(p), e=calcEndDate(p.startDate,p.duration), r=calcDaysRemaining(e);
@@ -3689,7 +3754,7 @@ function renderProjectsList(){
       <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:5px;background:var(--surface-2);border-radius:3px;"><div style="width:${p.progress}%;height:100%;background:${r<0?'var(--red)':p.progress>=80?'var(--green)':'var(--blue)'};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:700;">${p.progress}%</span></div></td>
       <td><span class="pill ${getProjStatusClass(p.status)}" onclick="toggleProjectStatus(${idx})" style="cursor:pointer;">${getProjStatusLabel(p.status)}</span></td>
       <td><span class="pill ${getPriorityClass(p.priority)}">${getPriorityLabel(p.priority)}</span></td>
-      <td><div class="row-actions"><button title="${lang==='en'?'View':'عرض'}" onclick="openProjectDetail(${idx})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="openProjectModal(${idx})">${ICONS.edit}</button><button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteProject(${idx})">${ICONS.trash}</button></div></td>
+      <td><div class="row-actions dw-actions dw-3"><button title="${lang==='en'?'View':'عرض'}" onclick="openProjectDetail(${idx})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="openProjectModal(${idx})">${ICONS.edit}</button>${dwHtml(idx, 'proj')}</div></td>
     </tr>`;
   }).join('');})() : `<tr><td colspan="11"><div class="empty-state">${ICONS.box}<div>${L.noData}</div></div></td></tr>`}
   </tbody></table></div>`;
