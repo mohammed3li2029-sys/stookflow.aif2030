@@ -1312,6 +1312,9 @@ let quotations = withFirestoreSync([
   {id:'AIF-F25-19', customer:'شركة الاوسط العربية للمقاولات', date:'2024-05-12', status:'sent', total:101890.00, 
    terms:'الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.',
    payments:'يدفع 50% عند التعاقد والباقي عند الاستلام.',
+   createdBy:{name:'Sarah Chen', at:'2024-05-12T09:15:00'},
+   createdAt:'2024-05-12T09:15:00',
+   edits:[{name:'Mohammed Ali', at:'2024-05-13T11:30:00'}],
    items:[
      {name:'حديد تسليح', desc:'سيخ حديد تسليح قطر 12 مم', qty:10, unit:'طن', price:2650.00},
     {name:'حديد تسليح', desc:'سيخ حديد تسليح قطر 16 مم', qty:15, unit:'طن', price:2600.00},
@@ -1322,6 +1325,9 @@ let quotations = withFirestoreSync([
   {id:'AIF-F25-20', customer:'شركة الخليج للمقاولات', date:'2024-06-01', status:'review', total:58750.00,
    phone:'055 987 6543', email:'info@gulf-contracting.sa', address:'جدة - حي الشرفية',
    validity:15, salesperson:'عبدالباسط',
+   createdBy:{name:'Ahmed Al-Faraj', at:'2024-06-01T10:20:00'},
+   createdAt:'2024-06-01T10:20:00',
+   edits:[],
    items:[
     {name:'حديد تسليح', desc:'سيخ حديد تسليح قطر 14 مم', qty:8, unit:'طن', price:2700.00},
     {name:'زوايا حديد', desc:'زاوية حديد 50×50 مم', qty:5, unit:'طن', price:3200.00},
@@ -1330,6 +1336,9 @@ let quotations = withFirestoreSync([
   {id:'AIF-F25-21', customer:'مصنع الرياض للصناعات', date:'2024-06-15', status:'review', total:42300.00,
    phone:'056 111 2222', email:'info@riyadh-factory.sa', address:'الرياض - المدينة الصناعية',
    validity:20, salesperson:'نمر أحمد',
+   createdBy:{name:'Khalid Nasser', at:'2024-06-15T14:45:00'},
+   createdAt:'2024-06-15T14:45:00',
+   edits:[{name:'Layla Mansour', at:'2024-06-16T09:05:00'}],
    items:[
     {name:'صاج حديد', desc:'صاج حديد سماكة 2 مم', qty:6, unit:'طن', price:3100.00},
     {name:'كمر H', desc:'كمر حديد H-Beam 200', qty:4, unit:'طن', price:5400.00}
@@ -1401,11 +1410,14 @@ function renderQuoteRows(filter='', statusF=''){
     });
   }
   if(rows.length===0){
-    tbody.innerHTML = '    <tr><td colspan="8"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
+    tbody.innerHTML = '    <tr><td colspan="9"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(({q, idx})=>`
-    <tr class="${selState.quote.has(idx)?'selected-row':''}" data-page-idx="${idx}">
+  tbody.innerHTML = rows.map(({q, idx})=>{
+    const open = openQuotePanels.has(q.id);
+    return `
+    <tr class="data-quote-row ${selState.quote.has(idx)?'selected-row':''} ${open?'is-open':''}" data-qid="${q.id}" data-page-idx="${idx}">
+      <td class="expand-col"><button type="button" class="expand-btn" onclick="toggleQuotePanel(this,'${q.id}')" aria-label="${lang==='en'?'Activity':'النشاط'}" title="${lang==='en'?'Who created/edited this quote':'من أنشأ وعدّل هذا العرض'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M6 9l6 6 6-6"/></svg></button></td>
       <td class="sel-check-col" style="display:${selMode.quote?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.quote.has(idx)?'checked':''} onchange="toggleSel('quote',${idx},this)"></td>
       <td><b>${q.id}</b></td>
       <td>${q.customer}</td>
@@ -1431,7 +1443,97 @@ function renderQuoteRows(filter='', statusF=''){
         ${dwHtml(idx, 'quote')}
       </div></td>
     </tr>
-  `).join('');
+    <tr class="expand-row ${open?'':'is-hidden'}" id="qpanel-${q.id}">
+      <td colspan="9">${quoteActivityHtml(q)}</td>
+    </tr>
+  `;
+  }).join('');
+}
+
+const openQuotePanels = new Set();
+
+function _qaTimeParts(iso){
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return { dt: String(iso||'') };
+  const dateStr = String(d.getFullYear()).padStart(4,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  let h = d.getHours(); const m = d.getMinutes();
+  const ap = h>=12 ? (lang==='ar'?'م':'PM') : (lang==='ar'?'ص':'AM');
+  h = h%12 || 12;
+  const timeStr = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+' '+ap;
+  return { dt: dateStr+' — '+timeStr };
+}
+
+const QA_AVATAR_PALETTE = ['#4F46E5','#D97706','#0EA5A5','#DB2777','#7C3AED','#0891B2'];
+function _qaAvatar(name, at){
+  const s = String(name||'');
+  let h = 0;
+  for(let i=0;i<s.length;i++) h = (h*31 + s.codePointAt(i)) >>> 0;
+  const color = QA_AVATAR_PALETTE[h % QA_AVATAR_PALETTE.length];
+  const initial = escapeHtml(getInitials(s || '?'));
+  const tip = s + (at ? ' — '+_qaTimeParts(at).dt : '');
+  return `<span class="p-avatar" style="background:${color}" data-name="${escapeHtml(tip)}">${initial}</span>`;
+}
+
+function quoteActivityHtml(q){
+  const ar = lang === 'ar';
+  const created = q && q.createdBy ? {name:q.createdBy.name, at:q.createdBy.at} : null;
+  const edits = (q && Array.isArray(q.edits)) ? q.edits.filter(e => e && e.name) : [];
+  const createdIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><path d="M12 5v14M5 12h14"/></svg>';
+  const editIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" width="9" height="9"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';
+  const noneIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="9" height="9"><circle cx="12" cy="12" r="9"/></svg>';
+
+  const createdHtml = created
+    ? `<div class="step created">
+        <span class="step-icon">${createdIcon}</span>
+        <div>
+          <div class="step-label">${ar?'أنشأ العرض':'Created the quote'}</div>
+          <div class="person-list">
+            <div class="person-line">${_qaAvatar(created.name, created.at)}<span class="p-time">${escapeHtml(_qaTimeParts(created.at).dt)}</span></div>
+          </div>
+        </div>
+      </div>`
+    : `<div class="step created">
+        <span class="step-icon">${createdIcon}</span>
+        <div>
+          <div class="step-label">${ar?'أنشأ العرض':'Created the quote'}</div>
+          <div class="step-none-text">—</div>
+        </div>
+      </div>`;
+
+  let editHtml;
+  if(edits.length){
+    const last = edits[edits.length-1];
+    editHtml = `<div class="step edited">
+        <span class="step-icon">${editIcon}</span>
+        <div>
+          <div class="step-label">${ar?'التعديلات':'Edits'} (${edits.length})</div>
+          <div class="edited-line">
+            <span class="avatar-stack">${edits.map(e => _qaAvatar(e.name, e.at)).join('')}</span>
+            <span class="p-time">${ar?'آخر تعديل':'Last edited'}: ${escapeHtml(_qaTimeParts(last.at).dt)}</span>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    editHtml = `<div class="step none">
+        <span class="step-icon">${noneIcon}</span>
+        <div>
+          <div class="step-label">${ar?'التعديلات':'Edits'}</div>
+          <div class="step-none-text">${ar?'لم يُعدَّل هذا العرض بعد':'This quote has not been edited yet'}</div>
+        </div>
+      </div>`;
+  }
+
+  return `<div class="expand-inner">${createdHtml}<div class="step-connector"></div>${editHtml}</div>`;
+}
+
+function toggleQuotePanel(btn, qid){
+  const row = btn ? btn.closest('tr') : null;
+  const panel = document.getElementById('qpanel-'+qid);
+  if(!row || !panel) return;
+  const opening = panel.classList.contains('is-hidden');
+  panel.classList.toggle('is-hidden', !opening);
+  row.classList.toggle('is-open', opening);
+  if(opening) openQuotePanels.add(qid); else openQuotePanels.delete(qid);
 }
 
 function renderSales(){
@@ -1482,6 +1584,7 @@ function renderSales(){
   <div class="table-card">
     <table>
       <thead><tr>
+        <th class="expand-col" title="${lang==='en'?'Activity':'النشاط'}"></th>
         <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="quoteCheckAll" onchange="toggleAllSel('quote')"></th>
         <th>${lang==='en'?'Quote #':'رقم العرض'}</th>
         <th>${lang==='en'?'Customer':'العميل'}</th>
@@ -1809,7 +1912,10 @@ function saveQuotation(){
   const vat = (subtotal - discount) * 0.15;
   
   const status = document.getElementById('qStatus') ? document.getElementById('qStatus').value : 'review';
-  
+
+  const now = new Date().toISOString();
+  const prev = editingQuoteIdx !== null && quotations[editingQuoteIdx] ? quotations[editingQuoteIdx] : null;
+
   const q = {
     id: 'AIF-F' + suffix,
     customer,
@@ -1826,10 +1932,19 @@ function saveQuotation(){
     payments,
     notes,
     items: JSON.parse(JSON.stringify(quoteLines)),
-    attachments: editingQuoteIdx !== null && quotations[editingQuoteIdx]?.attachments
-      ? JSON.parse(JSON.stringify(quotations[editingQuoteIdx].attachments))
-      : []
+    attachments: prev && prev.attachments
+      ? JSON.parse(JSON.stringify(prev.attachments))
+      : [],
+    createdBy: prev && prev.createdBy && prev.createdBy.name
+      ? {name:prev.createdBy.name, at:prev.createdBy.at || prev.createdAt || now}
+      : {name:profileData.name, at:now},
+    createdAt: prev && (prev.createdAt || (prev.createdBy && prev.createdBy.at)) ? (prev.createdAt || prev.createdBy.at) : now,
+    edits: prev && Array.isArray(prev.edits) ? prev.edits.map(e => ({name:e.name, at:e.at})) : []
   };
+
+  if(prev){
+    q.edits.push({name: profileData.name, at: now});
+  }
   
   if(editingQuoteIdx !== null){
     quotations[editingQuoteIdx] = q;
