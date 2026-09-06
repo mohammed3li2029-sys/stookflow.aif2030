@@ -1911,6 +1911,19 @@ function dwConfirm(btn){
         navigate('projects', {quiet:true});
         showToast(lang==='en'?'Project deleted':'تم حذف المشروع');
       }
+    } else if(wpage==='po'){
+      if(purchaseOrders[idx]){
+        purchaseOrders.splice(idx, 1);
+        if(typeof saveAllData==='function') saveAllData();
+        navigate('purchasing', {quiet:true});
+        showToast(lang==='en'?'Purchase order deleted.':'تم حذف طلب الشراء.');
+      }
+    } else if(wpage==='req'){
+      if(reqsData[idx]){
+        reqsData.splice(idx, 1);
+        navigate('issues', {quiet:true});
+        showToast(lang==='en'?'Request deleted!':'تم حذف الطلب!');
+      }
     }
   }, 1300);
 }
@@ -2612,7 +2625,7 @@ function renderPurchasing(){
     </div>
   </div>
   <div class="bulk-bar" id="bulkBar-po"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('po')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('po')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('po')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
-  <div class="row-2">
+  <div class="row-2 po-grid">
     <div class="table-card" style="overflow:auto;">
       <table>
         <thead><tr>
@@ -2623,7 +2636,7 @@ function renderPurchasing(){
           <th>${lang==='en'?'Delivery':'التسليم'}</th>
           <th>${lang==='en'?'Total':'الإجمالي'}</th>
           <th>${L.table.status}</th>
-          <th>${L.table.actions}</th>
+          <th style="min-width:190px;">${L.table.actions}</th>
         </tr></thead>
         <tbody id="poTableBody">
           ${purchaseOrders.length===0
@@ -2654,10 +2667,10 @@ function renderPurchasing(){
                     <td><b>SAR ${(po.grandTotal||0).toLocaleString('en',{minimumFractionDigits:2})}</b></td>
                     <td><span class="pill ${st.cls}">${lang==='en'?st.en:st.ar}</span></td>
                     <td>
-                      <div class="row-actions">
+                      <div class="row-actions dw-actions dw-3">
                         <button title="${lang==='en'?'View':'عرض'}" data-action="viewpo" data-idx="${idx}">${ICONS.eye}</button>
                         <button title="${lang==='en'?'Edit':'تعديل'}" data-action="editpo" data-idx="${idx}">${ICONS.edit}</button>
-                        <button title="${lang==='en'?'Delete':'حذف'}" data-action="deletepo" data-idx="${idx}">${ICONS.trash}</button>
+                        ${dwHtml(idx, 'po')}
                       </div>
                     </td>
                   </tr>`;
@@ -2739,10 +2752,10 @@ function renderIssues(){
           <div class="alert-sku">${lang==='en'?r.dept:r.deptAr}</div>
         </div>
         <span class="pill ${r.status==='approved'?'pill-ok':'pill-low'}" onclick="toggleReqStatus(${idx})" style="cursor:pointer;">${r.status==='approved'?(lang==='en'?'Approved':'تمت الموافقة'):(lang==='en'?'Pending':'قيد الانتظار')}</span>
-        <div class="row-actions">
+        <div class="row-actions dw-actions dw-3 dw-req">
           <button title="${lang==='en'?'View':'عرض'}" data-action="viewreq" data-idx="${idx}">${ICONS.eye}</button>
           <button title="${lang==='en'?'Edit':'تعديل'}" data-action="editreq" data-idx="${idx}">${ICONS.edit}</button>
-          <button title="${lang==='en'?'Delete':'حذف'}" data-action="deletereq" data-idx="${idx}">${ICONS.trash}</button>
+          ${dwHtml(idx, 'req')}
         </div>
       </div>`;
       }).join('');
@@ -5219,7 +5232,6 @@ function postRenderHooks(page){
     document.getElementById('newPoBtn').addEventListener('click', ()=>openPOModal(null));
     document.querySelectorAll('[data-action="viewpo"]').forEach(b=>b.addEventListener('click',()=>openPOView(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="editpo"]').forEach(b=>b.addEventListener('click',()=>openPOModal(parseInt(b.dataset.idx))));
-    document.querySelectorAll('[data-action="deletepo"]').forEach(b=>b.addEventListener('click',()=>openPODelete(parseInt(b.dataset.idx))));
     document.getElementById('poSortSelect').addEventListener('change', e=>{
       sortState.po = e.target.value;
       saveSortState();
@@ -5230,7 +5242,6 @@ function postRenderHooks(page){
     document.getElementById('newIssueBtn').addEventListener('click', ()=>openIssueModal(null));
     document.querySelectorAll('[data-action="viewreq"]').forEach(b=>b.addEventListener('click',()=>viewIssue(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="editreq"]').forEach(b=>b.addEventListener('click',()=>openIssueModal(parseInt(b.dataset.idx))));
-    document.querySelectorAll('[data-action="deletereq"]').forEach(b=>b.addEventListener('click',()=>deleteIssue(parseInt(b.dataset.idx))));
     document.getElementById('reqSortSelect').addEventListener('change', e=>{
       sortState.req = e.target.value;
       saveSortState();

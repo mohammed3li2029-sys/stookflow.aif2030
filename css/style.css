@@ -417,6 +417,7 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
 [data-theme="dark"] .trend-down{background:var(--red-soft-d);}
 
 .row-2{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:16px;}
+.po-grid{grid-template-columns:1.9fr 1fr;}
 .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
 .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .card-title{font-size:14.5px;font-weight:800;}
@@ -528,6 +529,8 @@ tbody tr:hover{background:var(--surface-2);}
 /* --- Delete-confirm widget (quotations) --- */
 .dw-actions{display:inline-flex;position:relative;width:130px;}
 .dw-actions.dw-3{width:96px;}
+.dw-actions.dw-req{width:172px;}
+.dw-req .delete-widget.expanded{width:104px;}
 .delete-widget{
   position:absolute;top:50%;transform:translateY(-50%);
   left:auto;right:auto;
@@ -542,8 +545,10 @@ tbody tr:hover{background:var(--surface-2);}
 }
 html:not([dir="rtl"]) .dw-actions .delete-widget{left:102px;}
 html:not([dir="rtl"]) .dw-actions.dw-3 .delete-widget{left:68px;}
+html:not([dir="rtl"]) .dw-actions.dw-req .delete-widget{left:68px;}
 html[dir="rtl"] .dw-actions .delete-widget{right:102px;}
 html[dir="rtl"] .dw-actions.dw-3 .delete-widget{right:68px;}
+html[dir="rtl"] .dw-actions.dw-req .delete-widget{right:68px;}
 .delete-widget.expanded{width:108px;}
 .dw-3 .delete-widget.expanded{width:104px;}
 .delete-widget.expanded{
