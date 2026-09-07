@@ -1697,6 +1697,14 @@ function openQuoteModal(idx=null){
           </thead>
           <tbody id="qLinesBody"></tbody>
         </table>
+        <datalist id="quoteItemCodes">
+          <option value="STW"></option>
+          <option value="HNG"></option>
+          <option value="TSP"></option>
+          <option value="FDT"></option>
+          <option value="PTC"></option>
+          <option value="CPS"></option>
+        </datalist>
       </div>
       <div class="po-totals">
         <div class="po-totals-row"><span>${lang==='en'?'Subtotal':'الإجمالي قبل الضريبة'}</span><span id="qSubtotal">${lang==='en' ? RYAL+' 0.00' : '<span dir="rtl">0.00 '+RYAL+'</span>'}</span></div>
@@ -1767,7 +1775,7 @@ function renderQuoteLines(){
   if(!body) return;
   body.innerHTML = quoteLines.map((l, idx)=>`
     <tr data-idx="${idx}">
-      <td><input class="q-item-name" value="${l.name}" oninput="quoteLines[${idx}].name=this.value" placeholder="${lang==='en'?'Item name':'اسم الصنف'}"></td>
+      <td><input class="q-item-name" list="quoteItemCodes" value="${l.name}" oninput="quoteLines[${idx}].name=this.value" placeholder="${lang==='en'?'Item name':'اسم الصنف'}"></td>
       <td><textarea rows="1" class="auto-grow" oninput="quoteLines[${idx}].desc=this.value; autoGrow(this)" placeholder="${lang==='en'?'Specifications':'المواصفات'}">${l.desc||''}</textarea></td>
       <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="qtyInc(${idx},-1)">−</button><input type="number" id="qty-${idx}" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input q-item-qty"><button type="button" class="qty-btn" onclick="qtyInc(${idx},1)">+</button></div></td>
       <td><input value="${l.unit}" oninput="quoteLines[${idx}].unit=this.value" style="text-align:center;"></td>
@@ -2269,7 +2277,7 @@ function openQuoteView(idx){
           <thead>
             <tr style="background:#1a237e; color:#fff;">
               <th style="padding:8px; border:1px solid #1a237e; width:35px;">${isAr?'م':'#'}</th>
-              <th style="padding:8px; border:1px solid #1a237e;">${isAr?'الصنف':'Item'}</th>
+              <th style="padding:8px; border:1px solid #1a237e; width:70px; text-align:center;">${isAr?'الصنف':'Item'}</th>
               <th style="padding:8px; border:1px solid #1a237e;">${isAr?'المواصفات':'Description'}</th>
               <th style="padding:8px; border:1px solid #1a237e; width:55px;">${isAr?'الوحدة':'Unit'}</th>
               <th style="padding:8px; border:1px solid #1a237e; width:55px;">${isAr?'الكمية':'Qty'}</th>
@@ -2281,7 +2289,7 @@ function openQuoteView(idx){
             ${q.items.map((it, i)=>`
               <tr style="background:${i%2===0?'#fff':'#f8f9fa'};">
                 <td style="padding:7px 6px; border:1px solid #e0e0e0; text-align:center; font-weight:700; background:#1a237e; color:#fff;">${i+1}</td>
-                <td style="padding:7px 8px; border:1px solid #e0e0e0; font-weight:700;">${it.name}</td>
+                <td style="padding:7px 6px; border:1px solid #e0e0e0; font-weight:700; text-align:center;">${it.name}</td>
                 <td style="padding:7px 8px; border:1px solid #e0e0e0; color:#555;">${it.desc}</td>
                 <td style="padding:7px 6px; border:1px solid #e0e0e0; text-align:center;">${it.unit}</td>
                 <td style="padding:7px 6px; border:1px solid #e0e0e0; text-align:center; font-weight:700;">${it.qty}</td>
