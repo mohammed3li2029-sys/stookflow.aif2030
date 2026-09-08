@@ -2229,4 +2229,50 @@ tr.expand-row:last-child td{border-bottom:0;}
   .step.created{flex:1 1 100%;max-width:100%;}
 }
 
+/* ── Liquid dropdown (quotation sort) ─────────────────────── */
+.sort-control.liquid-sort{position:relative;z-index:60;background:transparent;padding:0;}
+.liquid-dd{position:relative;}
+.liquid-dd .liquid-dd-liquid{position:relative;filter:url(#goo);}
+.liquid-dd-trigger{
+  position:relative;z-index:2;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  height:37px;padding:0 15px;box-sizing:border-box;
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  color:var(--text);font-size:12.8px;font-weight:700;font-family:inherit;
+  cursor:pointer;user-select:none;white-space:nowrap;outline:none;
+  transition:transform .15s var(--ease), background .2s var(--ease);
+}
+.liquid-dd-trigger:hover{background:var(--surface-2);}
+.liquid-dd-trigger:active{transform:scale(.96);}
+.liquid-dd-icon{display:flex;flex-shrink:0;color:var(--text-2);}
+.liquid-dd-icon svg{width:15px;height:15px;}
+.liquid-dd-chevron{display:flex;flex-shrink:0;transition:transform .35s cubic-bezier(.65,0,.35,1);color:var(--text-2);}
+.liquid-dd.open .liquid-dd-chevron{transform:rotate(180deg);}
+.liquid-dd-panel{
+  position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:1;
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:6px;box-sizing:border-box;
+  transform-origin:50% 0%;
+  transform:scaleY(.05) translateY(-14px);
+  pointer-events:none;opacity:0;
+  transition:transform .48s cubic-bezier(.32,1.35,.62,1),opacity 0s linear .48s;
+  box-shadow:0 12px 30px rgba(0,0,0,.14);
+}
+.liquid-dd.open .liquid-dd-panel{
+  transform:scaleY(1) translateY(9px);
+  pointer-events:auto;opacity:1;
+  transition:transform .38s cubic-bezier(.6,0,.4,1),opacity 0s linear 0s;
+}
+.liquid-dd-option{
+  display:flex;align-items:center;height:36px;padding:0 12px;border-radius:10px;
+  color:var(--text-2);font-size:12.8px;cursor:pointer;user-select:none;
+  opacity:0;transition:opacity .1s linear, background .15s var(--ease), color .15s var(--ease);
+}
+.liquid-dd.open .liquid-dd-option{opacity:1;transition:opacity .2s ease .12s;}
+.liquid-dd-option:hover{background:var(--surface-2);color:var(--text);}
+.liquid-dd-option.selected{background:var(--surface-2);color:var(--blue);font-weight:700;}
+@media(max-width:640px){
+  .liquid-dd{width:100%;}
+}
+
 

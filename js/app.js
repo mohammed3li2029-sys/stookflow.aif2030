@@ -1536,12 +1536,98 @@ function toggleQuotePanel(btn, qid){
   if(opening) openQuotePanels.add(qid); else openQuotePanels.delete(qid);
 }
 
+const LSORT = {
+  quote:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'customer',k:'customer'},{v:'total',k:'total'}],
+  inv:[{v:'default',k:'default'},{v:'name-asc',k:'nameAZ'},{v:'name-desc',k:'nameZA'},{v:'sku',k:'id'},{v:'stock',k:'stock'},{v:'category',k:'category'}],
+  po:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'supplier',k:'supplier'},{v:'total',k:'total'}],
+  req:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'dept',k:'dept'},{v:'priority',k:'priority'}],
+  proj:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'name',k:'name'},{v:'client',k:'customer'},{v:'value',k:'value'}]
+};
+function liquidSortLabel(list, val){
+  const it = list.find(o=>o.v===val) || list[0];
+  return STR[lang].sort[it.k];
+}
+function liquidSortHTML(prefix, list, val){
+  const label = liquidSortLabel(list, val);
+  return `<div class="liquid-dd" id="${prefix}DD">
+    <div class="liquid-dd-liquid">
+      <button type="button" class="liquid-dd-trigger" id="${prefix}Trigger" aria-haspopup="listbox" aria-expanded="false">
+        <span class="liquid-dd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg></span>
+        <span id="${prefix}Label">${label}</span>
+        <span class="liquid-dd-chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+      </button>
+      <div class="liquid-dd-panel" role="listbox" id="${prefix}Panel">
+        ${list.map(o=>`<div class="liquid-dd-option ${o.v===val?'selected':''}" data-val="${o.v}" role="option" aria-selected="${o.v===val?'true':'false'}">${STR[lang].sort[o.k]}</div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function liquidSortUpdateUI(prefix, list, val){
+  const lb = document.getElementById(prefix+'Label');
+  if(lb) lb.textContent = liquidSortLabel(list, val);
+  document.querySelectorAll('#'+prefix+'DD .liquid-dd-option').forEach(o=>{
+    const sel = o.dataset.val === val;
+    o.classList.toggle('selected', sel);
+    o.setAttribute('aria-selected', sel ? 'true' : 'false');
+  });
+}
+function liquidSortHTMLDefs(){
+  return `<svg width="0" height="0" style="position:absolute;pointer-events:none;" aria-hidden="true">
+    <defs>
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" result="goo"/>
+        <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+      </filter>
+    </defs>
+  </svg>`;
+}
+function liquidSortBind(prefix, list, onSelect){
+  const dd = document.getElementById(prefix+'DD');
+  if(!dd) return;
+  dd.addEventListener('click', e=>{
+    const trg = e.target.closest('#'+prefix+'Trigger');
+    const opt = e.target.closest('.liquid-dd-option');
+    if(trg){
+      const open = dd.classList.toggle('open');
+      trg.setAttribute('aria-expanded', open ? 'true' : 'false');
+    } else if(opt){
+      onSelect(opt.dataset.val);
+      liquidSortUpdateUI(prefix, list, opt.dataset.val);
+      dd.classList.remove('open');
+      const t = document.getElementById(prefix+'Trigger');
+      if(t) t.setAttribute('aria-expanded','false');
+    }
+  });
+}
+if(!window.__liquidDDBound){
+  window.__liquidDDBound = true;
+  document.addEventListener('click', e=>{
+    if(e.target.closest('.liquid-dd')) return;
+    document.querySelectorAll('.liquid-dd.open').forEach(d=>{
+      d.classList.remove('open');
+      const t = d.querySelector('.liquid-dd-trigger');
+      if(t) t.setAttribute('aria-expanded','false');
+    });
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape'){
+      document.querySelectorAll('.liquid-dd.open').forEach(d=>{
+        d.classList.remove('open');
+        const t = d.querySelector('.liquid-dd-trigger');
+        if(t) t.setAttribute('aria-expanded','false');
+      });
+    }
+  });
+}
+
 function renderSales(){
   const L = STR[lang];
   const totalQuotes = quotations.length;
   const approvedQuotes = quotations.filter(q=>q.status==='approved').length;
   const reviewQuotes = quotations.filter(q=>q.status==='review').length;
   return `<div data-page="quote">
+  ${liquidSortHTMLDefs()}
   <div class="kpi-strip">
     ${statCard(ICONS.sales,'var(--blue)','var(--blue-soft)',lang==='en'?'Total Quotations':'إجمالي عروض الأسعار',String(totalQuotes),'+0', true)}
     ${statCard(ICONS.flag,'var(--green)','var(--green-soft)',lang==='en'?'Approved':'معتمد',String(approvedQuotes),'+0', true)}
@@ -1551,16 +1637,8 @@ function renderSales(){
     <button class="btn btn-primary" id="newQuoteBtn">${ICONS.plus}${lang==='en'?'New Quotation':'عرض سعر جديد'}</button>
     <button class="btn" id="quoteFilterBtn">${ICONS.filter}${L.toolbar.filter}</button>
     <button class="btn" id="quote-selModeBtn" onclick="toggleSelMode('quote')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
-    <div class="sort-control">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-      <select id="quoteSortSelect">
-        <option value="default" ${sortState.quote==='default'?'selected':''}>${L.sort.default}</option>
-        <option value="date-asc" ${sortState.quote==='date-asc'?'selected':''}>${L.sort.dateOld}</option>
-        <option value="date-desc" ${sortState.quote==='date-desc'?'selected':''}>${L.sort.dateNew}</option>
-        <option value="id" ${sortState.quote==='id'?'selected':''}>${L.sort.id}</option>
-        <option value="customer" ${sortState.quote==='customer'?'selected':''}>${L.sort.customer}</option>
-        <option value="total" ${sortState.quote==='total'?'selected':''}>${L.sort.total}</option>
-      </select>
+    <div class="sort-control liquid-sort">
+      ${liquidSortHTML('quoteSort', LSORT.quote, sortState.quote)}
     </div>
     <div class="table-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -2509,21 +2587,14 @@ function printQuotation(idx){
 function renderInventory(){
   const L = STR[lang];
   return `<div data-page="inv">
+  ${liquidSortHTMLDefs()}
   <div class="toolbar">
     <button class="btn btn-primary" id="addItemBtn">${ICONS.plus}${L.toolbar.addItem}</button>
     <button class="btn" id="invFilterBtn">${ICONS.filter}${L.toolbar.filter}</button>
     <button class="btn" id="invExportBtn">${ICONS.download}${L.toolbar.export}</button>
     <button class="btn" id="inv-selModeBtn" onclick="toggleSelMode('inv')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
-    <div class="sort-control">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-      <select id="invSortSelect">
-        <option value="default" ${sortState.inv==='default'?'selected':''}>${L.sort.default}</option>
-        <option value="name-asc" ${sortState.inv==='name-asc'?'selected':''}>${L.sort.nameAZ}</option>
-        <option value="name-desc" ${sortState.inv==='name-desc'?'selected':''}>${L.sort.nameZA}</option>
-        <option value="sku" ${sortState.inv==='sku'?'selected':''}>${L.sort.id}</option>
-        <option value="stock" ${sortState.inv==='stock'?'selected':''}>${L.sort.stock}</option>
-        <option value="category" ${sortState.inv==='category'?'selected':''}>${L.sort.category}</option>
-      </select>
+    <div class="sort-control liquid-sort">
+      ${liquidSortHTML('invSort', LSORT.inv, sortState.inv)}
     </div>
     <div class="table-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -2723,6 +2794,7 @@ function renderPurchasing(){
   const totalPOs   = purchaseOrders.length;
   const pendingPOs = purchaseOrders.filter(p=>p.status==='pending').length;
   return `<div data-page="po">
+  ${liquidSortHTMLDefs()}
   <div class="kpi-strip">
     ${statCard(ICONS.users,'var(--blue)','var(--blue-soft)',    L.purchasing.suppliers, String(suppliers.length),'+1', true)}
     ${statCard(ICONS.purchase,'var(--amber)','var(--amber-soft)',L.purchasing.openPOs,   String(pendingPOs),'+0', true)}
@@ -2731,16 +2803,8 @@ function renderPurchasing(){
   <div class="toolbar">
     <button class="btn btn-primary" id="newPoBtn">${ICONS.plus}${L.purchasing.newPO}</button>
     <button class="btn" id="po-selModeBtn" onclick="toggleSelMode('po')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
-    <div class="sort-control">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-      <select id="poSortSelect">
-        <option value="default" ${sortState.po==='default'?'selected':''}>${L.sort.default}</option>
-        <option value="date-asc" ${sortState.po==='date-asc'?'selected':''}>${L.sort.dateOld}</option>
-        <option value="date-desc" ${sortState.po==='date-desc'?'selected':''}>${L.sort.dateNew}</option>
-        <option value="id" ${sortState.po==='id'?'selected':''}>${L.sort.id}</option>
-        <option value="supplier" ${sortState.po==='supplier'?'selected':''}>${L.sort.supplier}</option>
-        <option value="total" ${sortState.po==='total'?'selected':''}>${L.sort.total}</option>
-      </select>
+    <div class="sort-control liquid-sort">
+      ${liquidSortHTML('poSort', LSORT.po, sortState.po)}
     </div>
     <div class="table-search" style="max-width:300px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -2827,6 +2891,7 @@ function renderIssues(){
   const approvedToday = reqsData.filter(r=>r.status==='approved').length;
   const deptCount = [...new Set(reqsData.map(r=>r.dept))].length;
   return `<div data-page="req">
+  ${liquidSortHTMLDefs()}
   <div class="kpi-strip">
     ${statCard(ICONS.issue,'var(--amber)','var(--amber-soft)', L.issues.pending,String(pending),'+'+Math.max(0,pending-1), false)}
     ${statCard(ICONS.flag,'var(--green)','var(--green-soft)', L.issues.approvedToday,String(approvedToday),'+'+Math.max(0,approvedToday), true)}
@@ -2835,16 +2900,8 @@ function renderIssues(){
   <div class="toolbar">
     <button class="btn btn-primary" id="newIssueBtn">${ICONS.plus}${L.issues.newRequest}</button>
     <button class="btn" id="req-selModeBtn" onclick="toggleSelMode('req')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
-    <div class="sort-control">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-      <select id="reqSortSelect">
-        <option value="default" ${sortState.req==='default'?'selected':''}>${L.sort.default}</option>
-        <option value="date-asc" ${sortState.req==='date-asc'?'selected':''}>${L.sort.dateOld}</option>
-        <option value="date-desc" ${sortState.req==='date-desc'?'selected':''}>${L.sort.dateNew}</option>
-        <option value="id" ${sortState.req==='id'?'selected':''}>${L.sort.id}</option>
-        <option value="dept" ${sortState.req==='dept'?'selected':''}>${L.sort.dept}</option>
-        <option value="priority" ${sortState.req==='priority'?'selected':''}>${L.sort.priority}</option>
-      </select>
+    <div class="sort-control liquid-sort">
+      ${liquidSortHTML('reqSort', LSORT.req, sortState.req)}
     </div>
   </div>
   <div class="bulk-bar" id="bulkBar-req"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('req')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('req')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('req')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
@@ -3739,7 +3796,7 @@ function calcDaysRemaining(endDate){
 function renderProjects(){
   const L = STR[lang].projects;
   const page = currentProjectTab === 'dashboard' ? renderProjectsDashboard() : currentProjectTab === 'plan' ? renderProjectsPlan() : renderProjectsList();
-  return `<div data-page="proj"><div class="report-tabs" style="margin-bottom:8px;">${[
+  return `<div data-page="proj">${liquidSortHTMLDefs()}<div class="report-tabs" style="margin-bottom:8px;">${[
     {key:'dashboard',label:L.dashboard},{key:'list',label:L.list},{key:'plan',label:L.plan}
   ].map(t => `<span class="report-tab${currentProjectTab===t.key?' active':''}" data-ptab="${t.key}">${t.label}</span>`).join('')}</div>${page}</div>`;
 }
@@ -3858,17 +3915,8 @@ function renderProjectsList(){
     <button class="btn btn-primary" id="newProjBtn">${ICONS.plus} ${L.newProject}</button>
     <button class="btn" id="projFilterBtn">${ICONS.filter} ${L.filter}</button>
     <button class="btn" id="proj-selModeBtn" onclick="toggleSelMode('proj')">${ICONS.checkSquare} <span class="sel-btn-text">${STR[lang].sel.selectMode}</span></button>
-    <div class="sort-control">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-      <select id="projSortSelect">
-        <option value="default" ${sortState.proj==='default'?'selected':''}>${STR[lang].sort.default}</option>
-        <option value="date-asc" ${sortState.proj==='date-asc'?'selected':''}>${STR[lang].sort.dateOld}</option>
-        <option value="date-desc" ${sortState.proj==='date-desc'?'selected':''}>${STR[lang].sort.dateNew}</option>
-        <option value="id" ${sortState.proj==='id'?'selected':''}>${STR[lang].sort.id}</option>
-        <option value="name" ${sortState.proj==='name'?'selected':''}>${STR[lang].sort.name}</option>
-        <option value="client" ${sortState.proj==='client'?'selected':''}>${STR[lang].sort.customer}</option>
-        <option value="value" ${sortState.proj==='value'?'selected':''}>${STR[lang].sort.value}</option>
-      </select>
+    <div class="sort-control liquid-sort">
+      ${liquidSortHTML('projSort', LSORT.proj, sortState.proj)}
     </div>
     <div class="table-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="projSearch" placeholder="${L.searchProjects}"></div>
   </div>
@@ -5227,15 +5275,13 @@ function postRenderHooks(page){
       document.getElementById('quoteSearch').value='';
       sortState.quote = 'default';
       saveSortState();
-      document.getElementById('quoteSortSelect').value = 'default';
+      liquidSortUpdateUI('quoteSort', LSORT.quote, 'default');
       renderQuoteRows();
     });
-    document.getElementById('quoteSortSelect').addEventListener('change', e=>{
-      sortState.quote = e.target.value;
+    liquidSortBind('quoteSort', LSORT.quote, v=>{
+      sortState.quote = v;
       saveSortState();
-      const search = document.getElementById('quoteSearch').value;
-      const status = document.getElementById('quoteFilterStatus').value;
-      renderQuoteRows(search, status);
+      renderQuoteRows(document.getElementById('quoteSearch').value, document.getElementById('quoteFilterStatus').value);
     });
   }
   if(page==='dashboard') mountDashboardCharts();
@@ -5285,9 +5331,8 @@ function postRenderHooks(page){
       saveSortState();
       navigate('projects');
     });
-    const ps = document.getElementById('projSortSelect');
-    if(ps) ps.addEventListener('change', e=>{
-      sortState.proj = e.target.value;
+    liquidSortBind('projSort', LSORT.proj, v=>{
+      sortState.proj = v;
       saveSortState();
       navigate('projects');
     });
@@ -5340,11 +5385,11 @@ function postRenderHooks(page){
       document.getElementById('invFilterCat').value='';
       sortState.inv = 'default';
       saveSortState();
-      document.getElementById('invSortSelect').value = 'default';
+      liquidSortUpdateUI('invSort', LSORT.inv, 'default');
       renderInvRows();
     });
-    document.getElementById('invSortSelect').addEventListener('change', e=>{
-      sortState.inv = e.target.value;
+    liquidSortBind('invSort', LSORT.inv, v=>{
+      sortState.inv = v;
       saveSortState();
       renderInvRows(document.getElementById('invSearch').value, document.getElementById('invFilterStatus').value, document.getElementById('invFilterCat').value);
     });
@@ -5355,8 +5400,8 @@ function postRenderHooks(page){
     document.getElementById('newPoBtn').addEventListener('click', ()=>openPOModal(null));
     document.querySelectorAll('[data-action="viewpo"]').forEach(b=>b.addEventListener('click',()=>openPOView(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="editpo"]').forEach(b=>b.addEventListener('click',()=>openPOModal(parseInt(b.dataset.idx))));
-    document.getElementById('poSortSelect').addEventListener('change', e=>{
-      sortState.po = e.target.value;
+    liquidSortBind('poSort', LSORT.po, v=>{
+      sortState.po = v;
       saveSortState();
       navigate('purchasing');
     });
@@ -5365,8 +5410,8 @@ function postRenderHooks(page){
     document.getElementById('newIssueBtn').addEventListener('click', ()=>openIssueModal(null));
     document.querySelectorAll('[data-action="viewreq"]').forEach(b=>b.addEventListener('click',()=>viewIssue(parseInt(b.dataset.idx))));
     document.querySelectorAll('[data-action="editreq"]').forEach(b=>b.addEventListener('click',()=>openIssueModal(parseInt(b.dataset.idx))));
-    document.getElementById('reqSortSelect').addEventListener('change', e=>{
-      sortState.req = e.target.value;
+    liquidSortBind('reqSort', LSORT.req, v=>{
+      sortState.req = v;
       saveSortState();
       navigate('issues');
     });
