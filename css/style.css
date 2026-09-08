@@ -1365,6 +1365,9 @@ html[dir="rtl"] .content.page-enter table tbody tr{
   animation: iconSpin .6s var(--ease) both;
   color: var(--text-2);
 }
+#pageTitle[data-page="settings"] .page-title-icon svg{
+  animation: iconSpin 4s linear infinite;
+}
 
 /* --- Delete trash wiggle (closest to the framer-motion example) --- */
 .row-actions button[data-action="delete"]:hover svg,
