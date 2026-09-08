@@ -1607,12 +1607,7 @@ html[dir="rtl"] .content.page-enter table tbody tr{
 }
 .upload-btn:hover svg{
   animation: folderOpen .5s cubic-bezier(.4,0,.2,1) both;
-  color: var(--green);
-  filter: drop-shadow(0 0 4px rgba(31,174,92,.4));
-}
-.upload-btn:hover svg polyline,
-.upload-btn:hover svg line{
-  animation: uploadPop .5s cubic-bezier(.4,0,.2,1) .1s both;
+  filter: drop-shadow(0 0 5px rgba(85,143,203,.5));
 }
 .upload-btn:active svg{
   transform: scale(.85);
