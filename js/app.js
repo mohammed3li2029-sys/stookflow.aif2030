@@ -4117,7 +4117,8 @@ function getNotifItems(){
       const overdue = Math.abs(remain);
       items.push({
         icon:ICONS.clock, c:'var(--red)', bg:'var(--red-soft)',
-        title: `${lang==='en'?p.id:p.id} — ${lang==='en'?p.name:p.nameAr} (${overdue} ${lang==='en'?'d overdue':'يوم تأخير'})`,
+        title: `${lang==='en'?p.id:p.id} — ${lang==='en'?p.name:p.nameAr}`,
+        desc: `${overdue} ${lang==='en'?'d overdue':'يوم تأخير'}`,
         time: `${overdue}d`
       });
     }
@@ -4126,7 +4127,8 @@ function getNotifItems(){
       if(ph.status==='delayed'){
         items.push({
           icon:ICONS.issue, c:'var(--amber)', bg:'var(--amber-soft)',
-          title: `${lang==='en'?p.id:p.id} · ${lang==='en'? (ph.name||ph.id) : (ph.nameAr||ph.id)} ${lang==='en'?'delayed':'متأخر'}`,
+          title: `${lang==='en'?p.id:p.id} · ${lang==='en'? (ph.name||ph.id) : (ph.nameAr||ph.id)}`,
+          desc: lang==='en'?'delayed':'متأخر',
           time: '!'
         });
       }
@@ -4136,14 +4138,15 @@ function getNotifItems(){
   inventoryData.filter(i=>i.stock<i.min).slice(0,2).forEach(i => {
     items.push({
       icon:ICONS.flag, c:'var(--red)', bg:'var(--red-soft)',
-      title: `${lang==='en'?i.name:i.nameAr} (${i.sku}) ${L.notif.lowStockMsg}`,
+      title: `${lang==='en'?i.name:i.nameAr}`,
+      desc: `${i.sku} ${L.notif.lowStockMsg}`,
       time: '—'
     });
   });
   // pending approvals (mock)
   items.push({
     icon:ICONS.issue, c:'var(--blue)', bg:'var(--blue-soft)',
-    title: 'REQ-551 '+L.notif.approvalMsg, time: '1h'
+    title: 'REQ-551', desc: L.notif.approvalMsg, time: '1h'
   });
   return items;
 }
@@ -6518,14 +6521,157 @@ document.getElementById('profileSave').addEventListener('click',()=>{
   refreshTopbarProfile();
   showToast(lang==='en'?'Profile updated successfully!':'تم تحديث الملف الشخصي بنجاح!');
 });
-// Wire user-chip click → open profile modal
-document.querySelector('.user-chip').addEventListener('click', openProfileModal);
-// Wire notification bell → navigate to notifications
+// Wire user-chip click → profile menu dropdown (menu + edit views)
+const userChipEl = document.querySelector('.user-chip');
+const userDropdownEl = document.getElementById('userDropdown');
+let udCurrentView = 'menu';
+
+function udSetAvatar(el, sizeClass){
+  if(!el) return;
+  if(profileData.image){
+    el.innerHTML = `<img src="${profileData.image}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    el.style.background = 'none';
+  } else {
+    el.innerHTML = profileData.initials;
+    el.style.background = 'linear-gradient(135deg,var(--blue),#7CB2FF)';
+  }
+}
+function udRoleLabel(){
+  const rk = ['admin','manager','supervisor','employee'].includes(profileData.role) ? profileData.role : 'employee';
+  const ri = getRoleInfo(rk);
+  return lang==='ar' ? ri.labelAr : ri.label;
+}
+function udSetShellHeight(el){
+  const shell = document.getElementById('viewShell');
+  if(shell) shell.style.height = el.offsetHeight + 'px';
+}
+function udSwitchView(name){
+  const menuView = document.getElementById('menuView');
+  const editView = document.getElementById('editView');
+  const showEl = name === 'menu' ? menuView : editView;
+  const hideEl = name === 'menu' ? editView : menuView;
+  if(!showEl || !hideEl) return;
+  udSyncLabels();
+  udSetShellHeight(showEl);
+  hideEl.classList.remove('is-active');
+  showEl.classList.add('is-active');
+  udCurrentView = name;
+}
+function udSyncLabels(){
+  const lp = document.querySelector('#udEditProfile span');
+  if(lp) lp.textContent = lang==='en' ? 'Edit Profile' : 'تعديل الملف الشخصي';
+  const ls = document.querySelector('#udSettings span');
+  if(ls) ls.textContent = STR[lang].nav.settings || (lang==='en'?'Settings':'الإعدادات');
+  const lo = document.querySelector('#udLogout span');
+  if(lo) lo.textContent = STR[lang].nav.logout || (lang==='en'?'Log Out':'تسجيل الخروج');
+  const et = document.querySelector('#editView .edit-title');
+  if(et) et.textContent = lang==='en' ? 'Edit Profile' : 'تعديل الملف الشخصي';
+  const cp = document.getElementById('udChangePhoto');
+  if(cp) cp.textContent = lang==='en' ? 'Change Photo' : 'تغيير الصورة';
+  const fn = document.querySelector('#editView label[for="udFullNameInput"]');
+  if(fn) fn.textContent = lang==='en' ? 'Full Name' : 'الاسم الكامل';
+  const fr = document.querySelector('#editView label[for="udRoleInput"]');
+  if(fr) fr.textContent = lang==='en' ? 'Role' : 'الدور الوظيفي';
+  const fe = document.querySelector('#editView label[for="udEmailInput"]');
+  if(fe) fe.textContent = lang==='en' ? 'Email' : 'البريد الإلكتروني';
+  const can = document.getElementById('udCancel');
+  if(can) can.textContent = lang==='en' ? 'Cancel' : 'إلغاء';
+  const sav = document.getElementById('udSave');
+  if(sav) sav.textContent = lang==='en' ? 'Save Changes' : 'حفظ التعديلات';
+}
+function refreshUserDropdown(){
+  if(!userDropdownEl) return;
+  udSetAvatar(document.getElementById('udAvatar'));
+  udSetAvatar(document.getElementById('udEditAvatar'));
+  const nm = document.getElementById('udName');
+  if(nm) nm.textContent = profileData.name;
+  const rl = document.getElementById('udRole');
+  if(rl) rl.textContent = udRoleLabel();
+  udSyncLabels();
+  const ni = document.getElementById('udFullNameInput');
+  if(ni) ni.value = profileData.name;
+  const ri2 = document.getElementById('udRoleInput');
+  if(ri2) ri2.value = udRoleLabel();
+  const ei = document.getElementById('udEmailInput');
+  if(ei) ei.value = profileData.email || '';
+  udSwitchView('menu');
+}
+function closeUserDropdown(){
+  if(userDropdownEl) userDropdownEl.classList.remove('open');
+}
+userChipEl.addEventListener('click', function(e){
+  e.stopPropagation();
+  closeNotifDropdown();
+  const cal = document.getElementById('calDropdown');
+  if(cal.classList.contains('open')){
+    cal.classList.remove('open');
+    document.getElementById('calAddForm').classList.remove('open');
+  }
+  refreshUserDropdown();
+  userDropdownEl.classList.toggle('open');
+});
+document.getElementById('udEditProfile').addEventListener('click', function(e){
+  e.stopPropagation();
+  udSwitchView('edit');
+});
+document.getElementById('udSettings').addEventListener('click', function(e){
+  e.stopPropagation();
+  closeUserDropdown();
+  navigate('settings');
+});
+document.getElementById('udLogout').addEventListener('click', function(e){
+  e.stopPropagation();
+  closeUserDropdown();
+  doLogout();
+});
+document.getElementById('udCancel').addEventListener('click', function(e){
+  e.stopPropagation();
+  const ni = document.getElementById('udFullNameInput');
+  if(ni) ni.value = profileData.name;
+  udSwitchView('menu');
+});
+document.getElementById('udChangePhoto').addEventListener('click', function(e){
+  e.stopPropagation();
+  document.getElementById('udPhotoInput').click();
+});
+document.getElementById('udPhotoInput').addEventListener('change', async function(e){
+  const file = e.target.files[0];
+  if(!file || !file.type.startsWith('image/')) return;
+  e.target.value='';
+  const { url } = await uploadFileOrFallback(file, 'profile');
+  profileImgData = url;
+  profileData.image = url;
+  udSetAvatar(document.getElementById('udAvatar'));
+  udSetAvatar(document.getElementById('udEditAvatar'));
+  refreshTopbarProfile();
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('profile', [profileData], 'id');
+  }
+});
+document.getElementById('udSave').addEventListener('click', function(e){
+  e.stopPropagation();
+  const ni = document.getElementById('udFullNameInput');
+  const name = ni ? ni.value.trim() : '';
+  if(!name){ if(ni) ni.focus(); return; }
+  profileData.name = name;
+  profileData.email = document.getElementById('udEmailInput') ? document.getElementById('udEmailInput').value.trim() : profileData.email;
+  if(profileImgData) profileData.image = profileImgData;
+  profileData.initials = getInitials(name);
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('profile', [profileData], 'id');
+  }
+  refreshTopbarProfile();
+  refreshUserDropdown();
+  showToast(lang==='en'?'Profile updated successfully!':'تم تحديث الملف الشخصي بنجاح!');
+  closeUserDropdown();
+});
+// Wire notification bell → popover notifications
 document.getElementById('notifBtn').addEventListener('click', function(e){
   e.stopPropagation();
+  closeUserDropdown();
   const dd = document.getElementById('notifDropdown');
   if(dd.classList.contains('open')){
-    dd.classList.remove('open');
+    closeNotifDropdown();
     return;
   }
   // populate dropdown
@@ -6533,25 +6679,30 @@ document.getElementById('notifBtn').addEventListener('click', function(e){
   const todayStr = fmtDate(new Date());
   const todayEvents = getEventsForDate(todayStr);
   const items = [
-    ...todayEvents.map(e=>({icon:ICONS.clock,c:'var(--blue)',bg:'var(--blue-soft)', title: L.calendar.eventNotifPrefix+': '+e.name, time: e.time||'—'})),
+    ...todayEvents.map(e=>({icon:ICONS.clock,c:'var(--blue)',bg:'var(--blue-soft)', title: L.calendar.eventNotifPrefix+': '+e.name, desc: todayStr, time: e.time||'—'})),
     ...getNotifItems(),
   ];
   document.getElementById('notifDropTitle').textContent = L.notifList || (lang==='en'?'Notifications':'التنبيهات');
   document.getElementById('notifDropCount').textContent = items.length;
-  document.getElementById('notifDropBody').innerHTML = items.map(n=>`<div class="alert-row">
-    <div class="alert-icon" style="background:${n.bg};color:${n.c}">${n.icon}</div>
-    <div class="alert-mid"><div class="alert-name">${n.title}</div></div>
-    <div class="activity-time">${n.time}</div>
-  </div>`).join('');
+  const body = document.getElementById('notifDropBody');
+  body.innerHTML = items.map((n,idx)=>notifRowHTML(n,idx)).join('');
+  if(notifSwipe){ notifSwipe.destroy(); notifSwipe = null; }
+  notifSwipe = new NotifSwipeList(body);
   document.getElementById('notifDropViewAll').textContent = lang==='en'?'View All':'عرض الكل';
-  dd.classList.add('open');
+  document.getElementById('notifDropClear').textContent = lang==='en'?'Mark all read':'تعليم الكل كمقروء';
+  document.getElementById('notifDropHint').textContent = lang==='en'?'Swipe right to mark as read, or left to delete':'اسحب يمينًا للتمييز كمقروء، أو يسارًا للحذف';
+  updateNotifBadge();
+  openNotifDropdown();
 });
 // close dropdown on outside click
 document.addEventListener('click', function(e){
   const dd = document.getElementById('notifDropdown');
   const btn = document.getElementById('notifBtn');
   if(dd.classList.contains('open') && !dd.contains(e.target) && !btn.contains(e.target)){
-    dd.classList.remove('open');
+    closeNotifDropdown();
+  }
+  if(userDropdownEl.classList.contains('open') && !userDropdownEl.contains(e.target) && !userChipEl.contains(e.target)){
+    closeUserDropdown();
   }
   const calDd = document.getElementById('calDropdown');
   const calBtn = document.getElementById('calendarBtn');
@@ -6562,9 +6713,278 @@ document.addEventListener('click', function(e){
 });
 // view all → navigate to notifications page
 document.getElementById('notifDropViewAll').addEventListener('click', function(){
-  document.getElementById('notifDropdown').classList.remove('open');
+  closeNotifDropdown();
   navigate('notifications');
 });
+// close popover (X) and backdrop click
+document.getElementById('notifDropClose').addEventListener('click', function(e){
+  e.stopPropagation();
+  closeNotifDropdown();
+});
+document.getElementById('notifDropClear').addEventListener('click', function(e){
+  e.stopPropagation();
+  document.querySelectorAll('#notifDropBody .notif-desc.unread').forEach(d=>d.classList.remove('unread'));
+  updateNotifBadge();
+});
+document.getElementById('notifBackdrop').addEventListener('click', closeNotifDropdown);
+
+function openNotifDropdown(){
+  document.getElementById('notifDropdown').classList.add('open');
+  document.getElementById('notifBackdrop').classList.add('open');
+}
+function closeNotifDropdown(){
+  document.getElementById('notifDropdown').classList.remove('open');
+  document.getElementById('notifBackdrop').classList.remove('open');
+}
+function updateNotifBadge(){
+  const badge = document.getElementById('notifBadge');
+  const unread = document.querySelectorAll('#notifDropBody .notif-desc.unread').length;
+  badge.textContent = unread;
+  badge.classList.toggle('is-empty', unread===0);
+}
+function updateNotifCount(){
+  document.getElementById('notifDropCount').textContent = document.querySelectorAll('#notifDropBody .swipe-item').length;
+}
+
+/* ── Notification popover: swipe rows (spring) ── */
+function notifRowHTML(n, idx){
+  return `<div class="swipe-item" data-idx="${idx}">
+  <div class="swipe-rail">
+    <div class="rail-left">
+      <button class="action-btn tone-success" data-side="left" aria-label="${lang==='en'?'Mark as read':'تمييز كمقروء'}">
+        <span class="bubble">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+      </button>
+    </div>
+    <div class="rail-right">
+      <button class="action-btn tone-danger" data-side="right" aria-label="${lang==='en'?'Delete':'حذف'}">
+        <span class="bubble">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        </span>
+      </button>
+    </div>
+  </div>
+  <div class="swipe-surface">
+    <div class="notif-icon" style="background:${n.bg};color:${n.c}">${n.icon}</div>
+    <div class="notif-body">
+      <div class="notif-title">${n.title}</div>
+      <div class="notif-desc unread">${n.desc||''}</div>
+    </div>
+    <div class="notif-meta">${n.time}</div>
+  </div>
+</div>`;
+}
+
+const NOTIF_SPRING = { stiffness: 560, damping: 48, mass: 0.82, restDelta: 0.5, restSpeed: 8 };
+const NOTIF_ACTION_WIDTH = 56;
+const NOTIF_REVEAL = 34;
+const NOTIF_OPEN_RATIO = 0.46;
+const NOTIF_CLOSE_RATIO = 0.72;
+const NOTIF_OPEN_VEL = 720;
+const NOTIF_CLOSE_VEL = 320;
+const NOTIF_FLING = 14;
+const NOTIF_VEL_LIMIT = 1500;
+
+function notifClamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+function notifSpring(getX, setX, to, velocity, onComplete){
+  let pos = getX();
+  let vel = notifClamp(velocity, -NOTIF_VEL_LIMIT, NOTIF_VEL_LIMIT);
+  let last = performance.now();
+  let cancelled = false;
+  function frame(now){
+    if (cancelled) return;
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    const accel = (-NOTIF_SPRING.stiffness * (pos - to) - NOTIF_SPRING.damping * vel) / NOTIF_SPRING.mass;
+    vel += accel * dt;
+    pos += vel * dt;
+    setX(pos);
+    if (Math.abs(to - pos) < NOTIF_SPRING.restDelta && Math.abs(vel) < NOTIF_SPRING.restSpeed){
+      setX(to);
+      onComplete && onComplete();
+      return;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  return () => { cancelled = true; };
+}
+
+class NotifSwipeRow {
+  constructor(el, list){
+    this.el = el;
+    this.list = list;
+    this.surface = el.querySelector('.swipe-surface');
+    this.leftWidth = el.querySelectorAll('.rail-left .action-btn').length * NOTIF_ACTION_WIDTH;
+    this.rightWidth = el.querySelectorAll('.rail-right .action-btn').length * NOTIF_ACTION_WIDTH;
+    this.x = 0;
+    this.openSide = null;
+    this.stopSpring = null;
+    this.dragging = false;
+    this.intentLocked = null;
+    this.bind();
+  }
+  setX(v){
+    this.x = v;
+    this.surface.style.transform = `translateX(${v}px)`;
+  }
+  settle(target, velocity = 0, onComplete){
+    if (this.stopSpring) this.stopSpring();
+    this.stopSpring = notifSpring(() => this.x, (v) => this.setX(v), target, velocity, () => {
+      this.stopSpring = null;
+      onComplete && onComplete();
+    });
+  }
+  open(side, velocity = 0){
+    this.openSide = side;
+    this.list.setOpenRow(this);
+    this.settle(side === 'left' ? this.leftWidth : side === 'right' ? -this.rightWidth : 0, velocity);
+  }
+  close(velocity = 0){
+    this.openSide = null;
+    this.settle(0, velocity);
+    if (this.list.openRow === this) this.list.openRow = null;
+  }
+  bind(){
+    let startX = 0, startY = 0, startTx = 0, lastSampleX = 0, lastSampleT = 0, vx = 0;
+    let pointerId = null;
+
+    const onPointerDown = (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      pointerId = e.pointerId;
+      this.surface.setPointerCapture(pointerId);
+      if (this.stopSpring) this.stopSpring();
+      startX = e.clientX; startY = e.clientY;
+      startTx = this.x;
+      lastSampleX = e.clientX; lastSampleT = performance.now();
+      vx = 0;
+      this.dragging = false;
+      this.intentLocked = null;
+
+      if (this.list.openRow && this.list.openRow !== this) {
+        this.list.openRow.close();
+      }
+    };
+
+    const onPointerMove = (e) => {
+      if (pointerId === null) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      if (this.intentLocked === null) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        this.intentLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        if (this.intentLocked === 'x') {
+          this.dragging = true;
+          this.surface.classList.add('dragging');
+        }
+      }
+      if (this.intentLocked !== 'x') return;
+
+      e.preventDefault();
+      let next = startTx + dx;
+      if (next > this.leftWidth) next = this.leftWidth + (next - this.leftWidth) * 0.15;
+      if (next < -this.rightWidth) next = -this.rightWidth + (next + this.rightWidth) * 0.15;
+      this.setX(next);
+
+      const now = performance.now();
+      const dt = now - lastSampleT;
+      if (dt > 0) vx = ((e.clientX - lastSampleX) / dt) * 1000;
+      lastSampleX = e.clientX; lastSampleT = now;
+    };
+
+    const onPointerUp = () => {
+      if (pointerId === null) return;
+      pointerId = null;
+      this.surface.classList.remove('dragging');
+      if (!this.dragging) return;
+      this.dragging = false;
+
+      const velocity = notifClamp(vx, -NOTIF_VEL_LIMIT, NOTIF_VEL_LIMIT);
+      const latest = this.x;
+      const leftOpenThreshold = Math.max(NOTIF_REVEAL, this.leftWidth * NOTIF_OPEN_RATIO);
+      const rightOpenThreshold = Math.max(NOTIF_REVEAL, this.rightWidth * NOTIF_OPEN_RATIO);
+
+      if (this.openSide === 'left') {
+        if (latest < this.leftWidth * NOTIF_CLOSE_RATIO || velocity < -NOTIF_CLOSE_VEL) this.close(velocity);
+        else this.open('left', velocity);
+        return;
+      }
+      if (this.openSide === 'right') {
+        if (Math.abs(latest) < this.rightWidth * NOTIF_CLOSE_RATIO || velocity > NOTIF_CLOSE_VEL) this.close(velocity);
+        else this.open('right', velocity);
+        return;
+      }
+      if (this.leftWidth > 0 && latest > 0 &&
+          (latest > leftOpenThreshold || (velocity > NOTIF_OPEN_VEL && latest > NOTIF_FLING))) {
+        this.open('left', velocity);
+        return;
+      }
+      if (this.rightWidth > 0 && latest < 0 &&
+          (latest < -rightOpenThreshold || (velocity < -NOTIF_OPEN_VEL && latest < -NOTIF_FLING))) {
+        this.open('right', velocity);
+        return;
+      }
+      this.close(velocity);
+    };
+
+    this.surface.addEventListener('pointerdown', onPointerDown);
+    this.surface.addEventListener('pointermove', onPointerMove);
+    this.surface.addEventListener('pointerup', onPointerUp);
+    this.surface.addEventListener('pointercancel', onPointerUp);
+
+    this.el.querySelectorAll('.action-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const side = btn.dataset.side;
+        if (side === 'left') {
+          const desc = this.el.querySelector('.notif-desc');
+          if (desc) desc.classList.remove('unread');
+          updateNotifBadge();
+        } else {
+          this.removeRow();
+          setTimeout(() => { updateNotifCount(); updateNotifBadge(); }, 320);
+          return;
+        }
+        this.close();
+      });
+    });
+  }
+  removeRow(){
+    const height = this.el.offsetHeight;
+    this.el.style.maxHeight = height + 'px';
+    this.el.style.overflow = 'hidden';
+    requestAnimationFrame(() => {
+      this.el.classList.add('is-removing');
+      this.el.style.maxHeight = '0px';
+      this.el.style.opacity = '0';
+      this.el.style.marginTop = '0px';
+      this.el.style.marginBottom = '0px';
+    });
+    this.el.addEventListener('transitionend', () => this.el.remove(), { once: true });
+  }
+}
+
+class NotifSwipeList {
+  constructor(root){
+    this.root = root;
+    this.openRow = null;
+    this._docBound = (e) => {
+      if (this.openRow && !this.openRow.el.contains(e.target)) this.openRow.close();
+    };
+    document.addEventListener('pointerdown', this._docBound);
+    this.rows = Array.from(root.querySelectorAll('.swipe-item')).map((el) => new NotifSwipeRow(el, this));
+  }
+  setOpenRow(row){ this.openRow = row; }
+  destroy(){
+    document.removeEventListener('pointerdown', this._docBound);
+    this.rows.forEach(r => { if(r.stopSpring) r.stopSpring(); });
+    this.rows = [];
+    this.openRow = null;
+  }
+}
+
+let notifSwipe = null;
 
 /* ===================================================================
    CALENDAR
@@ -6725,7 +7145,8 @@ document.getElementById('calendarBtn').addEventListener('click', function(e){
     closeCalForm();
     return;
   }
-  document.getElementById('notifDropdown').classList.remove('open');
+  closeNotifDropdown();
+  closeUserDropdown();
   renderCalendar();
   dd.classList.add('open');
 });
