@@ -164,15 +164,17 @@
         <div class="page-title" id="pageTitle">Dashboard</div>
         <div class="page-sub" id="pageSub">Overview</div>
       </div>
-      <div class="search" id="globalSearchWrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="globalSearch" data-i18n-ph="topbar.search" placeholder="Search items, suppliers, orders...">
-        <button class="search-close-btn" id="searchCloseBtn" title="Close">âœ•</button>
-      </div>
-      <button class="icon-btn mobile-search-btn" id="mobileSearchBtn" title="Search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      </button>
       <div class="topbar-actions">
+        <div class="sek" id="globalSearchWrap" data-open="false" data-press="false" data-busy="false">
+          <div class="sek-skin">
+            <svg class="sek-lens" viewBox="0 0 18 18" aria-hidden="true">
+              <circle cx="7.6" cy="7.6" r="5.4" />
+              <path d="M11.6 11.6 L15.4 15.4" />
+            </svg>
+            <input class="sek-field" type="text" id="globalSearch" data-i18n-ph="topbar.search" placeholder="Search items, suppliers, orders..." aria-label="Search" tabindex="-1">
+            <button class="sek-hit" type="button" aria-label="Search"></button>
+          </div>
+        </div>
         <button class="lang-toggle" id="langToggle">EN / AR</button>
         <button class="icon-btn" id="layoutBtn" title="Customize Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>

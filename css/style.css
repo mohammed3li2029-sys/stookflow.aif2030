@@ -2611,4 +2611,123 @@ html[dir="rtl"] body.sidebar-collapsed #quoteModalOverlay .q-pick-opt.is-selecte
 #quoteModalOverlay .q-cal-today{border:none;background:none;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:6px;}
 #quoteModalOverlay .q-cal-today:hover{background:var(--surface-2);}
 
+/* =========================================================
+   Seek — expandable topbar search lens (ported from the
+   Seek component: icon becomes a field as one object, sprung
+   in JS, everything else derived from the width's progress).
+   ========================================================= */
+#globalSearchWrap.sek{
+  --ink-rgb:20,22,26;
+  --ink:rgb(var(--ink-rgb));
+  --ink-2:rgba(var(--ink-rgb),.82);
+  --ink-3:rgba(var(--ink-rgb),.62);
+  --ink-4:rgba(var(--ink-rgb),.42);
+  --ink-5:rgba(var(--ink-rgb),.30);
+  --pane:rgba(var(--ink-rgb),.055);
+  --pane-edge:rgba(var(--ink-rgb),.12);
+  --g-blur:2px;
+  --g-sat:150%;
+
+  position:relative;
+  display:grid;
+  align-items:center;
+  justify-items:end;
+  width:var(--frame,72px);
+  height:var(--frameh,56px);
+  flex-shrink:0;
+  font:inherit;
+}
+[data-theme="dark"] #globalSearchWrap.sek{
+  --ink-rgb:242,243,245;
+  --pane:rgba(242,243,245,.08);
+  --pane-edge:rgba(242,243,245,.18);
+}
+#globalSearchWrap .sek-skin{
+  position:relative;
+  width:var(--w);
+  height:var(--shut);
+  border-radius:var(--sek-r,999px);
+  background:var(--pane);
+  -webkit-backdrop-filter:blur(var(--g-blur,2px)) saturate(var(--g-sat,150%)) brightness(var(--g-bright,100%));
+  backdrop-filter:blur(var(--g-blur,2px)) saturate(var(--g-sat,150%)) brightness(var(--g-bright,100%));
+  isolation:isolate;
+  transform:translate(var(--lx),var(--ly)) scale(var(--sk,1));
+  transition:transform 260ms cubic-bezier(.22,.9,.28,1), background 220ms ease;
+  overflow:hidden;
+}
+#globalSearchWrap .sek-skin::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  border:1px solid transparent;
+  pointer-events:none;
+  z-index:2;
+}
+#globalSearchWrap .sek-skin:hover{ --sk:1.045; --g-bright:104%; }
+#globalSearchWrap.sek[data-press="true"] .sek-skin{
+  --sk:.93;
+  transition:transform 90ms cubic-bezier(.4,0,.6,1);
+}
+#globalSearchWrap.sek[data-open="true"] .sek-skin{ cursor:text; }
+#globalSearchWrap.sek[data-stroke="on"] .sek-skin::before{ border-color:var(--pane-edge); }
+
+#globalSearchWrap .sek-lens{
+  position:absolute;
+  left:var(--inset);
+  top:50%;
+  width:var(--lens);
+  height:var(--lens);
+  margin-top:calc(var(--lens) / -2);
+  fill:none;
+  stroke:var(--ink-3);
+  stroke-width:1.5;
+  stroke-linecap:round;
+  pointer-events:none;
+  transition:stroke 200ms ease, stroke-width 200ms ease;
+}
+#globalSearchWrap .sek-skin:hover .sek-lens{ stroke:var(--ink); }
+#globalSearchWrap.sek[data-open="true"] .sek-lens{ stroke:var(--ink-4); }
+#globalSearchWrap.sek[data-busy="true"] .sek-lens{ stroke:var(--ink-2); stroke-width:1.8; }
+
+#globalSearchWrap .sek-field{
+  position:absolute;
+  left:calc(var(--inset) + var(--lens) + 11px);
+  right:14px;
+  top:0;
+  height:100%;
+  border:0;
+  background:none;
+  font-size:14px;
+  letter-spacing:-.005em;
+  color:var(--ink);
+  outline:none;
+  opacity:var(--say);
+  transform:translateX(calc((1 - var(--say)) * -6px));
+  pointer-events:var(--say-hit, none);
+}
+#globalSearchWrap.sek[data-open="true"] .sek-field{ --say-hit:auto; }
+#globalSearchWrap .sek-field::placeholder{ color:var(--ink-5); }
+
+#globalSearchWrap .sek-hit{
+  position:absolute;
+  inset:0;
+  border:0;
+  border-radius:inherit;
+  background:none;
+  cursor:pointer;
+}
+#globalSearchWrap .sek-hit:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 2px var(--surface), 0 0 0 4px rgba(var(--ink-rgb),.4);
+}
+
+/* RTL mirror: lens sits on the inline-start edge of the field */
+html[dir="rtl"] #globalSearchWrap .sek-lens{ left:auto; right:var(--inset); }
+html[dir="rtl"] #globalSearchWrap .sek-field{
+  left:14px;
+  right:calc(var(--inset) + var(--lens) + 11px);
+  transform:translateX(calc((1 - var(--say)) * 6px));
+}
+
 

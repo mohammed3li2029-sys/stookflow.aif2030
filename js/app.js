@@ -7653,19 +7653,6 @@ document.querySelector('.app')?.addEventListener('click', function(e){
   }
 });
 
-// Mobile search toggle
-document.getElementById('mobileSearchBtn')?.addEventListener('click', e=>{
-  e.preventDefault();e.stopPropagation();
-  document.getElementById('globalSearchWrap').classList.toggle('open');
-  if(document.getElementById('globalSearchWrap').classList.contains('open')){
-    document.getElementById('globalSearch').focus();
-  }
-});
-document.getElementById('searchCloseBtn')?.addEventListener('click', e=>{
-  e.preventDefault();e.stopPropagation();
-  document.getElementById('globalSearchWrap').classList.remove('open');
-});
-
 // Mobile liquid glass buttons — top bar
 document.getElementById('mobSearchBtn')?.addEventListener('click', e=>{
   e.preventDefault();e.stopPropagation();
@@ -8100,4 +8087,209 @@ applyStaticI18n();
   const c=document.querySelector('.content');
   if(c) c.addEventListener('scroll', check, {passive:true});
   check();
+})();
+
+/* ===================================================================
+   SEEK — expandable topbar search lens
+   Ported from the Seek component: a search icon that becomes a search
+   field as one object, sprung in JS. Width is the state; the lens is
+   fixed; the frame never moves (stable home for the magnet).
+=================================================================== */
+(function(){
+  "use strict";
+
+  const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+
+  /* header-scale sizes (the standalone demo used 64; a topbar circle) */
+  const SHUT=40;                 // closed: a circle, width IS height
+  const LENS=18;                 // the lens, at ~0.44 of SHUT
+  const INSET=(SHUT-LENS)/2;     // 11
+  const CORNER=SHUT/2;           // 20
+  const WIDE=300;                // resting field width, wide screens
+  const SNUG=270;                // resting field width, narrow screens
+
+  const still=typeof window!=='undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  function springOf(tune){
+    return { k:0.08+(tune/100)*0.16, d:0.62+(tune/100)*0.2 };
+  }
+  function makeSpring(initial,tune,instant,onUpdate){
+    let cur=initial, vel=0, target=initial, raf=0, prevT=0;
+    function tick(t){
+      const{k,d}=springOf(tune);
+      const dt=prevT?clamp((t-prevT)/16.67,0,2.5):1;
+      prevT=t;
+      vel+=(target-cur)*k*dt;
+      vel*=Math.pow(d,dt);
+      cur+=vel*dt;
+      if(Math.abs(target-cur)<0.02 && Math.abs(vel)<0.02){
+        cur=target; vel=0;
+        onUpdate(cur);
+        raf=0;
+        return;
+      }
+      onUpdate(cur);
+      raf=requestAnimationFrame(tick);
+    }
+    return {
+      setTarget(next){
+        target=next;
+        if(instant){ cur=target; vel=0; onUpdate(cur); return; }
+        if(!raf){ prevT=0; raf=requestAnimationFrame(tick); }
+      }
+    };
+  }
+
+  function createSeek(root,options){
+    const opts=Object.assign({give:50,spring:50,width:undefined,corner:CORNER},options);
+    const skin=root.querySelector('.sek-skin');
+    const field=root.querySelector('.sek-field');
+    const hit=root.querySelector('.sek-hit');
+    if(!skin||!field||!hit) return;
+
+    let open=false, press=false, busy=false, value='';
+    let beatTimer=0, restTimer=0;
+
+    const roomMQ=window.matchMedia('(max-width:760px)');
+    const coarseMQ=window.matchMedia('(pointer: coarse)');
+    let snug=roomMQ.matches;
+    let touch=coarseMQ.matches;
+
+    const span=()=>opts.width??(snug?SNUG:WIDE);
+
+    function paintStatics(){
+      const s=span();
+      root.style.setProperty('--sek-r',clamp(opts.corner,0,CORNER)+'px');
+      root.style.setProperty('--inset',INSET+'px');
+      root.style.setProperty('--lens',LENS+'px');
+      root.style.setProperty('--shut',SHUT+'px');
+      root.style.setProperty('--frame',(Math.max(SHUT,s)+26)+'px');
+      root.style.setProperty('--frameh',(SHUT+16)+'px');
+    }
+    const target=()=>open?Math.max(SHUT,span()):SHUT;
+
+    const spring=makeSpring(SHUT,clamp(opts.spring,0,100),still,(w)=>{
+      const s=span();
+      const p=clamp((w-SHUT)/Math.max(1,Math.max(SHUT,s)-SHUT),0,1);
+      const say=clamp((p-0.55)/0.45,0,1);
+      root.style.setProperty('--w',w.toFixed(2)+'px');
+      root.style.setProperty('--p',p.toFixed(3));
+      root.style.setProperty('--say',say.toFixed(3));
+    });
+
+    function paintA11y(){
+      field.tabIndex=open?0:-1;
+      if(touch) field.setAttribute('inputmode','none');
+      else field.removeAttribute('inputmode');
+      hit.style.display=open?'none':'';
+    }
+    function setOpen(next){
+      open=next;
+      root.dataset.open=open?'true':'false';
+      if(open){
+        root.style.setProperty('--lx','0px');
+        root.style.setProperty('--ly','0px');
+      }
+      spring.setTarget(target());
+      paintA11y();
+    }
+    function setPress(next){ press=next; root.dataset.press=press?'true':'false'; }
+    function setBusy(next){ busy=next; root.dataset.busy=busy?'true':'false'; }
+
+    if(still) root.dataset.flat='true';
+    paintStatics();
+    spring.setTarget(target());
+    paintA11y();
+
+    function handleMQChange(){
+      snug=roomMQ.matches;
+      touch=coarseMQ.matches;
+      paintStatics();
+      spring.setTarget(target());
+      paintA11y();
+    }
+    roomMQ.addEventListener('change',handleMQChange);
+    coarseMQ.addEventListener('change',handleMQChange);
+
+    function start(){
+      if(open) return;
+      setPress(true);
+      window.clearTimeout(beatTimer);
+      beatTimer=window.setTimeout(()=>{
+        setPress(false);
+        setOpen(true);
+        field.focus();
+      },still?0:90);
+    }
+    function away(){
+      if(value.trim()) return;
+      setOpen(false);
+    }
+    function tapped(){
+      if(!busy) setBusy(true);
+      window.clearTimeout(restTimer);
+      restTimer=window.setTimeout(()=>setBusy(false),340);
+    }
+
+    hit.addEventListener('click',start);
+    field.addEventListener('input',e=>{ value=e.target.value; tapped(); });
+    field.addEventListener('blur',away);
+    field.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){
+        e.preventDefault();
+        value=''; field.value='';
+        setOpen(false);
+        field.blur();
+        return;
+      }
+      if(e.key!=='Enter') return;
+      e.preventDefault();
+      const q=field.value.trim();
+      if(!q) return;
+      const lq=q.toLowerCase();
+      const qHit=quotations.find(x=>(String(x.id||'').toLowerCase().includes(lq)||(x.customer||'').toLowerCase().includes(lq)));
+      const iHit=inventoryData.find(x=>((x.name||'')+' '+(x.sku||'')+' '+(x.category||'')).toLowerCase().includes(lq));
+      const targetPage=qHit?'sales':'inventory';
+      field.blur();
+      setOpen(false);
+      navigate(targetPage);
+      setTimeout(()=>{
+        const el=document.getElementById(targetPage==='sales'?'quoteSearch':'invSearch');
+        if(el){ el.value=q; el.dispatchEvent(new Event('input',{bubbles:true})); }
+      },0);
+    });
+
+    /* the magnet — measured from the frame, which never moves */
+    if(!still){
+      let raf=0;
+      let at={x:0,y:0};
+      const R=110;
+      const publish=()=>{
+        raf=0;
+        root.style.setProperty('--lx',at.x.toFixed(2)+'px');
+        root.style.setProperty('--ly',at.y.toFixed(2)+'px');
+      };
+      const read=(e)=>{
+        if(open) return;
+        const b=root.getBoundingClientRect();
+        const k=b.width/(root.offsetWidth||b.width)||1;
+        const dx=(e.clientX-(b.left+b.width/2))/k;
+        const dy=(e.clientY-(b.top+b.height/2))/k;
+        const d=Math.hypot(dx,dy);
+        if(d>R){
+          if(at.x||at.y){ at={x:0,y:0}; if(!raf) raf=requestAnimationFrame(publish); }
+          return;
+        }
+        const pull=Math.pow(1-d/R,1.4)*(2+(opts.give/100)*5);
+        at={x:(dx/(d||1))*pull,y:(dy/(d||1))*pull};
+        if(!raf) raf=requestAnimationFrame(publish);
+      };
+      const gone=()=>{ at={x:0,y:0}; if(!raf) raf=requestAnimationFrame(publish); };
+      document.addEventListener('pointermove',read,{passive:true});
+      document.addEventListener('pointerleave',gone);
+    }
+  }
+
+  const root=document.getElementById('globalSearchWrap');
+  if(root) createSeek(root,{give:50,spring:50,corner:CORNER});
 })();
