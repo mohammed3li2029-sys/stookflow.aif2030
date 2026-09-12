@@ -1686,13 +1686,11 @@ function openQuoteModal(idx=null){
   const isEdit = idx !== null;
   const q = isEdit ? quotations[idx] : null;
 
-  // Validity dropdown options (1..15) plus the saved value if it's outside
-  // that range (e.g. legacy quotes with validity 20). The saved value is
-  // selected ONLY when editing; a brand-new quote defaults to 15.
-  const validityOptions = Array.from({length:15}, (_,i)=>i+1);
   const savedValidity = isEdit ? parseInt(q && q.validity, 10) : null;
-  if(savedValidity && !validityOptions.includes(savedValidity)) validityOptions.push(savedValidity);
   const activeValidity = isEdit && savedValidity ? savedValidity : 15;
+  const activeSalesperson = isEdit && q && q.salesperson && SALESPERSON_NAMES[q.salesperson] ? q.salesperson : 'محمد علي';
+  const activeStatus = isEdit && q && q.status ? q.status : 'review';
+  const initialQDateISO = isEdit && q && q.date ? q.date : new Date().toISOString().split('T')[0];
   
   // Create Modal HTML
   const modalHTML = `
@@ -1714,15 +1712,27 @@ function openQuoteModal(idx=null){
         </div>
         <div class="field">
           <label>${lang==='en'?'Date':'التاريخ'}</label>
-          <input type="date" id="qDate" value="${isEdit ? q.date : new Date().toISOString().split('T')[0]}">
-        </div>
-        <div class="field">
-          <label>${lang==='en'?'Status':'الحالة'}</label>
-          <select id="qStatus">
-            <option value="review" ${isEdit&&q.status==='review'?'selected':''}>${lang==='en'?'Under Review':'تحت المراجعة'}</option>
-            <option value="approved" ${isEdit&&q.status==='approved'?'selected':''}>${lang==='en'?'Approved':'معتمد'}</option>
-            <option value="sent" ${isEdit&&q.status==='sent'?'selected':''}>${lang==='en'?'Sent':'تم الإرسال'}</option>
-          </select>
+          <div class="q-pick-anchor">
+            <div role="button" tabindex="0" class="q-pick-trigger q-pick-date" id="qDateTrig" aria-haspopup="dialog" aria-expanded="false" data-value="${initialQDateISO}">
+              <span class="q-pick-date-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+              <span class="q-pick-value" id="qDateValue">${qFmtISODate(initialQDateISO)}</span>
+              <span class="q-pick-end">
+                <button type="button" class="q-pick-clear" id="qDateClear" tabindex="-1" aria-label="${lang==='en'?'Clear date':'مسح التاريخ'}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+              </span>
+            </div>
+            <div class="q-pick-cal" id="qDateCal" role="dialog" aria-label="${lang==='en'?'Choose a date':'اختر التاريخ'}">
+              <div class="q-cal-head">
+                <button type="button" class="q-cal-nav" id="qCalPrev" aria-label="Previous month"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <span class="q-cal-title" id="qCalTitle"></span>
+                <button type="button" class="q-cal-nav" id="qCalNext" aria-label="Next month"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+              </div>
+              <div class="q-cal-weekdays" id="qCalWeekdays"></div>
+              <div class="q-cal-grid" id="qCalGrid"></div>
+              <div class="q-cal-foot">
+                <button type="button" class="q-cal-today" id="qCalToday">${lang==='en'?'Today':'اليوم'}</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="field-row">
@@ -1742,19 +1752,37 @@ function openQuoteModal(idx=null){
       <div class="field-row">
         <div class="field">
           <label>${lang==='en'?'Validity (days)':'مدة العرض (أيام)'}</label>
-          <select id="qValidity">
-            ${validityOptions.map(d => `<option value="${d}" ${d===activeValidity?'selected':''}>${d}</option>`).join('')}
-          </select>
+          <div class="q-pick-anchor">
+            <button type="button" class="q-pick-trigger" id="qValidity" aria-haspopup="listbox" aria-expanded="false" data-value="${activeValidity}">
+              <span class="q-pick-value">${activeValidity}</span>
+              <span class="q-pick-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            </button>
+            <div class="q-pick-pop" id="qValidityPop" role="listbox" aria-labelledby=""></div>
+          </div>
         </div>
         <div class="field">
           <label>${lang==='en'?'Salesperson':'المندوب'}</label>
-          <select id="qSalesperson">
-            ${Object.keys(SALESPERSON_NAMES).map(n => `<option value="${n}" ${isEdit&&q.salesperson===n?'selected':''}>${getSalespersonLabel(n)} - ${SALESPERSON_NAMES[n].phone}</option>`).join('')}
-          </select>
+          <div class="q-pick-anchor">
+            <button type="button" class="q-pick-trigger" id="qSalesperson" aria-haspopup="listbox" aria-expanded="false" data-value="${activeSalesperson}">
+              <span class="q-pick-value">${qPickLabel('salesperson', activeSalesperson)}</span>
+              <span class="q-pick-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            </button>
+            <div class="q-pick-pop" id="qSalespersonPop" role="listbox" aria-labelledby=""></div>
+          </div>
         </div>
         <div class="field">
           <label>${lang==='en'?'Discount (SAR)':`الخصم (${RYAL})`}</label>
           <input id="qDiscount" type="number" min="0" step="0.01" placeholder="0.00" value="${isEdit&&q.discount?q.discount:''}" oninput="updateQuoteTotals()">
+        </div>
+        <div class="field">
+          <label>${lang==='en'?'Status':'الحالة'}</label>
+          <div class="q-pick-anchor">
+            <button type="button" class="q-pick-trigger" id="qStatus" aria-haspopup="listbox" aria-expanded="false" data-value="${activeStatus}">
+              <span class="q-pick-value">${getQuoteStatusText(activeStatus)}</span>
+              <span class="q-pick-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            </button>
+            <div class="q-pick-pop" id="qStatusPop" role="listbox" aria-labelledby=""></div>
+          </div>
         </div>
       </div>
       <div style="margin-top:15px;">
@@ -1813,12 +1841,222 @@ function openQuoteModal(idx=null){
   quoteLines = isEdit ? JSON.parse(JSON.stringify(q.items)) : [];
   if(quoteLines.length === 0) addQuoteLine();
   renderQuoteLines();
+  wireQuotePickers();
+  wireQuoteDatePicker();
 }
 
 function closeQuoteModal(){
   const el = document.getElementById('quoteModalOverlay');
   if(el) el.remove();
 }
+
+const QP_CHECK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+function qValidityOptions(saved){
+  const opts = Array.from({length:15}, (_,i)=>i+1);
+  const s = parseInt(saved,10);
+  if(s && !opts.includes(s)) opts.push(s);
+  return opts;
+}
+function qPickLabel(kind, opt){
+  if(kind === 'validity') return String(opt);
+  if(kind === 'status') return getQuoteStatusText(opt);
+  return getSalespersonLabel(opt) + (getSalespersonPhone(opt) ? ' - ' + getSalespersonPhone(opt) : '');
+}
+function qSetPickValue(kind, value, labelText){
+  const id = kind === 'validity' ? 'qValidity' : kind === 'status' ? 'qStatus' : 'qSalesperson';
+  const trig = document.getElementById(id);
+  if(!trig) return;
+  trig.dataset.value = value;
+  const sp = trig.querySelector('.q-pick-value');
+  if(sp) sp.textContent = labelText;
+  const pop = document.getElementById(id + 'Pop');
+  if(pop){
+    renderQPop({ trig, pop, kind, value:String(value), options: kind==='validity' ? qValidityOptions(value) : kind==='status' ? ['review','approved','sent'] : Object.keys(SALESPERSON_NAMES) });
+  }
+}
+function getQPickValue(id){
+  const t = document.getElementById(id);
+  return t ? t.dataset.value : null;
+}
+function renderQPop(p){
+  p.pop.innerHTML = '';
+  p.options.forEach(opt=>{
+    const row = document.createElement('div');
+    row.className = 'q-pick-opt';
+    if(String(opt) === String(p.value)) row.classList.add('is-selected');
+    row.setAttribute('role','option');
+    row.innerHTML = '<span>' + qPickLabel(p.kind, opt) + '</span><span class="q-pick-check">' + QP_CHECK_SVG + '</span>';
+    row.addEventListener('click', ()=>{
+      qSetPickValue(p.kind, opt, qPickLabel(p.kind, opt));
+      closeQPop(p);
+    });
+    p.pop.appendChild(row);
+  });
+}
+function openQPop(p){
+  p.pop.classList.add('is-open');
+  p.trig.classList.add('is-open');
+  p.trig.setAttribute('aria-expanded','true');
+}
+function closeQPop(p){
+  p.pop.classList.remove('is-open');
+  p.trig.classList.remove('is-open');
+  p.trig.setAttribute('aria-expanded','false');
+}
+
+/* ─── Custom date picker (calendar) for the quotation modal ─── */
+const Q_MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const Q_MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const Q_WEEK_EN = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const Q_WEEK_AR = ['أح','إث','ثل','أر','خم','جم','سب'];
+function qPad2(n){ return String(n).padStart(2, '0'); }
+function qFmtISODate(iso){
+  if(!iso) return '';
+  const p = String(iso).split('-');
+  if(p.length !== 3) return iso;
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+function qDateISOToDate(iso){
+  if(!iso) return null;
+  const p = String(iso).split('-');
+  if(p.length !== 3) return null;
+  return new Date(+p[0], +p[1] - 1, +p[2]);
+}
+function qDateISOOf(d){
+  return d.getFullYear() + '-' + qPad2(d.getMonth() + 1) + '-' + qPad2(d.getDate());
+}
+function qSetDateISO(iso){
+  const trig = document.getElementById('qDateTrig');
+  if(!trig) return;
+  const isAr = lang === 'ar';
+  trig.dataset.value = iso;
+  const v = trig.querySelector('.q-pick-value');
+  if(v){
+    v.textContent = iso ? qFmtISODate(iso) : (isAr ? 'اختر التاريخ...' : 'Select date...');
+  }
+  trig.classList.toggle('has-value', !!iso);
+}
+function wireQuoteDatePicker(){
+  const trig = document.getElementById('qDateTrig');
+  const cal = document.getElementById('qDateCal');
+  const clearBtn = document.getElementById('qDateClear');
+  if(!trig || !cal) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const saved = qDateISOToDate(trig.dataset.value);
+  let sel = saved;
+  let selISO = trig.dataset.value || '';
+  let yy = (saved || today).getFullYear();
+  let mm = (saved || today).getMonth();
+
+  function sameDay(a,b){ return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function close(){ closeQPop({trig, pop:cal}); }
+  function paint(){ qSetDateISO(selISO); }
+
+  function render(){
+    const titleEl = document.getElementById('qCalTitle');
+    const grid = document.getElementById('qCalGrid');
+    const weekEl = document.getElementById('qCalWeekdays');
+    if(!titleEl || !grid) return;
+    const isAr = lang === 'ar';
+    titleEl.textContent = (isAr ? Q_MONTHS_AR[mm] : Q_MONTHS_EN[mm]) + ' ' + yy;
+    if(weekEl) weekEl.innerHTML = (isAr ? Q_WEEK_AR : Q_WEEK_EN).map(w => `<span>${w}</span>`).join('');
+    grid.innerHTML = '';
+    const firstOf = new Date(yy, mm, 1);
+    const startOffset = firstOf.getDay();
+    const dim = new Date(yy, mm + 1, 0).getDate();
+    const dip = new Date(yy, mm, 0).getDate();
+    const cells = [];
+    for(let i = startOffset - 1; i >= 0; i--) cells.push({day:dip - i, outside:true, date:new Date(yy, mm - 1, dip - i)});
+    for(let d = 1; d <= dim; d++) cells.push({day:d, outside:false, date:new Date(yy, mm, d)});
+    while(cells.length % 7 !== 0 || cells.length < 42){
+      const d = cells.length - (startOffset + dim) + 1;
+      cells.push({day:d, outside:true, date:new Date(yy, mm + 1, d)});
+      if(cells.length >= 42) break;
+    }
+    cells.forEach(c => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cal-day';
+      b.textContent = c.day;
+      if(c.outside) b.classList.add('is-outside');
+      if(sameDay(c.date, today)) b.classList.add('is-today');
+      if(sameDay(c.date, sel)) b.classList.add('is-selected');
+      b.addEventListener('click', ()=>{
+        sel = c.date;
+        selISO = qDateISOOf(c.date);
+        if(c.outside){ yy = c.date.getFullYear(); mm = c.date.getMonth(); }
+        paint();
+        render();
+        close();
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  trig.addEventListener('click', ()=>{
+    if(cal.classList.contains('is-open')) close();
+    else { render(); cal.classList.add('is-open'); trig.classList.add('is-open'); trig.setAttribute('aria-expanded','true'); }
+  });
+  trig.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); trig.click(); }
+    else if(e.key === 'Escape') close();
+  });
+
+  const prevBtn = document.getElementById('qCalPrev');
+  const nextBtn = document.getElementById('qCalNext');
+  const todayBtn = document.getElementById('qCalToday');
+  if(prevBtn) prevBtn.addEventListener('click', ()=>{ mm--; if(mm < 0){ mm = 11; yy--; } render(); });
+  if(nextBtn) nextBtn.addEventListener('click', ()=>{ mm++; if(mm > 11){ mm = 0; yy++; } render(); });
+  if(todayBtn) todayBtn.addEventListener('click', ()=>{ yy = today.getFullYear(); mm = today.getMonth(); sel = new Date(today); selISO = qDateISOOf(today); paint(); render(); close(); });
+  if(clearBtn) clearBtn.addEventListener('click', (e)=>{ e.stopPropagation(); sel = null; selISO = ''; paint(); render(); });
+
+  qSetDateISO(trig.dataset.value);
+}
+function wireQuotePickers(){
+  const kinds = [
+    { trig: document.getElementById('qValidity'), pop: document.getElementById('qValidityPop'), kind:'validity' },
+    { trig: document.getElementById('qSalesperson'), pop: document.getElementById('qSalespersonPop'), kind:'salesperson' },
+    { trig: document.getElementById('qStatus'), pop: document.getElementById('qStatusPop'), kind:'status' }
+  ];
+  kinds.forEach(k=>{
+    if(!k.trig || !k.pop) return;
+    k.value = String(k.trig.dataset.value);
+    k.options = k.kind === 'validity' ? qValidityOptions(k.value) : k.kind === 'status' ? ['review','approved','sent'] : Object.keys(SALESPERSON_NAMES);
+    renderQPop(k);
+    k.trig.addEventListener('click', ()=>{ k.pop.classList.contains('is-open') ? closeQPop(k) : openQPop(k); });
+    k.trig.addEventListener('keydown', (e)=>{
+      if(!['ArrowDown','ArrowUp','Enter',' ','Escape'].includes(e.key)) return;
+      e.preventDefault();
+      if(e.key === 'Escape'){ closeQPop(k); return; }
+      const wasClosed = !k.pop.classList.contains('is-open');
+      const opts = [...k.pop.querySelectorAll('.q-pick-opt')];
+      if(wasClosed){
+        openQPop(k);
+        if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      }
+      let idx = opts.findIndex(o=>o.classList.contains('is-active'));
+      if(e.key === 'ArrowDown') idx = Math.min(idx < 0 ? 0 : idx+1, opts.length-1);
+      else if(e.key === 'ArrowUp') idx = Math.max(idx-1, 0);
+      else if(e.key === 'Enter' || e.key === ' '){
+        if(idx >= 0) qSetPickValue(k.kind, k.options[idx], qPickLabel(k.kind, k.options[idx]));
+        closeQPop(k);
+        return;
+      }
+      opts.forEach((o,i)=>{ o.classList.toggle('is-active', i === idx); });
+      const active = opts[idx];
+      if(active) active.scrollIntoView({block:'nearest'});
+    });
+  });
+}
+function qPickersOutside(e){
+  ['qValidity','qSalesperson','qStatus','qDateTrig'].forEach(id=>{
+    const trig = document.getElementById(id);
+    const pop = id === 'qDateTrig' ? document.getElementById('qDateCal') : document.getElementById(id + 'Pop');
+    if(!trig || !pop) return;
+    if(!trig.contains(e.target) && !pop.contains(e.target)) closeQPop({trig, pop});
+  });
+}
+document.addEventListener('click', qPickersOutside);
 
 function addQuoteLine(){
   quoteLines.push({name:'', desc:'', qty:1, unit:'طن', price:0});
@@ -1921,15 +2159,15 @@ function scrollQuoteModalTo(el){
 function saveQuotation(){
   const suffix = document.getElementById('qIdSuffix').value.trim();
   const customer = document.getElementById('qCustomer').value.trim();
-  const date = document.getElementById('qDate').value;
+  const date = (document.getElementById('qDateTrig') ? document.getElementById('qDateTrig').dataset.value : '') || new Date().toISOString().split('T')[0];
   const terms = document.getElementById('qTerms').value.trim();
   const payments = document.getElementById('qPayments') ? document.getElementById('qPayments').value.trim() : '';
   const notes = document.getElementById('qNotes') ? document.getElementById('qNotes').value.trim() : '';
   const phone = document.getElementById('qPhone') ? document.getElementById('qPhone').value.trim() : '';
   const email = document.getElementById('qEmail') ? document.getElementById('qEmail').value.trim() : '';
   const address = document.getElementById('qAddress') ? document.getElementById('qAddress').value.trim() : '';
-  const validity = parseInt(document.getElementById('qValidity') ? document.getElementById('qValidity').value : 15) || 15;
-  const salesperson = document.getElementById('qSalesperson') ? document.getElementById('qSalesperson').value : 'محمد علي';
+  const validity = parseInt(getQPickValue('qValidity'), 10) || 15;
+  const salesperson = getQPickValue('qSalesperson') || 'محمد علي';
   
   const require = () => {};
   const clearInvalid = () => {
@@ -1997,7 +2235,7 @@ function saveQuotation(){
   const discount = Math.min(parseFloat(document.getElementById('qDiscount') ? document.getElementById('qDiscount').value : 0) || 0, subtotal);
   const vat = (subtotal - discount) * 0.15;
   
-  const status = document.getElementById('qStatus') ? document.getElementById('qStatus').value : 'review';
+  const status = getQPickValue('qStatus') || 'review';
 
   const now = new Date().toISOString();
   const prev = editingQuoteIdx !== null && quotations[editingQuoteIdx] ? quotations[editingQuoteIdx] : null;
@@ -2218,12 +2456,12 @@ function duplicateQuotation(idx){
     setTimeout(function(){
       document.getElementById('qIdSuffix').value = '';
       document.getElementById('qCustomer').value = src.customer || '';
-      document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
+      if(document.getElementById('qDateTrig')) qSetDateISO(new Date().toISOString().split('T')[0]);
       if(document.getElementById('qPhone')) document.getElementById('qPhone').value = src.phone || '';
       if(document.getElementById('qEmail')) document.getElementById('qEmail').value = src.email || '';
       if(document.getElementById('qAddress')) document.getElementById('qAddress').value = src.address || '';
-      if(document.getElementById('qValidity') && src.validity) document.getElementById('qValidity').value = src.validity;
-      if(document.getElementById('qSalesperson') && src.salesperson) document.getElementById('qSalesperson').value = src.salesperson;
+      if(document.getElementById('qValidity') && src.validity) qSetPickValue('validity', src.validity, qPickLabel('validity', src.validity));
+      if(document.getElementById('qSalesperson') && src.salesperson) qSetPickValue('salesperson', src.salesperson, qPickLabel('salesperson', src.salesperson));
       if(document.getElementById('qDiscount') && src.discount) document.getElementById('qDiscount').value = src.discount;
       if(document.getElementById('qTerms')) document.getElementById('qTerms').value = src.terms || '';
       if(document.getElementById('qPayments')) document.getElementById('qPayments').value = src.payments || '';

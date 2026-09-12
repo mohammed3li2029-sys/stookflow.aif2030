@@ -1124,6 +1124,14 @@ html[dir="rtl"] .toast{transform:translateX(50%);}
   .po-total-final{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 
+/* ─── Document-view overlays sit above toolbar flyouts ─── */
+/* The toolbar sort control (.liquid-sort) uses z-index:60 and the mobile
+   sidebar uses z-index:100, so these full-document overlays must be above
+   them or their controls bleed over the printed/viewed document. */
+#quoteViewOverlay,
+#poViewModalOverlay,
+#issueViewOverlay{ z-index:150 !important; }
+
 /* ─── Quote View: Force light document regardless of theme ─── */
 #quoteViewOverlay{
   background:rgba(0,0,0,.85) !important;
@@ -2449,5 +2457,158 @@ tr.expand-row:last-child td{border-bottom:0;}
 @media(max-width:640px){
   .liquid-dd{width:100%;}
 }
+
+/* =========================================================
+   Custom selectors for the quotation modal (validity + salesperson)
+   ========================================================= */
+#quoteModalOverlay .q-pick-anchor{position:relative;}
+#quoteModalOverlay .q-pick-trigger{
+  width:100%;
+  height:38px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;
+  padding:0 11px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:9px;
+  font-family:inherit;
+  font-size:13.5px;
+  color:var(--text);
+  cursor:pointer;
+  text-align:start;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+#quoteModalOverlay .q-pick-trigger:hover{border-color:var(--text-3);}
+#quoteModalOverlay .q-pick-trigger:focus-visible{
+  outline:none;
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(10,102,255,.14);
+}
+#quoteModalOverlay .q-pick-trigger.is-open{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(10,102,255,.14);
+}
+#quoteModalOverlay .q-pick-value{
+  flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#quoteModalOverlay .q-pick-chevron{
+  flex-shrink:0;display:flex;color:var(--text-2);
+  transition:transform .16s ease;
+}
+#quoteModalOverlay .q-pick-trigger.is-open .q-pick-chevron{transform:rotate(180deg);}
+#quoteModalOverlay .q-pick-pop{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;right:0;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:var(--shadow);
+  padding:5px;
+  z-index:50;
+  opacity:0;
+  transform:translateY(-4px) scale(.98);
+  transform-origin:top center;
+  pointer-events:none;
+  transition:opacity .13s ease, transform .13s ease;
+  max-height:240px;
+  overflow-y:auto;
+}
+#quoteModalOverlay .q-pick-pop.is-open{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+}
+#quoteModalOverlay .q-pick-opt{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;
+  padding:7px 9px;
+  border-radius:7px;
+  font-size:13.5px;
+  color:var(--text);
+  cursor:pointer;
+  user-select:none;
+}
+#quoteModalOverlay .q-pick-opt:hover,
+#quoteModalOverlay .q-pick-opt.is-active{background:var(--surface-2);}
+#quoteModalOverlay .q-pick-opt.is-selected{
+  background:var(--blue-soft);
+  color:var(--blue);
+  font-weight:600;
+}
+html[dir="rtl"] #quoteModalOverlay .q-pick-opt.is-selected,
+html[dir="rtl"] body.sidebar-collapsed #quoteModalOverlay .q-pick-opt.is-selected{color:var(--blue);}
+#quoteModalOverlay .q-pick-check{
+  flex-shrink:0;display:flex;opacity:0;color:var(--blue);
+  transition:opacity .1s ease;
+}
+#quoteModalOverlay .q-pick-opt.is-selected .q-pick-check{opacity:1;}
+#quoteModalOverlay .q-pick-pop::-webkit-scrollbar{width:6px;}
+#quoteModalOverlay .q-pick-pop::-webkit-scrollbar-thumb{background:var(--surface-2);border-radius:3px;}
+
+/* ─── Custom date picker (calendar) inside the quotation modal ─── */
+#quoteModalOverlay .q-pick-trigger.q-pick-date{
+  gap:8px;
+  padding-inline-start:11px;
+  padding-inline-end:8px;
+}
+#quoteModalOverlay .q-pick-date-icon{flex-shrink:0;display:flex;color:var(--text-2);}
+#quoteModalOverlay .q-pick-value.is-placeholder{color:var(--text-3);}
+#quoteModalOverlay .q-pick-end{flex-shrink:0;display:flex;align-items:center;gap:2px;}
+#quoteModalOverlay .q-pick-clear{
+  flex-shrink:0;width:20px;height:20px;border-radius:5px;
+  display:none;align-items:center;justify-content:center;
+  border:none;background:none;color:var(--text-2);cursor:pointer;padding:0;
+}
+#quoteModalOverlay .q-pick-clear:hover{background:var(--surface-2);color:var(--text);}
+#quoteModalOverlay .q-pick-trigger.has-value .q-pick-clear{display:flex;}
+#quoteModalOverlay .q-pick-cal{
+  position:absolute;
+  top:calc(100% + 6px);
+  inset-inline-start:0;
+  width:272px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  padding:10px;
+  z-index:50;
+  opacity:0;
+  transform:translateY(-4px) scale(.98);
+  transform-origin:top center;
+  pointer-events:none;
+  transition:opacity .13s ease, transform .13s ease;
+}
+#quoteModalOverlay .q-pick-cal.is-open{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+}
+#quoteModalOverlay .q-cal-head{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 10px;}
+#quoteModalOverlay .q-cal-nav{
+  width:26px;height:26px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;
+}
+#quoteModalOverlay .q-cal-nav:hover{background:var(--surface-2);color:var(--text);}
+#quoteModalOverlay .q-cal-title{font-size:13px;font-weight:700;color:var(--text);}
+#quoteModalOverlay .q-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px;}
+#quoteModalOverlay .q-cal-weekdays span{text-align:center;font-size:10.5px;font-weight:600;color:var(--text-2);padding:4px 0;}
+#quoteModalOverlay .q-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+#quoteModalOverlay .cal-day{
+  aspect-ratio:1;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12.5px;color:var(--text);
+  border:none;background:none;border-radius:8px;cursor:pointer;font-family:inherit;
+}
+#quoteModalOverlay .cal-day:hover{background:var(--surface-2);}
+#quoteModalOverlay .cal-day.is-outside{color:var(--text-3);}
+#quoteModalOverlay .cal-day.is-today{font-weight:700;box-shadow:inset 0 0 0 1px var(--blue-dim);}
+#quoteModalOverlay .cal-day.is-selected{background:var(--blue);color:#fff;font-weight:700;}
+#quoteModalOverlay .cal-day.is-selected:hover{background:var(--blue);}
+#quoteModalOverlay .q-cal-foot{display:flex;justify-content:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+#quoteModalOverlay .q-cal-today{border:none;background:none;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:6px;}
+#quoteModalOverlay .q-cal-today:hover{background:var(--surface-2);}
 
 
