@@ -1681,6 +1681,137 @@ function renderSales(){
 let quoteLines = [];
 let editingQuoteIdx = null;
 
+const Q_DEFAULT_TERMS='الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.';
+
+function qEscapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+const Q_DEFAULT_TERMS_HTML = Q_DEFAULT_TERMS.split('\n').map(t => '<div>'+qEscapeHtml(t)+'</div>').join('');
+
+/* fill a rich field: HTML stays HTML, legacy plain text turns into text */
+function qSetRich(el, str){
+  if(!el) return;
+  if(str && /<[a-z\/][^>]*>/i.test(String(str))){ el.innerHTML = str; }
+  else { el.textContent=''; el.innerText = str || ''; }
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
+/* static formatting toolbar HTML for a quote rich-text field */
+function quoteRichToolbarHTML(fieldId, ph, lang){
+  const _t=(en,ar)=>lang==='en'?en:ar;
+  const chev='<svg class="q-tb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  const linkSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11 5"/><path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07L13 19"/></svg>';
+  const ulSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/><path d="M9 6h11M9 12h11M9 18h11"/></svg>';
+  const olSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1v3M4 6l-.5 1M4 15.5h1a1 1 0 010 2h-1M4 14.5h1a1 1 0 010 2"/></svg>';
+  const alSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>';
+  return `
+    <div class="q-rich-wrap">
+      <div class="q-rich-tb" role="toolbar" aria-label="${_t('Text formatting','تنسيق النص')}">
+        <button type="button" class="q-tb-style" data-role="style" title="${_t('Text style','نمط النص')}"><span class="main">T</span>${chev}</button>
+        <button type="button" class="q-tb-btn b" data-cmd="bold" title="Bold">B</button>
+        <button type="button" class="q-tb-btn i" data-cmd="italic" title="Italic">I</button>
+        <button type="button" class="q-tb-btn u" data-cmd="underline" title="Underline">U</button>
+        <button type="button" class="q-tb-btn s" data-cmd="strikeThrough" title="Strikethrough">S</button>
+        <span class="q-tb-div"></span>
+        <button type="button" class="q-tb-btn" data-cmd="insertUnorderedList" title="${_t('Bullet list','قائمة نقطية')}">${ulSvg}</button>
+        <button type="button" class="q-tb-btn" data-cmd="insertOrderedList" title="${_t('Numbered list','قائمة مرقمة')}">${olSvg}</button>
+        <span class="q-tb-div"></span>
+        <button type="button" class="q-tb-style" data-role="align" title="${_t('Alignment','المحاذاة')}"><span class="main">${alSvg}</span>${chev}</button>
+        <button type="button" class="q-tb-btn" data-cmd="link" title="${_t('Link','رابط')}">${linkSvg}</button>
+        <div class="q-tb-menu" id="${fieldId}Style">
+          <button type="button" data-block="P">${_t('Paragraph','فقرة')}</button>
+          <button type="button" data-block="H1">${_t('Heading 1','عنوان 1')}</button>
+          <button type="button" data-block="H2">${_t('Heading 2','عنوان 2')}</button>
+          <button type="button" data-block="H3">${_t('Heading 3','عنوان 3')}</button>
+        </div>
+        <div class="q-tb-menu" id="${fieldId}Align">
+          <button type="button" data-align="justifyLeft">${_t('Left','يسار')}</button>
+          <button type="button" data-align="justifyCenter">${_t('Center','وسط')}</button>
+          <button type="button" data-align="justifyRight">${_t('Right','يمين')}</button>
+        </div>
+      </div>
+      <div class="q-rich" id="${fieldId}" contenteditable="true" spellcheck="false" data-ph="${ph}"></div>
+    </div>`;
+}
+
+/* wire the static toolbar (execCommand-based; plain text is persisted on save) */
+function wireQuoteRichEditor(fieldId){
+  const field=document.getElementById(fieldId);
+  if(!field) return;
+  const wrap=field.parentElement;
+  const tb=wrap.querySelector('.q-rich-tb');
+  const styleMenu=document.getElementById(fieldId+'Style');
+  const alignMenu=document.getElementById(fieldId+'Align');
+  const styleBtn=tb.querySelector('[data-role="style"]');
+  const alignBtn=tb.querySelector('[data-role="align"]');
+  if(!tb||!styleMenu||!alignMenu) return;
+
+  const refreshBlank=()=>{ if(!field.textContent.trim()) field.textContent=''; };
+  field.addEventListener('input',refreshBlank);
+  field.addEventListener('blur',()=>{ refreshBlank(); });
+
+  const runCmd=(cmd,val)=>{ field.focus(); document.execCommand(cmd,false,val); refreshBlank(); };
+
+  function refreshActive(){
+    tb.querySelectorAll('[data-cmd]').forEach(btn=>{
+      const c=btn.dataset.cmd;
+      if(c==='bold'||c==='italic'||c==='underline'||c==='strikeThrough'){
+        btn.classList.toggle('is-active', !!document.queryCommandState(c));
+      }
+    });
+  }
+  document.addEventListener('selectionchange',()=>{
+    const sel=window.getSelection();
+    if(sel && sel.rangeCount>0 && sel.anchorNode && field.contains(sel.anchorNode)) refreshActive();
+  });
+
+  tb.querySelectorAll('[data-cmd]').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.preventDefault());
+    btn.addEventListener('click',()=>{
+      if(btn.dataset.cmd==='link'){
+        const url=window.prompt(lang==='en'?'Link URL':'رابط الرابط');
+        if(url) runCmd('createLink',url);
+        return;
+      }
+      runCmd(btn.dataset.cmd);
+    });
+  });
+
+  function closeMenus(){ styleMenu.classList.remove('is-open'); alignMenu.classList.remove('is-open'); }
+  function toggleMenu(menu,btn){
+    const isOpen=menu.classList.contains('is-open');
+    closeMenus();
+    if(!isOpen){
+      menu.classList.add('is-open');
+      const tb=btn.closest('.q-rich-wrap').querySelector('.q-rich-tb');
+      const tbr=tb.getBoundingClientRect();
+      const br=btn.getBoundingClientRect();
+      let off=br.left-tbr.left;
+      const maxOff=tb.clientWidth-menu.offsetWidth;
+      if(off+menu.offsetWidth>tb.clientWidth) off=Math.max(0,maxOff);
+      menu.style.left=off+'px';
+      menu.style.right='auto';
+    }
+  }
+  styleBtn.addEventListener('mousedown',e=>e.preventDefault());
+  styleBtn.addEventListener('click',e=>{ e.stopPropagation(); toggleMenu(styleMenu,styleBtn); });
+  alignBtn.addEventListener('mousedown',e=>e.preventDefault());
+  alignBtn.addEventListener('click',e=>{ e.stopPropagation(); toggleMenu(alignMenu,alignBtn); });
+
+  styleMenu.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.preventDefault());
+    btn.addEventListener('click',()=>{ runCmd('formatBlock',btn.dataset.block); closeMenus(); });
+  });
+  alignMenu.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.preventDefault());
+    btn.addEventListener('click',()=>{ runCmd(btn.dataset.align); closeMenus(); });
+  });
+  document.addEventListener('mousedown',e=>{
+    if(!styleMenu.contains(e.target) && e.target!==styleBtn && !styleBtn.contains(e.target)) styleMenu.classList.remove('is-open');
+    if(!alignMenu.contains(e.target) && e.target!==alignBtn && !alignBtn.contains(e.target)) alignMenu.classList.remove('is-open');
+  });
+}
+
 function openQuoteModal(idx=null){
   editingQuoteIdx = idx;
   const isEdit = idx !== null;
@@ -1820,11 +1951,11 @@ function openQuoteModal(idx=null){
       </div>
       <div class="field" style="margin-top:15px;">
         <label>${lang==='en'?'Terms & Conditions':'الشروط والأحكام'}</label>
-        <textarea id="qTerms" rows="4" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg,var(--surface));color:var(--text);font-family:inherit;font-size:13px;resize:vertical;">${isEdit && q.terms ? q.terms : 'الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.'}</textarea>
+        ${quoteRichToolbarHTML('qTerms', lang==='en'?'Type terms & conditions...':'اكتب الشروط والأحكام...', lang)}
       </div>
       <div class="field" style="margin-top:10px;">
         <label>${lang==='en'?'Payments':'الدفعات'}</label>
-        <textarea id="qPayments" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg,var(--surface));color:var(--text);font-family:inherit;font-size:13px;resize:vertical;">${isEdit && q.payments ? q.payments : ''}</textarea>
+        ${quoteRichToolbarHTML('qPayments', lang==='en'?'Type payment terms...':'اكتب بنود الدفعات...', lang)}
       </div>
       <div class="field" style="margin-top:10px;">
         <label>${lang==='en'?'Notes':'ملاحظات'}</label>
@@ -1838,11 +1969,17 @@ function openQuoteModal(idx=null){
   </div>`;
   
   document.body.insertAdjacentHTML('beforeend', modalHTML);
+  const _qTermsEl=document.getElementById('qTerms');
+  if(_qTermsEl) qSetRich(_qTermsEl, isEdit ? (q.terms||'') : Q_DEFAULT_TERMS_HTML);
+  const _qPayEl=document.getElementById('qPayments');
+  if(_qPayEl) qSetRich(_qPayEl, isEdit ? (q.payments||'') : '');
   quoteLines = isEdit ? JSON.parse(JSON.stringify(q.items)) : [];
   if(quoteLines.length === 0) addQuoteLine();
   renderQuoteLines();
   wireQuotePickers();
   wireQuoteDatePicker();
+  wireQuoteRichEditor('qTerms');
+  wireQuoteRichEditor('qPayments');
 }
 
 function closeQuoteModal(){
@@ -2129,6 +2266,38 @@ function getTermsForDisplay(termsText){
   return termsText.split('\n').filter(t => t.trim()).map(t => t.trim());
 }
 
+/* render terms for the quote view: preserves ordered/bulleted lists,
+   loose paragraphs become <li> bullets; legacy plain text splits by newline */
+function quoteTermsListHtml(termsHtml){
+  if(!termsHtml) return '';
+  const ULLI='style="margin:0; padding-inline-start:18px; font-size:11px; color:#444; line-height:1.5;"';
+  if(!/<[a-z\/][^>]*>/i.test(String(termsHtml))){
+    const lis=getTermsForDisplay(termsHtml).map(t => `<li style="margin-bottom:2px;">${t}</li>`).join('');
+    return `<ul ${ULLI}>${lis}</ul>`;
+  }
+  const h=String(termsHtml);
+  const parts=[];
+  const re=/<(ol|ul)(?:\s[^>]*)?>[\s\S]*?<\/\1>/gi;
+  let last=0, m;
+  while((m=re.exec(h))){ if(m.index>last) parts.push({text:h.slice(last,m.index)}); parts.push({html:m[0]}); last=m.index+m[0].length; }
+  if(last<h.length) parts.push({text:h.slice(last)});
+  let out='';
+  for(const p of parts){
+    if(p.html){ out+=p.html.replace(/^<(ol|ul)(?:\s[^>]*)?>/i, '<$1 '+ULLI+'>'); continue; }
+    const blocks=p.text
+      .replace(/<br\s*\/?>/gi,'\u0000')
+      .replace(/<\/(?:p|div|h[1-6])>/gi,'\u0000')
+      .replace(/<(?:p|div|h[1-6])(?:\s[^>]*)?>/gi,'')
+      .split('\u0000')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => `<li style="margin-bottom:2px;">${s}</li>`)
+      .join('');
+    if(blocks) out+=`<ul ${ULLI}>${blocks}</ul>`;
+  }
+  return out;
+}
+
 function savePaymentsText(idx, text){
   if(quotations[idx]){
     quotations[idx].payments = text.trim();
@@ -2160,8 +2329,8 @@ function saveQuotation(){
   const suffix = document.getElementById('qIdSuffix').value.trim();
   const customer = document.getElementById('qCustomer').value.trim();
   const date = (document.getElementById('qDateTrig') ? document.getElementById('qDateTrig').dataset.value : '') || new Date().toISOString().split('T')[0];
-  const terms = document.getElementById('qTerms').value.trim();
-  const payments = document.getElementById('qPayments') ? document.getElementById('qPayments').value.trim() : '';
+  const terms = document.getElementById('qTerms').innerHTML.trim();
+  const payments = document.getElementById('qPayments') ? document.getElementById('qPayments').innerHTML.trim() : '';
   const notes = document.getElementById('qNotes') ? document.getElementById('qNotes').value.trim() : '';
   const phone = document.getElementById('qPhone') ? document.getElementById('qPhone').value.trim() : '';
   const email = document.getElementById('qEmail') ? document.getElementById('qEmail').value.trim() : '';
@@ -2252,7 +2421,7 @@ function saveQuotation(){
     status,
     discount,
     total: (subtotal - discount) + vat,
-    terms: terms || 'الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.',
+    terms: terms || Q_DEFAULT_TERMS_HTML,
     payments,
     notes,
     items: JSON.parse(JSON.stringify(quoteLines)),
@@ -2463,8 +2632,8 @@ function duplicateQuotation(idx){
       if(document.getElementById('qValidity') && src.validity) qSetPickValue('validity', src.validity, qPickLabel('validity', src.validity));
       if(document.getElementById('qSalesperson') && src.salesperson) qSetPickValue('salesperson', src.salesperson, qPickLabel('salesperson', src.salesperson));
       if(document.getElementById('qDiscount') && src.discount) document.getElementById('qDiscount').value = src.discount;
-      if(document.getElementById('qTerms')) document.getElementById('qTerms').value = src.terms || '';
-      if(document.getElementById('qPayments')) document.getElementById('qPayments').value = src.payments || '';
+      if(document.getElementById('qTerms')) qSetRich(document.getElementById('qTerms'), src.terms || '');
+      if(document.getElementById('qPayments')) qSetRich(document.getElementById('qPayments'), src.payments || '');
       if(document.getElementById('qNotes')) document.getElementById('qNotes').value = src.notes || '';
       quoteLines = JSON.parse(JSON.stringify(src.items || []));
       renderQuoteLines();
@@ -2639,7 +2808,7 @@ function openQuoteView(idx){
         <!-- Payments -->
         <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:10px 12px; margin-bottom:15px;">
           <div style="font-weight:900; color:#d32f2f; border-bottom:2px solid #d32f2f; display:inline-block; margin-bottom:6px; padding-bottom:2px; font-size:13px;">${isAr?'الدفعات :':'Payments:'}</div>
-          <div id="quotePaymentsDisplay" contenteditable="true" style="font-size:11px; color:#444; line-height:1.5; white-space:pre-wrap; padding:4px; border:1px dashed #ccc; border-radius:4px; min-height:24px;" onblur="savePaymentsText(${idx}, this.innerText)">${q.payments || (isAr?'(نص الدفعات)':'(Payment terms)')}</div>
+          <div id="quotePaymentsDisplay" contenteditable="true" style="font-size:11px; color:#444; line-height:1.5; white-space:pre-wrap; padding:4px; border:1px dashed #ccc; border-radius:4px; min-height:24px;" onblur="savePaymentsText(${idx}, this.innerHTML)">${q.payments || (isAr?'(نص الدفعات)':'(Payment terms)')}</div>
         </div>
 
         <!-- Terms + Signature (kept together across pages) -->
@@ -2648,9 +2817,7 @@ function openQuoteView(idx){
         <!-- Terms -->
         <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:10px 12px; margin-bottom:15px;">
           <div style="font-weight:900; color:#d32f2f; border-bottom:2px solid #d32f2f; display:inline-block; margin-bottom:6px; padding-bottom:2px; font-size:13px;">${isAr?'الشروط والأحكام :':'Terms & Conditions:'}</div>
-          <ul style="margin:0; padding-inline-start:18px; font-size:11px; color:#444; line-height:1.5;">
-            ${getTermsForDisplay(q.terms).map(t => `<li style="margin-bottom:2px;">${t}</li>`).join('')}
-          </ul>
+          ${quoteTermsListHtml(q.terms)}
         </div>
 
         ${q.notes ? `

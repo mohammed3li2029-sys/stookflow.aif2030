@@ -2730,4 +2730,129 @@ html[dir="rtl"] #globalSearchWrap .sek-field{
   transform:translateX(calc((1 - var(--say)) * 6px));
 }
 
+/* =========================================================
+   Quote modal — static text-formatting toolbar
+   A fixed strip above the Terms / Payments fields. Buttons
+   format the selection via execCommand; text is persisted as
+   plain text (innerText) to match the rest of the pipeline.
+   ========================================================= */
+.q-rich-wrap{ position:relative; }
+.q-rich-wrap .q-rich-tb{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:2px;
+  padding:4px;
+  border:1px solid var(--border);
+  border-bottom:none;
+  border-radius:8px 8px 0 0;
+  background:var(--surface);
+  flex-wrap:wrap;
+}
+.q-rich-wrap .q-tb-btn,
+.q-rich-wrap .q-tb-style{
+  font-family:inherit;
+  border:none;
+  background:none;
+  color:var(--text);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:26px;
+  min-width:26px;
+  padding:0 5px;
+  border-radius:6px;
+  font-size:13px;
+  flex-shrink:0;
+}
+.q-rich-wrap .q-rich-tb svg{ width:14px; height:14px; }
+.q-rich-wrap .q-rich-tb .q-tb-style .q-tb-chev{ width:10px; height:10px; color:var(--text-2); }
+.q-rich-wrap .q-tb-btn:hover,
+.q-rich-wrap .q-tb-style:hover{ background:var(--surface-2); }
+.q-rich-wrap .q-tb-btn.is-active{ background:var(--active-bg, #e9e9ec); color:var(--text); }
+[data-theme="dark"] .q-rich-wrap .q-tb-btn.is-active{ background:rgba(255,255,255,.14); }
+.q-rich-wrap .q-tb-btn.b{ font-weight:800; }
+.q-rich-wrap .q-tb-btn.i{ font-style:italic; font-family:Georgia,serif; }
+.q-rich-wrap .q-tb-btn.u{ text-decoration:underline; }
+.q-rich-wrap .q-tb-btn.s{ text-decoration:line-through; }
+.q-rich-wrap .q-tb-div{
+  width:1px;
+  align-self:stretch;
+  margin:4px 5px;
+  background:var(--border);
+  flex-shrink:0;
+}
+.q-rich-wrap .q-tb-btn:focus-visible,
+.q-rich-wrap .q-tb-style:focus-visible{ outline:none; box-shadow:0 0 0 2px var(--blue-dim); }
+.q-rich-wrap .q-rich{
+  width:100%;
+  min-height:96px;
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:0 0 8px 8px;
+  background:var(--input-bg,var(--surface));
+  color:var(--text);
+  font-family:inherit;
+  font-size:13px;
+  line-height:1.6;
+  white-space:pre-wrap;
+  overflow-wrap:break-word;
+  outline:none;
+}
+#qPayments.q-rich{ min-height:74px; }
+.q-rich-wrap .q-rich:empty::before{
+  content:attr(data-ph);
+  color:var(--text-3);
+  pointer-events:none;
+}
+.q-rich-wrap .q-rich:focus{ border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-dim); }
+.q-rich-wrap .q-rich ::selection,
+.q-rich-wrap .q-rich::selection{ background:var(--selection-bg, #cfe3fb); }
+[data-theme="dark"] .q-rich-wrap .q-rich ::selection{ background:rgba(78,122,255,.35); }
+
+/* dropdown menus: absolute inside the toolbar, anchored under their button via JS left */
+.q-rich-wrap .q-tb-menu{
+  position:absolute;
+  top:calc(100% - 6px);
+  left:0;
+  z-index:300;
+  display:none;
+  flex-direction:column;
+  min-width:150px;
+  padding:4px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:9px;
+  box-shadow:var(--shadow);
+}
+.q-rich-wrap .q-tb-menu.is-open{ display:flex; }
+.q-rich-wrap .q-tb-menu button{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  padding:6px 9px;
+  border-radius:6px;
+  font-size:12.5px;
+  font-family:inherit;
+  border:none;background:none;color:var(--text);
+  cursor:pointer;
+  text-align:left;
+}
+[dir="rtl"] .q-rich-wrap .q-tb-menu button{ text-align:right; }
+.q-rich-wrap .q-tb-menu button:hover{ background:var(--surface-2); }
+
+/* Quote view (عرض السعر) — keep lists compact like the plain term lines */
+#quoteViewOverlay ol,
+#quoteViewOverlay ul{
+  margin:4px 0;
+  padding-inline-start:18px;
+  font-size:11px;
+  color:#444;
+  line-height:1.5;
+}
+#quoteViewOverlay ol li,
+#quoteViewOverlay ul li{ margin-bottom:2px; }
+
 
