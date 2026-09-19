@@ -1984,7 +1984,13 @@ function openQuoteModal(idx=null){
 
 function closeQuoteModal(){
   const el = document.getElementById('quoteModalOverlay');
-  if(el) el.remove();
+  if(!el || el.classList.contains('is-closing')) return;
+  el.classList.remove('show');
+  el.classList.add('is-closing');
+  /* same close animation as the code: overlay 130ms, content 90ms */
+  const removeNow = () => el.remove();
+  el.addEventListener('animationend', removeNow, {once:true});
+  setTimeout(removeNow, 180);
 }
 
 const QP_CHECK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';

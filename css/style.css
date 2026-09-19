@@ -2855,4 +2855,30 @@ html[dir="rtl"] #globalSearchWrap .sek-field{
 #quoteViewOverlay ol li,
 #quoteViewOverlay ul li{ margin-bottom:2px; }
 
+/* ═══════ Quote modal morph animation (same speed as the supplied code) ═══════
+   open  : 340ms cubic-bezier(0.16,1,0.3,1)   content 220ms ease @130ms
+   close : 130ms cubic-bezier(0.4,0,1,1)      content 90ms ease            */
+@keyframes qMorphOverlayIn{from{opacity:0;}to{opacity:1;}}
+@keyframes qMorphOverlayOut{from{opacity:1;}to{opacity:0;}}
+@keyframes qMorphModalIn{
+  from{opacity:0;transform:translateY(18px) scale(.92);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes qMorphModalOut{
+  from{opacity:1;transform:translateY(0) scale(1);}
+  to{opacity:0;transform:translateY(10px) scale(.96);}
+}
+#quoteModalOverlay.show{
+  animation:qMorphOverlayIn .34s cubic-bezier(0.16,1,0.3,1) both;
+}
+#quoteModalOverlay.show .modal{
+  animation:qMorphModalIn .34s cubic-bezier(0.16,1,0.3,1) both;
+}
+#quoteModalOverlay.is-closing{
+  animation:qMorphOverlayOut .13s cubic-bezier(0.4,0,1,1) both;
+}
+#quoteModalOverlay.is-closing .modal{
+  animation:qMorphModalOut .13s cubic-bezier(0.4,0,1,1) both;
+}
+
 
