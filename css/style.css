@@ -37,7 +37,11 @@ button{font-family:inherit;}
 /* Collapsible sidebar */
 .sidebar{
   width:230px; flex-shrink:0; background:var(--surface);
-  border-inline-end:1px solid var(--border);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:0 4px 24px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+  margin:14px;
+  margin-inline-end:6px; /* hug the content (was 14+26=40px gap) */
   display:flex; flex-direction:column; padding:18px 14px;
   transition:width .3s var(--ease), padding .3s var(--ease), background .35s var(--ease), border-color .35s var(--ease), inset-inline-start .3s var(--ease);
   overflow:hidden; position:relative;
