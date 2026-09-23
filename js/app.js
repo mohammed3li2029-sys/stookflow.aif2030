@@ -8466,3 +8466,12 @@ applyStaticI18n();
   const root=document.getElementById('globalSearchWrap');
   if(root) createSeek(root,{give:50,spring:50,corner:CORNER});
 })();
+
+/* ─── Topbar date next to the calendar icon (same "Apr 23, 2026" format in both languages) ─── */
+(function populateTopbarDate(){
+  const target = document.getElementById('topbarDate');
+  if(!target) return;
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  target.textContent = MONTHS[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+})();
