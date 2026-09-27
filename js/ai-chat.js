@@ -9,7 +9,6 @@
   if(!CFG || !TOOLS) { console.error('[AI] Config or tools not loaded'); return; }
 
   let chatHistory = [];
-  let isOpen = false;
   let isTyping = false;
 
   /* ── Tool definitions for Groq function calling ── */
@@ -253,12 +252,13 @@ When presenting data, format it nicely with bullet points or short tables. Alway
 
   /* ── Toggle Chat ───────────────────────────────── */
   function toggleChat() {
-    isOpen = !isOpen;
     const panel = el('aiChatPanel');
     const fab = el('aiChatFab');
-    if(panel) panel.classList.toggle('open', isOpen);
-    if(fab) fab.classList.toggle('active', isOpen);
-    if(isOpen) {
+    const willOpen = !(panel && panel.classList.contains('open'));
+    if(panel) panel.classList.toggle('open', willOpen);
+    if(fab) fab.classList.toggle('active', willOpen);
+    document.body.classList.toggle('ai-page-open', willOpen);
+    if(willOpen) {
       renderQuickActions();
       const input = el('aiChatInput');
       if(input && chatHistory.length === 0) {
@@ -295,6 +295,15 @@ When presenting data, format it nicely with bullet points or short tables. Alway
         if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
       });
     }
+    // The panel is a full page: Escape closes it, and so does a click on the
+    // page backdrop (anything outside the chat card itself).
+    const panel = el('aiChatPanel');
+    if(panel) {
+      panel.addEventListener('click', e => { if(e.target === panel) toggleChat(); });
+    }
+    document.addEventListener('keydown', e => {
+      if(e.key === 'Escape' && panel && panel.classList.contains('open')) toggleChat();
+    });
   }
 
   /* Expose for external init */
