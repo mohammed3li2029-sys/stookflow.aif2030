@@ -317,6 +317,92 @@ When presenting data, format it nicely with bullet points or short tables. Alway
     return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  /* ── Bottom sheet: snap points, drag, inertia ──── */
+  /* first entry is the default height (largest, so the chat is usable) */
+  const SHEET_SNAPS = [0.85, 0.4];
+  const DISMISS_THRESHOLD = 120;   /* px dragged below the smallest snap -> close */
+  const FLING_VELOCITY = 0.45;     /* px/ms that counts as a fling          */
+  const SHEET_MIN = 0.22;          /* hard limits as a fraction of viewport */
+  const SHEET_MAX = 0.92;
+
+  let snapIndex = 0;
+  let sheetH = 0, dragStartH = 0, dragStartY = 0, lastY = 0, lastT = 0, velocity = 0;
+  let isDragging = false;
+
+  const vh = () => window.innerHeight;
+  const snapPx = i => Math.round(vh() * SHEET_SNAPS[i]);
+  const clampH = px => Math.max(Math.round(vh() * SHEET_MIN), Math.min(Math.round(vh() * SHEET_MAX), px));
+
+  function setSheetHeight(px, animate){
+    const card = el('aiChatCard');
+    if(!card) return;
+    if(!animate) card.classList.add('no-anim');
+    card.style.setProperty('--ai-sheet-h', clampH(px) + 'px');
+    if(!animate) { void card.offsetHeight; card.classList.remove('no-anim'); }
+  }
+
+  function nearestSnap(px){
+    let best = 0, dist = Infinity;
+    for(let i = 0; i < SHEET_SNAPS.length; i++) {
+      const d = Math.abs(snapPx(i) - px);
+      if(d < dist) { dist = d; best = i; }
+    }
+    return best;
+  }
+
+  function snapTo(i){
+    snapIndex = Math.max(0, Math.min(SHEET_SNAPS.length - 1, i));
+    setSheetHeight(snapPx(snapIndex), true);
+  }
+
+  function onDragStart(e){
+    const panel = el('aiChatPanel');
+    if(!panel || !panel.classList.contains('open')) return;
+    /* ignore presses on the header's own buttons (close / new chat) */
+    if(e.target.closest && e.target.closest('button') && !e.target.closest('#aiSheetHandle')) return;
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+
+    const card = el('aiChatCard');
+    if(!card) return;
+    isDragging = true;
+    sheetH = card.getBoundingClientRect().height;
+    dragStartH = sheetH;
+    dragStartY = e.clientY;
+    lastY = e.clientY; lastT = e.timeStamp; velocity = 0;
+    card.classList.add('no-anim');
+    if(card.setPointerCapture && e.pointerId != null){
+      try { card.setPointerCapture(e.pointerId); } catch(err){}
+    }
+    e.preventDefault();
+  }
+
+  function onDragMove(e){
+    if(!isDragging) return;
+    sheetH = dragStartH - (e.clientY - dragStartY);   /* drag up -> taller */
+    setSheetHeight(sheetH, false);
+    const t = e.timeStamp;
+    if(t > lastT) velocity = (e.clientY - lastY) / (t - lastT);  /* down = + */
+    lastY = e.clientY; lastT = t;
+    e.preventDefault();
+  }
+
+  function onDragEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    const card = el('aiChatCard');
+    if(card) card.classList.remove('no-anim');
+
+    /* pulled well past the smallest snap -> dismiss */
+    if(sheetH < snapPx(SHEET_SNAPS.length - 1) - DISMISS_THRESHOLD) {
+      toggleChat();
+      return;
+    }
+    /* a fling decides direction; otherwise settle on the nearest snap */
+    if(velocity >= FLING_VELOCITY)      snapTo(snapIndex + 1);  /* down -> collapse */
+    else if(velocity <= -FLING_VELOCITY) snapTo(snapIndex - 1); /* up   -> expand   */
+    else                                snapTo(nearestSnap(sheetH));
+  }
+
   /* ── Toggle Chat ───────────────────────────────── */
   function toggleChat() {
     const panel = el('aiChatPanel');
@@ -326,10 +412,16 @@ When presenting data, format it nicely with bullet points or short tables. Alway
     if(fab) fab.classList.toggle('active', willOpen);
     document.body.classList.toggle('ai-page-open', willOpen);
     if(willOpen) {
+      snapIndex = 0;
+      setSheetHeight(snapPx(0), false);
       renderWelcome();
       renderQuickActions();
       const input = el('aiChatInput');
       if(input) setTimeout(() => input.focus(), 200);
+    } else {
+      isDragging = false;
+      const card = el('aiChatCard');
+      if(card) card.classList.remove('no-anim');
     }
   }
 
@@ -366,6 +458,25 @@ When presenting data, format it nicely with bullet points or short tables. Alway
     }
     renderWelcome();
     renderQuickActions();
+    /* Drag: the handle and the header chrome move the sheet; the scrollable
+       message list is deliberately excluded so scrolling never fights the drag. */
+    const handle = el('aiSheetHandle');
+    const header = document.querySelector('#aiChatPanel .ai-chat-header');
+    [handle, header].forEach(node => {
+      if(node) node.addEventListener('pointerdown', onDragStart);
+    });
+    document.addEventListener('pointermove', onDragMove, { passive:false });
+    document.addEventListener('pointerup', onDragEnd);
+    document.addEventListener('pointercancel', onDragEnd);
+    /* keep the sheet on its snap point when the viewport changes */
+    let resizeT = null;
+    window.addEventListener('resize', () => {
+      if(isDragging) return;
+      const panel = el('aiChatPanel');
+      if(!panel || !panel.classList.contains('open')) return;
+      clearTimeout(resizeT);
+      resizeT = setTimeout(() => setSheetHeight(snapPx(snapIndex), false), 120);
+    });
     // The panel is a full page: Escape closes it, and so does a click on the
     // page backdrop (anything outside the chat card itself).
     // Suggestion cards, the featured button and the footer chips are all handled
@@ -382,11 +493,18 @@ When presenting data, format it nicely with bullet points or short tables. Alway
       });
     }
     document.addEventListener('keydown', e => {
-      if(e.key === 'Escape' && panel && panel.classList.contains('open')) toggleChat();
+      if(!panel || !panel.classList.contains('open')) return;
+      if(e.key === 'Escape') toggleChat();
+      /* snap points are reachable without a pointer — but never while typing,
+         where the arrow keys belong to the caret */
+      const typing = e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT');
+      if(typing) return;
+      if(e.key === 'ArrowUp'){ e.preventDefault(); snapTo(snapIndex - 1); }
+      if(e.key === 'ArrowDown'){ e.preventDefault(); snapTo(snapIndex + 1); }
     });
   }
 
   /* Expose for external init */
-  window.AIChat = { init, toggleChat, renderWelcome, renderQuickActions, clearChat };
+  window.AIChat = { init, toggleChat, renderWelcome, renderQuickActions, clearChat, snapTo };
 
 })();

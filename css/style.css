@@ -2378,33 +2378,57 @@ html[dir="rtl"] .scroll-top-btn{right:auto;left:28px;}
   border-color:transparent;color:#fff;
 }
 
-/* ── Chat Panel — full page ────────────────────────── */
+/* ── Chat Panel — bottom sheet backdrop ───────────── */
 body.ai-page-open{overflow:hidden;}
 .ai-chat-panel{
   position:fixed;inset:0;z-index:299;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--surface-2);padding:20px;
-  transform:translateY(10px) scale(.995);opacity:0;pointer-events:none;visibility:hidden;
-  transition:transform .25s var(--ease),opacity .25s var(--ease),visibility .25s var(--ease);
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:0 20px;
+  /* the sides stay clear: just a light frost over the app, no dim */
+  background:transparent;
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;visibility:hidden;
+  transition:opacity .28s var(--ease),visibility .28s var(--ease);
 }
 .ai-chat-panel.open{
-  transform:translateY(0) scale(1);opacity:1;pointer-events:auto;visibility:visible;
+  opacity:1;pointer-events:auto;visibility:visible;
 }
-/* the chat card — one continuous card, centered on the page */
+/* the sheet — same card as before, docked to the bottom edge and rising up */
 .ai-chat-card{
-  width:100%;max-width:1000px;height:min(860px,94vh);
+  width:100%;max-width:1000px;
+  height:var(--ai-sheet-h,85dvh);
   display:flex;flex-direction:column;
   background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:18px;overflow:hidden;
-  box-shadow:0 20px 50px -20px rgba(15,23,42,.15);
+  border:1px solid var(--border);border-bottom:none;
+  border-radius:20px 20px 0 0;overflow:hidden;
+  box-shadow:0 -12px 40px -18px rgba(15,23,42,.28);
+  transform:translateY(100%);
+  transition:transform .34s var(--ease),height .34s var(--ease);
 }
+.ai-chat-panel.open .ai-chat-card{transform:translateY(0);}
+.ai-chat-card.no-anim{transition:none;}
+
+/* ── Drag handle ────────────────────────────────── */
+.ai-sheet-handle{
+  flex-shrink:0;width:100%;
+  display:flex;align-items:center;justify-content:center;
+  padding:9px 0 5px;
+  background:none;border:none;cursor:grab;touch-action:none;
+}
+.ai-sheet-handle span{
+  width:40px;height:4px;border-radius:99px;
+  background:var(--text-3);opacity:.55;
+  transition:opacity .15s var(--ease),width .15s var(--ease);
+}
+.ai-sheet-handle:hover span{opacity:.9;width:48px;}
+.ai-sheet-handle:active{cursor:grabbing;}
 
 /* ── Header ─────────────────────────────────────── */
 .ai-chat-header{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:14px 20px;border-bottom:1px solid var(--border);
   background:var(--surface);flex-shrink:0;
+  touch-action:none;
 }
 .ai-chat-title{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;color:var(--text);}
 .ai-badge{
@@ -2586,7 +2610,7 @@ body.ai-page-open{overflow:hidden;}
 }
 @media(max-width:600px){
   .ai-chat-panel{padding:0;}
-  .ai-chat-card{max-width:100%;height:100dvh;border-radius:0;border:none;}
+  .ai-chat-card{max-width:100%;border-radius:16px 16px 0 0;}
   .ai-chat-header{padding:12px 14px;}
   .ai-chat-footer{padding:10px 14px 14px;}
   .ai-empty-state{padding:40px 16px 20px;}
@@ -2595,7 +2619,7 @@ body.ai-page-open{overflow:hidden;}
 
 /* ── Dark mode tweaks ───────────────────────────── */
 [data-theme="dark"] .ai-chat-card{
-  box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+  box-shadow:0 -12px 40px -18px rgba(0,0,0,.7);
 }
 [data-theme="dark"] .ai-suggest-card:hover{
   box-shadow:0 8px 20px -12px rgba(0,0,0,.7);
