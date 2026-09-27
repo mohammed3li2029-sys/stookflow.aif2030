@@ -7922,6 +7922,8 @@ function applyStaticI18n(){
 function applyLang(){
   document.documentElement.lang = lang;
   document.documentElement.dir = lang==='ar' ? 'rtl' : 'ltr';
+  const topbarLangLabel = document.getElementById('topbarLangLabel');
+  if(topbarLangLabel) topbarLangLabel.textContent = lang==='ar' ? 'English' : 'العربية';
   applyStaticI18n();
   navigate(currentPage);
 }
