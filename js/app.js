@@ -1376,13 +1376,12 @@ function getSalespersonPhone(name){
   return m ? m.phone : '';
 }
 
-function toggleQuoteStatus(idx){
+// Reassign through the proxy so the status change is persisted to Supabase
+// (deep mutation of q alone wouldn't trigger the array's sync proxy).
+function setQuoteStatus(idx, status){
   const q = quotations[idx];
-  if(!q) return;
-  const cycle = {review:'approved', approved:'sent', sent:'review'};
-  q.status = cycle[q.status] || 'review';
-  // Reassign through the proxy so the status change is persisted to Supabase
-  // (deep mutation of q alone wouldn't trigger the array's sync proxy).
+  if(!q || !['review','approved','sent'].includes(status)) return;
+  q.status = status;
   quotations[idx] = q;
   renderQuoteRows(document.getElementById('quoteSearch')?.value||'', document.getElementById('quoteFilterStatus')?.value||'');
 }
@@ -1423,7 +1422,7 @@ function renderQuoteRows(filter='', statusF=''){
       <td>${q.customer}</td>
       <td>${q.date}</td>
       <td style="font-weight:700;color:var(--blue);">${lang==='en' ? q.total.toLocaleString('en',{minimumFractionDigits:2})+' '+RYAL : RYAL+' '+q.total.toLocaleString('en',{minimumFractionDigits:2})}</td>
-      <td><span class="pill ${getQuoteStatusPill(q.status)}" onclick="toggleQuoteStatus(${idx})" style="cursor:pointer;">${getQuoteStatusText(q.status)}</span></td>
+      <td><select class="pill ${getQuoteStatusPill(q.status)} pill-select" onchange="setQuoteStatus(${idx},this.value)" style="cursor:pointer;text-align:center;" title="${lang==='en'?'Change status':'تغيير الحالة'}">${['review','approved','sent'].map(s=>`<option value="${s}"${s===q.status?' selected':''}>${getQuoteStatusText(s)}</option>`).join('')}</select></td>
       <td style="text-align:center;white-space:nowrap;">
         ${q.attachments && q.attachments.length
           ? q.attachments.map((a,i)=>`
@@ -1934,13 +1933,6 @@ function openQuoteModal(idx=null){
           </thead>
           <tbody id="qLinesBody"></tbody>
         </table>
-        <datalist id="quoteItemCodes">
-          <option value="STW"></option>
-          <option value="HNG"></option>
-          <option value="TSP"></option>
-          <option value="FDT"></option>
-          <option value="PTC"></option>
-          <option value="CPS"></option>
         </datalist>
       </div>
       <div class="po-totals">
@@ -2201,8 +2193,11 @@ function qPickersOutside(e){
 }
 document.addEventListener('click', qPickersOutside);
 
+// Item codes offered in the quotation item selector.
+const QUOTE_ITEM_CODES = ['STW','HNG','TSP','FDT','PTC','CPS','MZN'];
+
 function addQuoteLine(){
-  quoteLines.push({name:'', desc:'', qty:1, unit:'طن', price:0});
+  quoteLines.push({name:QUOTE_ITEM_CODES[0], desc:'', qty:1, unit:'طن', price:0});
   renderQuoteLines();
 }
 
@@ -2234,7 +2229,22 @@ function renderQuoteLines(){
   if(!body) return;
   body.innerHTML = quoteLines.map((l, idx)=>`
     <tr data-idx="${idx}">
-      <td><input class="q-item-name" list="quoteItemCodes" value="${l.name}" oninput="quoteLines[${idx}].name=this.value" placeholder="${lang==='en'?'Item name':'اسم الصنف'}"></td>
+      <td><div class="q-selector" data-quote-item="${idx}">
+        <div class="selector-anchor">
+          <button type="button" class="selector-trigger${l.name?' has-value':''}${l.name?' is-placeholder':''}" data-q-sel-trigger aria-haspopup="listbox" aria-expanded="false">
+            <span class="trigger-value${l.name?'':' is-placeholder'}" data-q-sel-value>${l.name||(lang==='en'?'Select...':'اختر...')}</span>
+            <span class="trigger-end">
+              <span class="clear-btn" data-q-sel-clear role="button" tabindex="-1" aria-label="${lang==='en'?'Clear selection':'مسح'}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </span>
+              <span class="trigger-indicator">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </span>
+          </button>
+          <div class="selector-popover" data-q-sel-popover role="listbox"></div>
+        </div>
+      </div></td>
       <td><textarea rows="1" class="auto-grow" oninput="quoteLines[${idx}].desc=this.value; autoGrow(this)" placeholder="${lang==='en'?'Specifications':'المواصفات'}">${l.desc||''}</textarea></td>
       <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="qtyInc(${idx},-1)">−</button><input type="number" id="qty-${idx}" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input q-item-qty"><button type="button" class="qty-btn" onclick="qtyInc(${idx},1)">+</button></div></td>
       <td><input value="${l.unit}" oninput="quoteLines[${idx}].unit=this.value" style="text-align:center;"></td>
@@ -2244,7 +2254,88 @@ function renderQuoteLines(){
   `).join('');
   document.querySelectorAll('#qLinesBody .auto-grow').forEach(autoGrow);
   updateQuoteTotals();
+  bindQuoteItemSelectors();
 }
+
+// Quote item selector — same component as the supplied design: a trigger
+// button with the chosen value, an "x" clear button, a chevron that rotates
+// while open, and a popover listing the item codes.
+function qSelOptions(){
+  return QUOTE_ITEM_CODES.map(code=>({value:code, label:code}));
+}
+function qSelPaint(root, idx){
+  const trigger = root.querySelector('[data-q-sel-trigger]');
+  const valueEl = root.querySelector('[data-q-sel-value]');
+  const name = quoteLines[idx]?.name || '';
+  valueEl.textContent = name || (lang==='en' ? 'Select...' : 'اختر...');
+  valueEl.classList.toggle('is-placeholder', !name);
+  trigger.classList.toggle('has-value', !!name);
+}
+function qSelRenderOptions(root, idx){
+  const popover = root.querySelector('[data-q-sel-popover]');
+  const current = quoteLines[idx]?.name || '';
+  popover.innerHTML = qSelOptions().map(opt=>`
+    <div class="selector-option${opt.value===current?' is-selected':''}" role="option" aria-selected="${opt.value===current}" data-q-sel-opt="${opt.value}">
+      <span>${opt.label}</span>
+      <span class="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+    </div>`).join('');
+  popover.querySelectorAll('[data-q-sel-opt]').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      quoteLines[idx].name = row.dataset.qSelOpt;
+      qSelPaint(root, idx);
+      qSelRenderOptions(root, idx);
+      qSelClose(root);
+    });
+  });
+}
+function qSelClose(root){
+  const trigger = root.querySelector('[data-q-sel-trigger]');
+  const popover = root.querySelector('[data-q-sel-popover]');
+  popover.classList.remove('is-open');
+  trigger.classList.remove('is-open');
+  trigger.setAttribute('aria-expanded','false');
+}
+function qSelOpen(root, idx){
+  const trigger = root.querySelector('[data-q-sel-trigger]');
+  const popover = root.querySelector('[data-q-sel-popover]');
+  qSelRenderOptions(root, idx);
+  popover.classList.add('is-open');
+  trigger.classList.add('is-open');
+  trigger.setAttribute('aria-expanded','true');
+}
+function bindQuoteItemSelectors(){
+  document.querySelectorAll('#qLinesBody .q-selector').forEach(root=>{
+    const idx = parseInt(root.dataset.quoteItem);
+    if(isNaN(idx)) return;
+    const trigger = root.querySelector('[data-q-sel-trigger]');
+    const popover = root.querySelector('[data-q-sel-popover]');
+    qSelPaint(root, idx);
+    trigger.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(popover.classList.contains('is-open')){ qSelClose(root); } else { qSelOpen(root, idx); }
+    });
+    trigger.addEventListener('keydown', e=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        if(popover.classList.contains('is-open')){
+          const sel = popover.querySelector('.selector-option.is-selected');
+          if(sel) sel.click();
+        } else { qSelOpen(root, idx); }
+      }else if(e.key==='Escape'){ qSelClose(root); }
+    });
+    root.querySelector('[data-q-sel-clear]').addEventListener('click', e=>{
+      e.stopPropagation();
+      quoteLines[idx].name = '';
+      qSelPaint(root, idx);
+      if(popover.classList.contains('is-open')) qSelRenderOptions(root, idx);
+    });
+  });
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#qLinesBody .q-selector')){
+    document.querySelectorAll('#qLinesBody .q-selector').forEach(qSelClose);
+  }
+});
 
 function autoGrow(el){
   if(!el) return;
@@ -2350,7 +2441,7 @@ function saveQuotation(){
       el.style.border = '';
       el.style.boxShadow = '';
     });
-    document.querySelectorAll('#qLinesBody .q-item-name, #qLinesBody .q-item-qty, #qLinesBody .q-item-price').forEach(el => {
+    document.querySelectorAll('#qLinesBody .q-item-name, #qLinesBody [data-q-sel-trigger], #qLinesBody .q-item-qty, #qLinesBody .q-item-price').forEach(el => {
       el.style.border = '';
       el.style.boxShadow = '';
     });
@@ -2378,7 +2469,7 @@ function saveQuotation(){
     quoteLines.forEach((l, i) => {
       const row = document.querySelector(`#qLinesBody tr[data-idx="${i}"]`);
       if(!row) return;
-      if(!l.name.trim()) markErr(row.querySelector('.q-item-name'));
+      if(!l.name.trim()) markErr(row.querySelector('[data-q-sel-trigger]'));
       if(!(l.qty > 0)) markErr(row.querySelector('.q-item-qty'));
       if(!(l.price >= 0)) markErr(row.querySelector('.q-item-price'));
     });
