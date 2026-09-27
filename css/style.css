@@ -277,11 +277,13 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
   opacity:0;transform:translateY(-8px) scale(.94);
   transform-origin:top right;
   pointer-events:none;
-  transition:opacity .22s ease, transform .38s cubic-bezier(.34,1.56,.64,1);
+  visibility:hidden;
+  transition:opacity .22s ease, transform .38s cubic-bezier(.34,1.56,.64,1), visibility .22s ease;
 }
 .user-dropdown.open{
   opacity:1;transform:translateY(0) scale(1);
   pointer-events:auto;
+  visibility:visible;
 }
 .user-dropdown .view-shell{
   position:relative;
@@ -295,7 +297,7 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
   pointer-events:none;
   transition:opacity .22s ease, transform .22s ease;
 }
-.user-dropdown .view.is-active{
+.user-dropdown.open .view.is-active{
   position:relative;
   opacity:1;
   transform:translateY(0);
