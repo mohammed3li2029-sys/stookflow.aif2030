@@ -166,29 +166,57 @@ When presenting data, format it nicely with bullet points or short tables. Alway
   /* ── DOM Helpers ───────────────────────────────── */
   function el(id){ return document.getElementById(id); }
 
-  function addMessage(text, role) {
+  function autoGrow(){
+    const input = el('aiChatInput');
+    if(!input) return;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  }
+
+  function scrollToBottom(){
     const body = el('aiChatBody');
-    if(!body) return;
+    if(body) body.scrollTop = body.scrollHeight;
+  }
+
+  /* Empty state -> conversation, once the first message is sent. */
+  function showConversation(){
+    const empty = el('aiEmptyState');
+    const msgs  = el('aiChatMessages');
+    if(empty) empty.hidden = true;
+    if(msgs)  msgs.hidden = false;
+  }
+  function showWelcome(){
+    const empty = el('aiEmptyState');
+    const msgs  = el('aiChatMessages');
+    if(empty) empty.hidden = false;
+    if(msgs){ msgs.hidden = true; msgs.innerHTML = ''; }
+  }
+
+  function addMessage(text, role) {
+    const msgs = el('aiChatMessages');
+    if(!msgs) return;
+    showConversation();
     const div = document.createElement('div');
     div.className = 'ai-msg ai-' + role;
     /* Simple markdown: bold, line breaks */
-    let html = text
+    let html = String(text)
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n/g, '<br>');
     div.innerHTML = '<div class="ai-msg-bubble">' + html + '</div>';
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
+    msgs.appendChild(div);
+    scrollToBottom();
   }
 
   function showTyping() {
-    const body = el('aiChatBody');
-    if(!body) return;
+    const msgs = el('aiChatMessages');
+    if(!msgs) return;
+    showConversation();
     const div = document.createElement('div');
     div.className = 'ai-msg ai-assistant ai-typing-indicator';
     div.id = 'aiTyping';
     div.innerHTML = '<div class="ai-msg-bubble"><span class="ai-dot"></span><span class="ai-dot"></span><span class="ai-dot"></span></div>';
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
+    msgs.appendChild(div);
+    scrollToBottom();
   }
 
   function hideTyping() {
@@ -197,14 +225,21 @@ When presenting data, format it nicely with bullet points or short tables. Alway
   }
 
   /* ── Send Handler ──────────────────────────────── */
-  async function handleSend() {
+  function resetComposer(){
     const input = el('aiChatInput');
-    if(!input) return;
-    const text = input.value.trim();
+    if(input) input.value = '';
+    autoGrow();
+    const sendBtn = el('aiChatSend');
+    if(sendBtn) sendBtn.classList.remove('is-ready');
+  }
+
+  async function handleSend(promptText) {
+    const input = el('aiChatInput');
+    const text = (promptText !== undefined ? promptText : (input ? input.value : '')).trim();
     if(!text || isTyping) return;
 
-    input.value = '';
     addMessage(text, 'user');
+    resetComposer();
 
     isTyping = true;
     const sendBtn = el('aiChatSend');
@@ -219,35 +254,67 @@ When presenting data, format it nicely with bullet points or short tables. Alway
     if(sendBtn) sendBtn.disabled = false;
   }
 
-  /* ── Quick Actions ─────────────────────────────── */
-  const QUICK_ACTIONS_AR = [
-    { label:'نظرة عامة', prompt:'اعطني نظرة عامة على النظام' },
-    { label:'المخزون', prompt:'كم عنصر عندي في المستودع؟' },
-    { label:'مهام اليوم', prompt:'وش مهامي اليوم؟' },
-    { label:'المشاريع', prompt:'كم مشروع عندي وش وضعهم؟' },
-    { label:'طلبات الشراء', prompt:'كم طلب شراء معلق؟' },
+  /* ── Suggestions (welcome grid) + chips (footer) ── */
+  const SUGGESTIONS_AR = [
+    { icon:'<path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 8H6"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/>', label:'طلبات الشراء', desc:'حالة الطلبات المعلقة والمستلمة', prompt:'لخص لي طلبات الشراء المعلقة' },
+    { icon:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/>', label:'المشاريع', desc:'نظرة على تقدم المشاريع الجارية', prompt:'كيف وضع المشاريع الحالية؟' },
+    { icon:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>', label:'مهام اليوم', desc:'قائمة مهامك المجدولة لهذا اليوم', prompt:'عرض مهام اليوم' },
+    { icon:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>', label:'المخزون', desc:'تنبيهات الكميات المنخفضة', prompt:'هل فيه أصناف وصلت الحد الأدنى بالمخزون؟' },
+    { icon:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>', label:'نظرة عامة', desc:'ملخص سريع لأهم الأرقام', prompt:'أعطني نظرة عامة على أداء اليوم' },
   ];
-  const QUICK_ACTIONS_EN = [
-    { label:'Overview', prompt:'Give me an overview of the system' },
-    { label:'Inventory', prompt:'How many items do I have in inventory?' },
-    { label:'Today\'s Tasks', prompt:'What are my tasks today?' },
-    { label:'Projects', prompt:'How many projects do I have and their status?' },
-    { label:'Purchase Orders', prompt:'How many pending purchase orders?' },
+  const SUGGESTIONS_EN = [
+    { icon:'<path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 8H6"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/>', label:'Purchase Orders', desc:'Pending and received orders', prompt:'Summarize my pending purchase orders' },
+    { icon:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/>', label:'Projects', desc:'Progress of active projects', prompt:'How are my current projects doing?' },
+    { icon:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>', label:"Today's Tasks", desc:'Tasks scheduled for today', prompt:'Show my tasks for today' },
+    { icon:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>', label:'Inventory', desc:'Low stock alerts', prompt:'Any items that reached their minimum stock?' },
+    { icon:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>', label:'Overview', desc:'A quick summary of the numbers', prompt:'Give me an overview of today' },
   ];
+  const suggestions = () => lang === 'ar' ? SUGGESTIONS_AR : SUGGESTIONS_EN;
 
-  function renderQuickActions() {
+  const ICON_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+
+  function renderWelcome(){
+    const grid = el('aiSuggestGrid');
+    if(grid) {
+      grid.innerHTML = suggestions().map(s =>
+        '<button class="ai-suggest-card" data-ai-prompt="' + escAttr(s.prompt) + '">' +
+          '<span class="s-icon"><svg ' + ICON_ATTRS + '>' + s.icon + '</svg></span>' +
+          '<span class="s-label">' + s.label + '</span>' +
+          '<span class="s-desc">' + s.desc + '</span>' +
+        '</button>'
+      ).join('');
+    }
+    const title = el('aiWelcomeTitle');
+    const text  = el('aiWelcomeText');
+    const featured = el('aiFeaturedText');
+    const input = el('aiChatInput');
+    if(title) title.textContent = lang === 'ar' ? 'مرحبًا 👋' : 'Hello 👋';
+    if(text) text.textContent = lang === 'ar'
+      ? 'كيف أقدر أساعدك في إدارة مخزونك ومهامك اليوم؟'
+      : 'How can I help you manage your inventory and tasks today?';
+    if(featured) {
+      const s = suggestions()[2];
+      featured.textContent = s.label;
+      const btn = el('aiFeaturedBtn');
+      if(btn) btn.dataset.aiPrompt = s.prompt;
+    }
+    if(input) input.placeholder = lang === 'ar'
+      ? 'اسأل عن أي شيء يخص مخزونك...'
+      : 'Ask anything about your inventory...';
+  }
+
+  function renderQuickActions(){
     const wrap = el('aiQuickActions');
     if(!wrap) return;
-    const acts = lang === 'ar' ? QUICK_ACTIONS_AR : QUICK_ACTIONS_EN;
-    wrap.innerHTML = acts.map(a =>
-      '<button class="ai-quick-btn" data-prompt="' + a.prompt.replace(/"/g, '&quot;') + '">' + a.label + '</button>'
+    wrap.innerHTML = suggestions().map(s =>
+      '<button class="ai-chip" data-ai-prompt="' + escAttr(s.prompt) + '">' +
+        '<svg ' + ICON_ATTRS + '>' + s.icon + '</svg>' + s.label +
+      '</button>'
     ).join('');
-    wrap.querySelectorAll('.ai-quick-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const input = el('aiChatInput');
-        if(input) { input.value = btn.dataset.prompt; handleSend(); }
-      });
-    });
+  }
+
+  function escAttr(str){
+    return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   /* ── Toggle Chat ───────────────────────────────── */
@@ -259,23 +326,21 @@ When presenting data, format it nicely with bullet points or short tables. Alway
     if(fab) fab.classList.toggle('active', willOpen);
     document.body.classList.toggle('ai-page-open', willOpen);
     if(willOpen) {
+      renderWelcome();
       renderQuickActions();
       const input = el('aiChatInput');
-      if(input && chatHistory.length === 0) {
-        const welcome = lang === 'ar'
-          ? 'مرحباً! أنا مساعد StockFlow الذكي. اسألني أي شي عن التطبيق — المخزون، المهام، المشاريع، الطلبات، وغيرهم.'
-          : 'Hello! I\'m the StockFlow AI assistant. Ask me anything about the app — inventory, tasks, projects, orders, and more.';
-        addMessage(welcome, 'assistant');
-      }
       if(input) setTimeout(() => input.focus(), 200);
     }
   }
 
   function clearChat() {
     chatHistory = [];
-    const body = el('aiChatBody');
-    if(body) body.innerHTML = '';
-    renderQuickActions();
+    isTyping = false;
+    hideTyping();
+    const sendBtn = el('aiChatSend');
+    if(sendBtn){ sendBtn.disabled = false; sendBtn.classList.remove('is-ready'); }
+    resetComposer();
+    showWelcome();
   }
 
   /* ── Init ──────────────────────────────────────── */
@@ -288,18 +353,33 @@ When presenting data, format it nicely with bullet points or short tables. Alway
 
     if(fab) fab.addEventListener('click', toggleChat);
     if(close) close.addEventListener('click', toggleChat);
-    if(send) send.addEventListener('click', handleSend);
+    if(send) send.addEventListener('click', () => handleSend());
     if(clear) clear.addEventListener('click', clearChat);
     if(input) {
+      input.addEventListener('input', () => {
+        autoGrow();
+        if(send) send.classList.toggle('is-ready', input.value.trim().length > 0);
+      });
       input.addEventListener('keydown', e => {
         if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
       });
     }
+    renderWelcome();
+    renderQuickActions();
     // The panel is a full page: Escape closes it, and so does a click on the
     // page backdrop (anything outside the chat card itself).
+    // Suggestion cards, the featured button and the footer chips are all handled
+    // by delegation, so re-rendering them on every language switch keeps working.
     const panel = el('aiChatPanel');
     if(panel) {
-      panel.addEventListener('click', e => { if(e.target === panel) toggleChat(); });
+      panel.addEventListener('click', e => {
+        const promptBtn = e.target.closest ? e.target.closest('[data-ai-prompt]') : null;
+        if(promptBtn && panel.contains(promptBtn)) {
+          handleSend(promptBtn.dataset.aiPrompt);
+          return;
+        }
+        if(e.target === panel) toggleChat();
+      });
     }
     document.addEventListener('keydown', e => {
       if(e.key === 'Escape' && panel && panel.classList.contains('open')) toggleChat();
@@ -307,6 +387,6 @@ When presenting data, format it nicely with bullet points or short tables. Alway
   }
 
   /* Expose for external init */
-  window.AIChat = { init, toggleChat };
+  window.AIChat = { init, toggleChat, renderWelcome, renderQuickActions, clearChat };
 
 })();
