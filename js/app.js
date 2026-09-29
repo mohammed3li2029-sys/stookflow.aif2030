@@ -4044,6 +4044,7 @@ function syncUsers(){
     const sanitized = usersData.map(({password, ...rest}) => rest);
     window.StockFlowBackend.syncCollection('users', sanitized, 'email');
   }
+  if(typeof renderTopbarAvatars === 'function') renderTopbarAvatars();
 }
 
 function saveUser(){
@@ -8010,6 +8011,85 @@ function getInitials(name){
   return((p[0]?p[0][0]:'')+(p[1]?p[1][0]:'')).toUpperCase()||'?';
 }
 
+/* ---- Topbar team avatars -------------------------------------------
+   The staff list is the same array whether or not a backend is configured:
+   when Supabase is connected its rows are pulled into usersData (see the
+   Supabase load above), and offline the seeded rows are used. So the group
+   shows the real list in both cases without a second data path. */
+const TOPBAR_AVATAR_COLORS = ['#4F46E5','#D97706','#0EA5A5','#DB2777','#7C3AED','#2563EB','#059669','#DC2626','#0891B2','#B45309'];
+const TOPBAR_AVATAR_MAX = 4;
+
+function topbarAvatarColor(seed){
+  let h = 2166136261;
+  for(let i=0;i<seed.length;i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return TOPBAR_AVATAR_COLORS[h % TOPBAR_AVATAR_COLORS.length];
+}
+
+function renderTopbarAvatars(){
+  const host = document.getElementById('topbarAvatars');
+  if(!host) return;
+  const meEmail = String((profileData && profileData.email) || '').trim().toLowerCase();
+  const isMe = u => String(u.email||'').trim().toLowerCase() === meEmail && meEmail !== '';
+  // signed-in account first, everyone else alphabetically
+  const members = usersData.filter(u => u && u.name)
+    .slice()
+    .sort((a,b) => (isMe(b)?1:0)-(isMe(a)?1:0) || String(a.name).localeCompare(String(b.name)));
+  if(!members.length){ host.innerHTML = ''; host.style.display = 'none'; return; }
+  host.style.display = '';
+  const shown = members.slice(0, TOPBAR_AVATAR_MAX);
+  const extra = members.length - shown.length;
+  const roleOf = u => {
+    const rk = ['admin','manager','supervisor','employee'].includes(u.role) ? u.role : 'employee';
+    const ri = getRoleInfo(rk);
+    return lang==='ar' ? ri.labelAr : ri.label;
+  };
+  host.innerHTML = shown.map(u => {
+    const ini = String(u.init || getInitials(String(u.name))).toUpperCase();
+    return `<div class="t-avatar${isMe(u) ? ' is-online' : ''}">
+      <div class="avatar-item" style="background:${topbarAvatarColor(String(u.name||u.email||''))}">${escapeHtml(ini)}</div>
+      <div class="status-dot"></div>
+      <div class="avatar-tip"><strong>${escapeHtml(u.name)}</strong><span>${escapeHtml(roleOf(u))}</span></div>
+    </div>`;
+  }).join('') + (extra > 0
+    ? `<div class="t-avatar t-avatar-more"><div class="avatar-item">+${extra}</div></div>`
+    : '');
+  host.setAttribute('aria-label', lang==='en' ? 'Team' : 'الفريق');
+  bindTopbarAvatarHover(host);
+}
+
+/* Delegated so it survives the innerHTML rewrite on every re-render. Reads
+   the supplied lift/scale/falloff from :root and applies them by distance,
+   easing in on enter and easing out when the pointer leaves the group. */
+function bindTopbarAvatarHover(group){
+  if(!group || group.getAttribute('data-hover-bound')==='1') return;
+  group.setAttribute('data-hover-bound','1');
+  const root = getComputedStyle(document.documentElement);
+  const LIFT = parseFloat(root.getPropertyValue('--avatar-lift')) || -4;
+  const SCALE = parseFloat(root.getPropertyValue('--avatar-scale')) || 1.05;
+  const FALLOFF = parseFloat(root.getPropertyValue('--avatar-falloff')) || 0.45;
+  group.addEventListener('mouseover', e => {
+    const el = e.target.closest('.t-avatar');
+    if(!el || !group.contains(el)) return;
+    const items = Array.from(group.querySelectorAll('.t-avatar'));
+    const activeIdx = items.indexOf(el);
+    if(activeIdx < 0) return;
+    items.forEach((sib,i) => {
+      const distance = Math.abs(i - activeIdx);
+      sib.style.transitionTimingFunction = 'var(--avatar-ease-in)';
+      sib.style.setProperty('--shift', (LIFT * Math.pow(FALLOFF, distance)).toFixed(3) + 'px');
+      sib.style.setProperty('--scale-active', i === activeIdx ? SCALE : 1);
+      sib.style.zIndex = i === activeIdx ? 10 : String(items.length - distance);
+    });
+  });
+  group.addEventListener('mouseleave', () => {
+    group.querySelectorAll('.t-avatar').forEach(sib => {
+      sib.style.transitionTimingFunction = 'var(--avatar-ease-out)';
+      sib.style.setProperty('--shift', '0px');
+      sib.style.setProperty('--scale-active', '1');
+    });
+  });
+}
+
 function refreshTopbarProfile(){
   const nameEl=document.getElementById('userName');
   if(nameEl) nameEl.textContent=profileData.name;
@@ -8041,6 +8121,7 @@ function refreshTopbarProfile(){
   if(mobName) mobName.textContent=profileData.name;
   const mobRole=document.getElementById('mobRole');
   if(mobRole) mobRole.textContent=lang==='ar'?ri.labelAr:ri.label;
+  renderTopbarAvatars();
 }
 
 function setProfilePreview(src){
@@ -9096,6 +9177,7 @@ function applyLang(){
   if(topbarLangLabel) topbarLangLabel.textContent = lang==='ar' ? 'English' : 'العربية';
   applyStaticI18n();
   navigate(currentPage);
+  renderTopbarAvatars();
 }
 
 document.getElementById('langToggle').addEventListener('click', ()=>{
