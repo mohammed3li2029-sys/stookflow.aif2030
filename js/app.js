@@ -2586,8 +2586,9 @@ function saveQuotation(){
   showSuccessCheck(lang==='en'?'Quotation saved!':'تم حفظ عرض السعر!', ()=>{ navigate('sales', {quiet:true}); });
 }
 
-function dwHtml(wIdx, wPage){
-  return `<div class="delete-widget" data-wpage="${wPage}" data-widx="${wIdx}">
+function dwHtml(wIdx, wPage, wSub){
+  const sub = (wSub==null || wSub==='') ? '' : ` data-wsub="${wSub}"`;
+  return `<div class="delete-widget" data-wpage="${wPage}" data-widx="${wIdx}"${sub}>
           <button class="action-btn cancel" type="button" aria-label="Cancel" onclick="dwCancel(this)"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2.1" stroke-linecap="round"/></svg></button>
           <button class="action-btn confirm" type="button" aria-label="Confirm delete" onclick="dwConfirm(this)"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.6 3.6L16 5.5" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="icon-slot" type="button" aria-label="Delete" onclick="dwToggle(this)">
@@ -2669,6 +2670,9 @@ function dwConfirm(btn){
         navigate('issues', {quiet:true});
         showToast(lang==='en'?'Request deleted!':'تم حذف الطلب!');
       }
+    } else if(wpage==='crane'){
+      // the widget itself is the confirmation, so skip the modal
+      deleteCraneWorkDirect(idx, parseInt(w.dataset.wsub, 10));
     }
   }, 1300);
 }
@@ -4704,10 +4708,10 @@ function renderCraneWorksList(p, idx){
       <td>${escapeHtml(w.location||'—')}</td>
       <td>${escapeHtml(w.workDate||'—')}</td>
       <td><span class="cat-tag">${(w.items||[]).length}</span></td>
-      <td><div class="row-actions">
+      <td><div class="row-actions dw-actions dw-3">
         <button title="${T.preview}" onclick="openCranePreview(${idx},${i})">${ICONS.eye}</button>
         <button title="${T.edit}" onclick="showCraneWorkModal(${idx},${i})">${ICONS.edit}</button>
-        <button title="${T.del}" onclick="deleteCraneWork(${idx},${i})">${ICONS.trash}</button>
+        ${dwHtml(idx, 'crane', i)}
       </div></td></tr>`).join('')}
   </tbody></table></div>`;
 }
@@ -5204,20 +5208,26 @@ function showCraneWorkModal(idx, wi){
 }
 
 async function deleteCraneWork(idx, wi){
+  const ok = await showConfirm(lang==='en'?'Delete this work sheet?':'هل تريد حذف هذا العمل؟');
+  if(!ok) return;
+  deleteCraneWorkDirect(idx, wi);
+}
+
+/* Removal only. The row delete button uses the same inline widget as Sales,
+   so it calls this directly; the modal path above stays for programmatic use. */
+function deleteCraneWorkDirect(idx, wi){
   const standalone = idx === -1;
   const p = standalone ? null : projects[idx];
   if(!standalone && !p) return;
   const works = standalone ? standaloneWorks : getCraneWorks(p);
   if(!works[wi]) return;
-  const T = craneText();
-  const ok = await showConfirm(lang==='en'?'Delete this work sheet?':'هل تريد حذف هذا العمل؟');
-  if(!ok) return;
   works.splice(wi, 1);
   if(standalone) syncStandaloneWorks(); else syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
   if(body && !standalone) body.innerHTML = renderProjDocsTab(p, idx, STR[lang].projects);
   if(document.getElementById('docsResults')) docsUpdateResults();
-  showToast(T.removed);
+  if(document.getElementById('docsClearBtn')) updateCheckAll('docs');
+  showToast(craneText().removed);
 }
 
 /* ---- A4 sheet ---------------------------------------------------- */
@@ -5547,10 +5557,10 @@ function docsUpdateResults(){
         <td>${escapeHtml(cwSupervisorLabel(w.supervisor)||'—')}</td>
         <td><span class="cat-tag">${(w.items||[]).length}</span></td>
         <td style="font-weight:700;white-space:nowrap;">${hours ? docsFmtHours(hours) : '—'}</td>
-        <td><div class="row-actions">
+        <td><div class="row-actions dw-actions dw-3">
           <button title="${T.preview}" onclick="openCranePreview(${idx},${wi})">${ICONS.eye}</button>
           <button title="${T.edit}" onclick="showCraneWorkModal(${idx},${wi})">${ICONS.edit}</button>
-          <button title="${T.del}" onclick="deleteCraneWork(${idx},${wi})">${ICONS.trash}</button>
+          ${dwHtml(idx, 'crane', wi)}
         </div></td></tr>`;
     }).join('')}
   </tbody></table></div>`;
