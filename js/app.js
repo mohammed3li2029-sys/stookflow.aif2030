@@ -1,4 +1,4 @@
-﻿/* ===================================================================
+/* ===================================================================
    BACKEND SYNC HELPER (Supabase)
    Wraps an array in a Proxy so that any push/splice/unshift/index
    assignment is automatically mirrored to the database (when configured).
@@ -365,6 +365,7 @@ const ICONS = {
   notifications:'<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" class="nc-icon-wrapper"><path d="M15.5 19.5C15.5 21.433 13.933 23 12 23C10.067 23 8.5 21.433 8.5 19.5C8.5 17.567 10.067 16 12 16C13.933 16 15.5 17.567 15.5 19.5Z" fill="url(#vt4yn901qr8-1752500502766-7626048_bell_existing_0_14lff8flw)" data-glass="origin" mask="url(#vt4yn901qr8-1752500502766-7626048_bell_mask_fyq300pns)"></path><path d="M15.5 19.5C15.5 21.433 13.933 23 12 23C10.067 23 8.5 21.433 8.5 19.5C8.5 17.567 10.067 16 12 16C13.933 16 15.5 17.567 15.5 19.5Z" fill="url(#vt4yn901qr8-1752500502766-7626048_bell_existing_0_14lff8flw)" data-glass="clone" filter="url(#vt4yn901qr8-1752500502766-7626048_bell_filter_44txncefw)" clip-path="url(#vt4yn901qr8-1752500502766-7626048_bell_clipPath_wi1z96ji7)"></path><path d="M4 9C4 4.58172 7.58172 1 12 1C16.4183 1 20 4.58172 20 9V12.1246C20 12.7003 20.134 13.2681 20.3915 13.783L20.6845 14.3689C21.4512 15.9024 21.8345 16.6691 21.7425 17.2923C21.662 17.8365 21.361 18.3236 20.9102 18.6389C20.3939 19 19.5367 19 17.8223 19H6.17771C4.46327 19 3.60606 19 3.08979 18.6389C2.63898 18.3236 2.33795 17.8365 2.25755 17.2923C2.16546 16.6691 2.54882 15.9024 3.31554 14.3689L3.60851 13.783C3.86597 13.2681 4 12.7003 4 12.1246V9Z" fill="url(#vt4yn901qr8-1752500502766-7626048_bell_existing_1_cf31vy2bg)" data-glass="blur"></path><path d="M17.8223 18.25V19H6.17776V18.25H17.8223ZM19.25 12.125V9C19.25 4.99594 16.0041 1.75 12 1.75C7.99596 1.75 4.75002 4.99594 4.75002 9V12.125C4.74996 12.8169 4.58873 13.4993 4.27932 14.1182L3.98635 14.7041C3.59657 15.4837 3.32785 16.0227 3.16311 16.4443C2.99806 16.8669 2.9819 17.0663 2.99905 17.1826C3.0493 17.5227 3.23782 17.8273 3.51955 18.0244C3.6159 18.0918 3.80101 18.1666 4.25295 18.208C4.7038 18.2493 5.30599 18.25 6.17776 18.25V19L5.04494 18.9941C4.13826 18.9786 3.57614 18.9205 3.19045 18.7021L3.08987 18.6387C2.69536 18.3627 2.41547 17.9554 2.29787 17.4932L2.25783 17.292C2.18889 16.8246 2.38661 16.2764 2.8135 15.3848L3.31545 14.3691L3.60842 13.7832C3.83372 13.3326 3.96501 12.8413 3.99416 12.3398L4.00002 12.125V9C4.00002 4.58172 7.58174 1 12 1C16.4183 1 20 4.58172 20 9V12.125L20.0059 12.3398C20.035 12.8413 20.1663 13.3326 20.3916 13.7832L20.6846 14.3691C21.4511 15.9022 21.8341 16.6688 21.7422 17.292C21.6618 17.8362 21.3609 18.3234 20.9102 18.6387C20.3939 18.9998 19.5367 19 17.8223 19V18.25C18.6941 18.25 19.2962 18.2493 19.7471 18.208C20.199 18.1666 20.3841 18.0918 20.4805 18.0244C20.7622 17.8273 20.9507 17.5227 21.001 17.1826C21.0181 17.0663 21.002 16.8669 20.8369 16.4443C20.6722 16.0227 20.4035 15.4837 20.0137 14.7041L19.7207 14.1182C19.4113 13.4993 19.2501 12.8169 19.25 12.125Z" fill="url(#vt4yn901qr8-1752500502766-7626048_bell_existing_2_82e85sl3p)"></path><defs><linearGradient id="vt4yn901qr8-1752500502766-7626048_bell_existing_0_14lff8flw" x1="12" y1="16" x2="12" y2="23" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(0, 0, 0, 1)"></stop><stop offset="1" stop-color="rgba(255, 240, 0, 1)"></stop></linearGradient><linearGradient id="vt4yn901qr8-1752500502766-7626048_bell_existing_1_cf31vy2bg" x1="12" y1="1" x2="12" y2="19" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(227, 227, 229, 0.6)"></stop><stop offset="1" stop-color="rgba(187, 187, 192, 0.6)"></stop></linearGradient><linearGradient id="vt4yn901qr8-1752500502766-7626048_bell_existing_2_82e85sl3p" x1="12" y1="1" x2="12" y2="11.424" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(255, 255, 255, 1)"></stop><stop offset="1" stop-color="rgba(255, 255, 255, 1)" stop-opacity="0"></stop></linearGradient><filter id="vt4yn901qr8-1752500502766-7626048_bell_filter_44txncefw" x="-100%" y="-100%" width="400%" height="400%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="2" x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" edgeMode="none" result="blur"></feGaussianBlur></filter><clipPath id="vt4yn901qr8-1752500502766-7626048_bell_clipPath_wi1z96ji7"><path d="M4 9C4 4.58172 7.58172 1 12 1C16.4183 1 20 4.58172 20 9V12.1246C20 12.7003 20.134 13.2681 20.3915 13.783L20.6845 14.3689C21.4512 15.9024 21.8345 16.6691 21.7425 17.2923C21.662 17.8365 21.361 18.3236 20.9102 18.6389C20.3939 19 19.5367 19 17.8223 19H6.17771C4.46327 19 3.60606 19 3.08979 18.6389C2.63898 18.3236 2.33795 17.8365 2.25755 17.2923C2.16546 16.6691 2.54882 15.9024 3.31554 14.3689L3.60851 13.783C3.86597 13.2681 4 12.7003 4 12.1246V9Z"></path></clipPath><mask id="vt4yn901qr8-1752500502766-7626048_bell_mask_fyq300pns"><rect width="100%" height="100%" fill="#FFF"></rect><path d="M4 9C4 4.58172 7.58172 1 12 1C16.4183 1 20 4.58172 20 9V12.1246C20 12.7003 20.134 13.2681 20.3915 13.783L20.6845 14.3689C21.4512 15.9024 21.8345 16.6691 21.7425 17.2923C21.662 17.8365 21.361 18.3236 20.9102 18.6389C20.3939 19 19.5367 19 17.8223 19H6.17771C4.46327 19 3.60606 19 3.08979 18.6389C2.63898 18.3236 2.33795 17.8365 2.25755 17.2923C2.16546 16.6691 2.54882 15.9024 3.31554 14.3689L3.60851 13.783C3.86597 13.2681 4 12.7003 4 12.1246V9Z" fill="#000"></path></mask></defs></g></svg>',
   settings:'<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" class="nc-icon-wrapper"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6Z" fill="url(#uy7yqj1bi5b-1752500502788-6080933_gear_existing_0_2z1iprimi)" data-glass="origin" mask="url(#uy7yqj1bi5b-1752500502788-6080933_gear_mask_lza70t7q1)"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6Z" fill="url(#uy7yqj1bi5b-1752500502788-6080933_gear_existing_0_2z1iprimi)" data-glass="clone" filter="url(#uy7yqj1bi5b-1752500502788-6080933_gear_filter_8bx0dpzso)" clip-path="url(#uy7yqj1bi5b-1752500502788-6080933_gear_clipPath_b5f224jfy)"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M13.3447 1C13.7426 1.00011 13.9999 1.33303 14 1.70801C14 2.5955 14.6355 3.34891 15.4551 3.68945C16.2743 4.0297 17.2358 3.93568 17.8633 3.30859C18.1288 3.04342 18.5464 2.9898 18.8281 3.27148L20.7285 5.17188C21.0095 5.45283 20.9573 5.87076 20.6924 6.13574C20.0645 6.76325 19.9699 7.72518 20.3105 8.54492C20.6512 9.36445 21.4045 10 22.292 10C22.667 10.0001 22.9999 10.2575 23 10.6553V13.3447C22.9999 13.7426 22.667 13.9999 22.292 14C21.4047 14 20.6515 14.6349 20.3105 15.4541C19.9697 16.2735 20.0639 17.2357 20.6914 17.8633C20.9566 18.1287 21.0102 18.5464 20.7285 18.8281L18.8281 20.7285C18.5464 21.0103 18.1288 20.9565 17.8633 20.6914C17.2358 20.0639 16.2736 19.9701 15.4541 20.3105C14.6351 20.651 14.0002 21.4031 14 22.29C14 22.6656 13.7427 23 13.3438 23H10.6562C10.2576 23 10.0002 22.6664 10 22.291C10 21.4036 9.3645 20.6508 8.54492 20.3105C7.72514 19.9703 6.76322 20.0637 6.13574 20.6914C5.87074 20.9566 5.45301 21.0096 5.17188 20.7285L3.27148 18.8281C2.9898 18.5464 3.04342 18.1288 3.30859 17.8633C3.93568 17.2358 4.0297 16.2743 3.68945 15.4551C3.34891 14.6355 2.5955 14 1.70801 14C1.33303 13.9999 1.00011 13.7426 1 13.3447V10.6553C1.00011 10.2575 1.33301 10 1.70801 10C2.59557 10 3.34809 9.36461 3.68848 8.54492C4.02888 7.72515 3.93527 6.7634 3.30762 6.13574C3.04283 5.87087 2.99006 5.45378 3.27051 5.17285L5.17285 3.27051C5.45378 2.99006 5.87087 3.04283 6.13574 3.30762C6.7634 3.93527 7.72515 4.02888 8.54492 3.68848C9.36461 3.34809 10 2.59557 10 1.70801C10 1.33301 10.2575 1.00011 10.6553 1H13.3447ZM12 7.5C9.51472 7.5 7.5 9.51472 7.5 12C7.5 14.4853 9.51472 16.5 12 16.5C14.4853 16.5 16.5 14.4853 16.5 12C16.5 9.51472 14.4853 7.5 12 7.5Z" fill="url(#uy7yqj1bi5b-1752500502788-6080933_gear_existing_1_v6y0vtbxg)" data-glass="blur"></path><path d="M13.3447 1C13.7426 1.00011 13.9999 1.33303 14 1.70801C14 2.5955 14.6355 3.34891 15.4551 3.68945C16.2743 4.0297 17.2358 3.93568 17.8633 3.30859C18.1288 3.04342 18.5464 2.9898 18.8281 3.27148L20.7285 5.17188C21.0095 5.45283 20.9573 5.87076 20.6924 6.13574C20.0645 6.76325 19.9699 7.72518 20.3105 8.54492C20.6512 9.36445 21.4045 10 22.292 10C22.667 10.0001 22.9999 10.2575 23 10.6553V13.3447C22.9999 13.7426 22.667 13.9999 22.292 14C21.4047 14 20.6515 14.6349 20.3105 15.4541C19.9697 16.2735 20.0639 17.2357 20.6914 17.8633C20.9566 18.1287 21.0102 18.5464 20.7285 18.8281L18.8281 20.7285C18.5464 21.0103 18.1288 20.9565 17.8633 20.6914C17.2358 20.0639 16.2736 19.9701 15.4541 20.3105C14.6351 20.651 14.0002 21.4031 14 22.29C14 22.6656 13.7427 23 13.3438 23H10.6562C10.2576 23 10.0002 22.6664 10 22.291C10 21.4036 9.3645 20.6508 8.54492 20.3105C7.72514 19.9703 6.76322 20.0637 6.13574 20.6914C5.87074 20.9566 5.45301 21.0096 5.17188 20.7285L3.27148 18.8281C2.9898 18.5464 3.04342 18.1288 3.30859 17.8633C3.93568 17.2358 4.0297 16.2743 3.68945 15.4551C3.34891 14.6355 2.5955 14 1.70801 14C1.33303 13.9999 1.00011 13.7426 1 13.3447V10.6553C1.00011 10.2575 1.33301 10 1.70801 10C2.59557 10 3.34809 9.36461 3.68848 8.54492C4.02888 7.72515 3.93527 6.7634 3.30762 6.13574C3.04283 5.87087 2.99006 5.45378 3.27051 5.17285L5.17285 3.27051C5.45378 2.99006 5.87087 3.04283 6.13574 3.30762C6.7634 3.93527 7.72515 4.02888 8.54492 3.68848C9.36461 3.34809 10 2.59557 10 1.70801C10 1.33301 10.2575 1.00011 10.6553 1H13.3447ZM10.748 1.75C10.7285 2.99383 9.84617 3.95994 8.83301 4.38086C7.80936 4.80592 6.5239 4.72648 5.63672 3.86621L3.86621 5.63672C4.72648 6.5239 4.80592 7.80936 4.38086 8.83301C3.95994 9.84617 2.99382 10.7285 1.75 10.748V13.251C2.99359 13.2705 3.96068 14.1537 4.38184 15.167C4.80701 16.1907 4.72613 17.4755 3.86621 18.3623L5.63574 20.1318C6.52284 19.2714 7.80872 19.1935 8.83203 19.6182C9.84564 20.039 10.729 21.0057 10.748 22.25H13.252C13.2708 21.0059 14.1529 20.0394 15.166 19.6182C16.1896 19.1929 17.4754 19.2728 18.3623 20.1328L20.1328 18.3623C19.2729 17.4754 19.1922 16.1899 19.6182 15.166L19.7041 14.9756C20.1626 14.0447 21.0852 13.2692 22.25 13.251V10.748C21.0063 10.7285 20.0394 9.84609 19.6182 8.83301C19.1926 7.80892 19.2731 6.52338 20.1328 5.63672L18.3623 3.86621C17.4755 4.72613 16.1907 4.80701 15.167 4.38184C14.1537 3.96068 13.2715 2.99358 13.252 1.75H10.748Z" fill="url(#uy7yqj1bi5b-1752500502788-6080933_gear_existing_2_1vqoz2c6t)"></path><defs><linearGradient id="uy7yqj1bi5b-1752500502788-6080933_gear_existing_0_2z1iprimi" x1="12" y1="6" x2="12" y2="18" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(0, 0, 0, 1)"></stop><stop offset="1" stop-color="rgba(57, 57, 57, 1)"></stop></linearGradient><linearGradient id="uy7yqj1bi5b-1752500502788-6080933_gear_existing_1_v6y0vtbxg" x1="12" y1="1" x2="12" y2="23" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(227, 227, 229, 0.6)"></stop><stop offset="1" stop-color="rgba(187, 187, 192, 0.6)"></stop></linearGradient><linearGradient id="uy7yqj1bi5b-1752500502788-6080933_gear_existing_2_1vqoz2c6t" x1="12" y1="1" x2="12" y2="15" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(159, 159, 159, 1)" stop-opacity="1"></stop><stop offset="1" stop-color="rgba(159, 159, 159, 1)" stop-opacity="0"></stop></linearGradient><filter id="uy7yqj1bi5b-1752500502788-6080933_gear_filter_8bx0dpzso" x="-100%" y="-100%" width="400%" height="400%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="2" x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" edgeMode="none" result="blur"></feGaussianBlur></filter><clipPath id="uy7yqj1bi5b-1752500502788-6080933_gear_clipPath_b5f224jfy"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.3447 1C13.7426 1.00011 13.9999 1.33303 14 1.70801C14 2.5955 14.6355 3.34891 15.4551 3.68945C16.2743 4.0297 17.2358 3.93568 17.8633 3.30859C18.1288 3.04342 18.5464 2.9898 18.8281 3.27148L20.7285 5.17188C21.0095 5.45283 20.9573 5.87076 20.6924 6.13574C20.0645 6.76325 19.9699 7.72518 20.3105 8.54492C20.6512 9.36445 21.4045 10 22.292 10C22.667 10.0001 22.9999 10.2575 23 10.6553V13.3447C22.9999 13.7426 22.667 13.9999 22.292 14C21.4047 14 20.6515 14.6349 20.3105 15.4541C19.9697 16.2735 20.0639 17.2357 20.6914 17.8633C20.9566 18.1287 21.0102 18.5464 20.7285 18.8281L18.8281 20.7285C18.5464 21.0103 18.1288 20.9565 17.8633 20.6914C17.2358 20.0639 16.2736 19.9701 15.4541 20.3105C14.6351 20.651 14.0002 21.4031 14 22.29C14 22.6656 13.7427 23 13.3438 23H10.6562C10.2576 23 10.0002 22.6664 10 22.291C10 21.4036 9.3645 20.6508 8.54492 20.3105C7.72514 19.9703 6.76322 20.0637 6.13574 20.6914C5.87074 20.9566 5.45301 21.0096 5.17188 20.7285L3.27148 18.8281C2.9898 18.5464 3.04342 18.1288 3.30859 17.8633C3.93568 17.2358 4.0297 16.2743 3.68945 15.4551C3.34891 14.6355 2.5955 14 1.70801 14C1.33303 13.9999 1.00011 13.7426 1 13.3447V10.6553C1.00011 10.2575 1.33301 10 1.70801 10C2.59557 10 3.34809 9.36461 3.68848 8.54492C4.02888 7.72515 3.93527 6.7634 3.30762 6.13574C3.04283 5.87087 2.99006 5.45378 3.27051 5.17285L5.17285 3.27051C5.45378 2.99006 5.87087 3.04283 6.13574 3.30762C6.7634 3.93527 7.72515 4.02888 8.54492 3.68848C9.36461 3.34809 10 2.59557 10 1.70801C10 1.33301 10.2575 1.00011 10.6553 1H13.3447ZM12 7.5C9.51472 7.5 7.5 9.51472 7.5 12C7.5 14.4853 9.51472 16.5 12 16.5C14.4853 16.5 16.5 14.4853 16.5 12C16.5 9.51472 14.4853 7.5 12 7.5Z"></path></clipPath><mask id="uy7yqj1bi5b-1752500502788-6080933_gear_mask_lza70t7q1"><rect width="100%" height="100%" fill="#FFF"></rect><path fill-rule="evenodd" clip-rule="evenodd" d="M13.3447 1C13.7426 1.00011 13.9999 1.33303 14 1.70801C14 2.5955 14.6355 3.34891 15.4551 3.68945C16.2743 4.0297 17.2358 3.93568 17.8633 3.30859C18.1288 3.04342 18.5464 2.9898 18.8281 3.27148L20.7285 5.17188C21.0095 5.45283 20.9573 5.87076 20.6924 6.13574C20.0645 6.76325 19.9699 7.72518 20.3105 8.54492C20.6512 9.36445 21.4045 10 22.292 10C22.667 10.0001 22.9999 10.2575 23 10.6553V13.3447C22.9999 13.7426 22.667 13.9999 22.292 14C21.4047 14 20.6515 14.6349 20.3105 15.4541C19.9697 16.2735 20.0639 17.2357 20.6914 17.8633C20.9566 18.1287 21.0102 18.5464 20.7285 18.8281L18.8281 20.7285C18.5464 21.0103 18.1288 20.9565 17.8633 20.6914C17.2358 20.0639 16.2736 19.9701 15.4541 20.3105C14.6351 20.651 14.0002 21.4031 14 22.29C14 22.6656 13.7427 23 13.3438 23H10.6562C10.2576 23 10.0002 22.6664 10 22.291C10 21.4036 9.3645 20.6508 8.54492 20.3105C7.72514 19.9703 6.76322 20.0637 6.13574 20.6914C5.87074 20.9566 5.45301 21.0096 5.17188 20.7285L3.27148 18.8281C2.9898 18.5464 3.04342 18.1288 3.30859 17.8633C3.93568 17.2358 4.0297 16.2743 3.68945 15.4551C3.34891 14.6355 2.5955 14 1.70801 14C1.33303 13.9999 1.00011 13.7426 1 13.3447V10.6553C1.00011 10.2575 1.33301 10 1.70801 10C2.59557 10 3.34809 9.36461 3.68848 8.54492C4.02888 7.72515 3.93527 6.7634 3.30762 6.13574C3.04283 5.87087 2.99006 5.45378 3.27051 5.17285L5.17285 3.27051C5.45378 2.99006 5.87087 3.04283 6.13574 3.30762C6.7634 3.93527 7.72515 4.02888 8.54492 3.68848C9.36461 3.34809 10 2.59557 10 1.70801C10 1.33301 10.2575 1.00011 10.6553 1H13.3447ZM12 7.5C9.51472 7.5 7.5 9.51472 7.5 12C7.5 14.4853 9.51472 16.5 12 16.5C14.4853 16.5 16.5 14.4853 16.5 12C16.5 9.51472 14.4853 7.5 12 7.5Z" fill="#000"></path></mask></defs></g></svg>',
   tasks:'<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" class="nc-icon-wrapper"><path d="M14.086 8.58579C14.8671 7.80474 16.1331 7.80474 16.9142 8.58579C17.6951 9.36684 17.6952 10.6329 16.9142 11.4139L12.4142 15.9139C12.0393 16.2888 11.5308 16.4998 11.0001 16.4998C10.4694 16.4998 9.9609 16.2887 9.58603 15.9139L7.08603 13.4139C6.30498 12.6329 6.30498 11.3668 7.08603 10.5858C7.86708 9.80474 9.13311 9.80474 9.91416 10.5858L11.0001 11.6717L14.086 8.58579Z" fill="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_existing_0_nj5c4b3sq)" data-glass="origin" mask="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_mask_wtnucnuoh)"></path><path d="M14.086 8.58579C14.8671 7.80474 16.1331 7.80474 16.9142 8.58579C17.6951 9.36684 17.6952 10.6329 16.9142 11.4139L12.4142 15.9139C12.0393 16.2888 11.5308 16.4998 11.0001 16.4998C10.4694 16.4998 9.9609 16.2887 9.58603 15.9139L7.08603 13.4139C6.30498 12.6329 6.30498 11.3668 7.08603 10.5858C7.86708 9.80474 9.13311 9.80474 9.91416 10.5858L11.0001 11.6717L14.086 8.58579Z" fill="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_existing_0_nj5c4b3sq)" data-glass="clone" filter="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_filter_ncgso9qjd)" clip-path="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_clipPath_5cw5yfv8q)"></path><path d="M12 5C15.866 5 19 8.13401 19 12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12C5 8.13401 8.13401 5 12 5ZM16.207 9.29297C15.8165 8.90244 15.1835 8.90244 14.793 9.29297L11 13.0859L9.20703 11.293C8.81651 10.9024 8.18349 10.9024 7.79297 11.293C7.40244 11.6835 7.40244 12.3165 7.79297 12.707L10.293 15.207C10.4805 15.3946 10.7348 15.5 11 15.5C11.2652 15.5 11.5195 15.3946 11.707 15.207L16.207 10.707C16.5976 10.3165 16.5976 9.68349 16.207 9.29297Z" fill="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_existing_1_o6a66jrfv)" data-glass="blur"></path><path d="M13.8008 20.8203C14.3419 20.7105 14.8694 21.0596 14.9795 21.6006C15.0893 22.1417 14.7403 22.6703 14.1992 22.7803C13.4879 22.9247 12.7521 23 12 23C11.2479 23 10.5121 22.9247 9.80078 22.7803C9.25964 22.6703 8.90968 22.1418 9.01953 21.6006C9.12955 21.0595 9.65808 20.7105 10.1992 20.8203C10.7802 20.9382 11.3824 21 12 21C12.6176 21 13.2198 20.9382 13.8008 20.8203ZM3.10352 16.6816C3.56392 16.3766 4.1852 16.5025 4.49023 16.9629C4.81772 17.4572 5.19896 17.9275 5.63574 18.3643C6.07254 18.8011 6.54281 19.1823 7.03711 19.5098C7.49752 19.8148 7.62339 20.4361 7.31836 20.8965C7.01337 21.3566 6.39292 21.4824 5.93262 21.1777C5.32754 20.7769 4.7535 20.3101 4.22168 19.7783C3.68985 19.2465 3.22315 18.6725 2.82227 18.0674C2.51755 17.6071 2.64336 16.9866 3.10352 16.6816ZM19.5098 16.9629C19.8148 16.5025 20.4361 16.3766 20.8965 16.6816C21.3566 16.9866 21.4824 17.6071 21.1777 18.0674C20.7769 18.6725 20.3101 19.2465 19.7783 19.7783C19.2465 20.3101 18.6725 20.7769 18.0674 21.1777C17.6071 21.4824 16.9866 21.3566 16.6816 20.8965C16.3766 20.4361 16.5025 19.8148 16.9629 19.5098C17.4572 19.1823 17.9275 18.8011 18.3643 18.3643C18.8011 17.9275 19.1823 17.4572 19.5098 16.9629ZM1 12C1 11.2479 1.07534 10.5121 1.21973 9.80078C1.32969 9.25966 1.85824 8.90968 2.39941 9.01953C2.94047 9.12955 3.28953 9.65809 3.17969 10.1992C3.06178 10.7802 3 11.3824 3 12C3 12.6176 3.06177 13.2198 3.17969 13.8008C3.28953 14.3419 2.94047 14.8705 2.39941 14.9805C1.85825 15.0903 1.3297 14.7403 1.21973 14.1992C1.07534 13.4879 1 12.7521 1 12ZM21 12C21 11.3824 20.9382 10.7802 20.8203 10.1992C20.7105 9.65807 21.0595 9.12953 21.6006 9.01953C22.1418 8.90968 22.6703 9.25964 22.7803 9.80078C22.9247 10.5121 23 11.2479 23 12C23 12.7521 22.9247 13.4879 22.7803 14.1992C22.6703 14.7403 22.1417 15.0893 21.6006 14.9795C21.0596 14.8694 20.7105 14.3419 20.8203 13.8008C20.9382 13.2198 21 12.6176 21 12ZM5.93262 2.82227C6.39292 2.51759 7.01336 2.64339 7.31836 3.10352C7.62339 3.56392 7.49752 4.1852 7.03711 4.49023C6.54281 4.81772 6.07254 5.19895 5.63574 5.63574C5.19895 6.07253 4.81772 6.54282 4.49023 7.03711C4.1852 7.49752 3.56392 7.62339 3.10352 7.31836C2.64337 7.01336 2.51756 6.39293 2.82227 5.93262C3.22315 5.32753 3.68985 4.75351 4.22168 4.22168C4.7535 3.68986 5.32754 3.22315 5.93262 2.82227ZM16.6816 3.10352C16.9866 2.64337 17.6071 2.51754 18.0674 2.82227C18.6725 3.22315 19.2465 3.68986 19.7783 4.22168C20.3101 4.75349 20.7769 5.32755 21.1777 5.93262C21.4824 6.39291 21.3566 7.01337 20.8965 7.31836C20.4361 7.62339 19.8148 7.49751 19.5098 7.03711C19.1823 6.54281 18.801 6.07254 18.3643 5.63574C17.9275 5.19896 17.4572 4.81772 16.9629 4.49023C16.5025 4.1852 16.3766 3.56392 16.6816 3.10352ZM12 1C12.7521 1 13.4879 1.07534 14.1992 1.21973C14.7403 1.32972 15.0893 1.85827 14.9795 2.39941C14.8694 2.94036 14.3419 3.28952 13.8008 3.17969C13.2198 3.06177 12.6176 3 12 3C11.3824 3 10.7802 3.06178 10.1992 3.17969C9.65809 3.28953 9.12956 2.94046 9.01953 2.39941C8.90968 1.85823 9.25964 1.32967 9.80078 1.21973C10.5121 1.07534 11.2479 1 12 1Z" fill="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_existing_2_f6ovztgg8)"></path><path d="M12 5C15.866 5 19 8.13401 19 12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12C5 8.13401 8.13401 5 12 5ZM12 5.75C8.54822 5.75 5.75 8.54822 5.75 12C5.75 15.4518 8.54822 18.25 12 18.25C15.4518 18.25 18.25 15.4518 18.25 12C18.25 8.54822 15.4518 5.75 12 5.75Z" fill="url(#pkgy86jc9qn-1783331433244-6948861_progress-done_existing_3_hrwt4iimq)"></path><defs><linearGradient id="pkgy86jc9qn-1783331433244-6948861_progress-done_existing_0_nj5c4b3sq" x1="12" y1="8" x2="12" y2="16.5" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(0, 0, 0, 1)"></stop><stop offset="1" stop-color="rgba(109, 235, 138, 1)"></stop></linearGradient><linearGradient id="pkgy86jc9qn-1783331433244-6948861_progress-done_existing_1_o6a66jrfv" x1="12" y1="5" x2="12" y2="19" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(227, 227, 229, 0.6)"></stop><stop offset="1" stop-color="rgba(187, 187, 192, 0.6)"></stop></linearGradient><linearGradient id="pkgy86jc9qn-1783331433244-6948861_progress-done_existing_2_f6ovztgg8" x1="12" y1="1" x2="12" y2="23" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(0, 0, 0, 1)"></stop><stop offset="1" stop-color="rgba(109, 235, 138, 1)"></stop></linearGradient><linearGradient id="pkgy86jc9qn-1783331433244-6948861_progress-done_existing_3_hrwt4iimq" x1="12" y1="5" x2="12" y2="13.107" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(255, 255, 255, 1)"></stop><stop offset="1" stop-color="rgba(255, 255, 255, 1)" stop-opacity="0"></stop></linearGradient><filter id="pkgy86jc9qn-1783331433244-6948861_progress-done_filter_ncgso9qjd" x="-100%" y="-100%" width="400%" height="400%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="2" x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" edgeMode="none" result="blur"></feGaussianBlur></filter><clipPath id="pkgy86jc9qn-1783331433244-6948861_progress-done_clipPath_5cw5yfv8q"><path d="M12 5C15.866 5 19 8.13401 19 12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12C5 8.13401 8.13401 5 12 5ZM16.207 9.29297C15.8165 8.90244 15.1835 8.90244 14.793 9.29297L11 13.0859L9.20703 11.293C8.81651 10.9024 8.18349 10.9024 7.79297 11.293C7.40244 11.6835 7.40244 12.3165 7.79297 12.707L10.293 15.207C10.4805 15.3946 10.7348 15.5 11 15.5C11.2652 15.5 11.5195 15.3946 11.707 15.207L16.207 10.707C16.5976 10.3165 16.5976 9.68349 16.207 9.29297Z"></path></clipPath><mask id="pkgy86jc9qn-1783331433244-6948861_progress-done_mask_wtnucnuoh"><rect width="100%" height="100%" fill="#FFF"></rect><path d="M12 5C15.866 5 19 8.13401 19 12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12C5 8.13401 8.13401 5 12 5ZM16.207 9.29297C15.8165 8.90244 15.1835 8.90244 14.793 9.29297L11 13.0859L9.20703 11.293C8.81651 10.9024 8.18349 10.9024 7.79297 11.293C7.40244 11.6835 7.40244 12.3165 7.79297 12.707L10.293 15.207C10.4805 15.3946 10.7348 15.5 11 15.5C11.2652 15.5 11.5195 15.3946 11.707 15.207L16.207 10.707C16.5976 10.3165 16.5976 9.68349 16.207 9.29297Z" fill="#000"></path></mask></defs></g></svg>',
+  docs:'<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" class="nc-icon-wrapper"><path d="M17.9176 2C19.6966 2 20.5861 2 21.2656 2.35034C21.8633 2.6585 22.3492 3.15022 22.6538 3.75503C23 4.4426 23 5.34269 23 7.14286V11.8571C23 13.6573 23 14.5574 22.6538 15.245C22.3492 15.8498 21.8633 16.3415 21.2656 16.6497C20.5861 17 19.6966 17 17.9176 17H10.0824C8.30336 17 7.41387 17 6.73438 16.6497C6.13669 16.3415 5.65075 15.8498 5.34621 15.245C5 14.5574 5 13.6573 5 11.8571L5 7.14286C5 5.34269 5 4.4426 5.34621 3.75503C5.65075 3.15022 6.13669 2.6585 6.73438 2.35034C7.41387 2 8.30336 2 10.0824 2L17.9176 2Z" fill="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_0_q6c3uijeo)" data-glass="origin" mask="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_mask_7t4k5miu5)"></path><path d="M17.9176 2C19.6966 2 20.5861 2 21.2656 2.35034C21.8633 2.6585 22.3492 3.15022 22.6538 3.75503C23 4.4426 23 5.34269 23 7.14286V11.8571C23 13.6573 23 14.5574 22.6538 15.245C22.3492 15.8498 21.8633 16.3415 21.2656 16.6497C20.5861 17 19.6966 17 17.9176 17H10.0824C8.30336 17 7.41387 17 6.73438 16.6497C6.13669 16.3415 5.65075 15.8498 5.34621 15.245C5 14.5574 5 13.6573 5 11.8571L5 7.14286C5 5.34269 5 4.4426 5.34621 3.75503C5.65075 3.15022 6.13669 2.6585 6.73438 2.35034C7.41387 2 8.30336 2 10.0824 2L17.9176 2Z" fill="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_0_q6c3uijeo)" data-glass="clone" filter="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_filter_mdwc2l39y)" clip-path="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_clipPath_j59tljfjn)"></path><path d="M14.2 10C15.8802 10 16.7202 10 17.362 10.327C17.9265 10.6146 18.3854 11.0735 18.673 11.638C19 12.2798 19 13.1198 19 14.8V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H5.8C4.11984 22 3.27976 22 2.63803 21.673C2.07354 21.3854 1.6146 20.9265 1.32698 20.362C1 19.7202 1 18.8802 1 17.2L1 11.8C1 10.1198 1 9.27976 1.32698 8.63803C1.6146 8.07354 2.07354 7.6146 2.63803 7.32698C3.27976 7 4.11984 7 5.8 7L7.28741 7C7.91355 7 8.22663 7 8.5108 7.0863C8.76238 7.1627 8.99643 7.28796 9.19955 7.45491C9.42899 7.64349 9.60265 7.90398 9.94997 8.42496L11 10H14.2Z" fill="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_1_jccwar2bc)" data-glass="blur"></path><path d="M1 17.2002V11.7998C1 10.2247 1.00007 9.38795 1.26953 8.76074L1.32715 8.6377C1.57888 8.14381 1.96166 7.73057 2.43164 7.44238L2.6377 7.32715C3.27941 7.00018 4.11978 7 5.7998 7H7.28711C7.91314 7 8.22661 6.99968 8.51074 7.08594C8.76227 7.16233 8.99612 7.28818 9.19922 7.45508C9.42866 7.64366 9.60288 7.90383 9.9502 8.4248L11 10H14.2002C15.8802 10 16.7206 10.0002 17.3623 10.3271C17.9265 10.6147 18.3853 11.0735 18.6729 11.6377C18.9998 12.2794 19 13.1198 19 14.7998V17.2002L18.9951 18.3125C18.9798 19.2877 18.9181 19.881 18.6729 20.3623L18.5576 20.5684C18.2694 21.0383 17.8562 21.4211 17.3623 21.6729L17.2393 21.7305C16.7793 21.9281 16.2066 21.9811 15.3125 21.9951L14.2002 22V21.25C15.0525 21.25 15.6468 21.2497 16.1094 21.2119C16.5632 21.1748 16.824 21.1055 17.0215 21.0049C17.4448 20.7892 17.7892 20.4448 18.0049 20.0215C18.1055 19.824 18.1748 19.5632 18.2119 19.1094C18.2497 18.6468 18.25 18.0525 18.25 17.2002V14.7998C18.25 13.9475 18.2497 13.3532 18.2119 12.8906C18.1748 12.4368 18.1055 12.176 18.0049 11.9785C17.7892 11.5552 17.4448 11.2108 17.0215 10.9951C16.824 10.8945 16.5632 10.8252 16.1094 10.7881C15.6468 10.7503 15.0525 10.75 14.2002 10.75H10.5986L9.32617 8.84082C8.95306 8.28116 8.84667 8.13534 8.72363 8.03418C8.59669 7.92984 8.45019 7.85146 8.29297 7.80371C8.14052 7.75741 7.95995 7.75 7.28711 7.75H5.7998C4.94746 7.75 4.35322 7.75029 3.89062 7.78809C3.4368 7.82517 3.17602 7.89449 2.97852 7.99512C2.55515 8.21083 2.21083 8.55515 1.99512 8.97852C1.89449 9.17602 1.82517 9.4368 1.78809 9.89062C1.75029 10.3532 1.75 10.9475 1.75 11.7998V17.2002C1.75 18.0525 1.75029 18.6468 1.78809 19.1094C1.82517 19.5632 1.89449 19.824 1.99512 20.0215C2.21083 20.4448 2.55515 20.7892 2.97852 21.0049C3.17602 21.1055 3.4368 21.1748 3.89062 21.2119C4.35322 21.2497 4.94745 21.25 5.7998 21.25V22C4.11978 22 3.27941 21.9998 2.6377 21.6729C2.14381 21.4211 1.73057 21.0383 1.44238 20.5684L1.32715 20.3623C1.0819 19.881 1.02021 19.2877 1.00488 18.3125L1 17.2002ZM14.2002 21.25V22H5.7998V21.25H14.2002Z" fill="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_2_93zh461hn)"></path><defs><linearGradient id="jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_0_q6c3uijeo" x1="14" y1="2" x2="14" y2="17" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(0, 0, 0, 0.13)" data-glass-11="on"></stop><stop offset="1" stop-color="rgba(11, 146, 216, 1)" data-glass-12="on"></stop></linearGradient><linearGradient id="jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_1_jccwar2bc" x1="10" y1="7" x2="10" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(187, 187, 187, 0.5)" data-glass-21="on"></stop><stop offset="1" stop-color="rgba(0, 0, 0, 0.6)" data-glass-22="on"></stop></linearGradient><linearGradient id="jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_2_93zh461hn" x1="10" y1="7" x2="10" y2="15.687" gradientUnits="userSpaceOnUse"><stop stop-color="rgba(111, 100, 100, 1)" data-glass-light="on"></stop><stop offset="1" stop-color="rgba(111, 100, 100, 1)" stop-opacity="0" data-glass-light="on"></stop></linearGradient><filter id="jd5fpgiay7o-1783331433238-9936540_folder-doc_filter_mdwc2l39y" x="-100%" y="-100%" width="400%" height="400%" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"><feGaussianBlur stdDeviation="2" x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" edgeMode="none" result="blur"></feGaussianBlur></filter><clipPath id="jd5fpgiay7o-1783331433238-9936540_folder-doc_clipPath_j59tljfjn"><path d="M14.2 10C15.8802 10 16.7202 10 17.362 10.327C17.9265 10.6146 18.3854 11.0735 18.673 11.638C19 12.2798 19 13.1198 19 14.8V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H5.8C4.11984 22 3.27976 22 2.63803 21.673C2.07354 21.3854 1.6146 20.9265 1.32698 20.362C1 19.7202 1 18.8802 1 17.2L1 11.8C1 10.1198 1 9.27976 1.32698 8.63803C1.6146 8.07354 2.07354 7.6146 2.63803 7.32698C3.27976 7 4.11984 7 5.8 7L7.28741 7C7.91355 7 8.22663 7 8.5108 7.0863C8.76238 7.1627 8.99643 7.28796 9.19955 7.45491C9.42899 7.64349 9.60265 7.90398 9.94997 8.42496L11 10H14.2Z" fill="url(#jd5fpgiay7o-1783331433238-9936540_folder-doc_existing_1_jccwar2bc)"></path></clipPath><mask id="jd5fpgiay7o-1783331433238-9936540_folder-doc_mask_7t4k5miu5"><rect width="100%" height="100%" fill="#FFF"></rect><path d="M14.2 10C15.8802 10 16.7202 10 17.362 10.327C17.9265 10.6146 18.3854 11.0735 18.673 11.638C19 12.2798 19 13.1198 19 14.8V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H5.8C4.11984 22 3.27976 22 2.63803 21.673C2.07354 21.3854 1.6146 20.9265 1.32698 20.362C1 19.7202 1 18.8802 1 17.2L1 11.8C1 10.1198 1 9.27976 1.32698 8.63803C1.6146 8.07354 2.07354 7.6146 2.63803 7.32698C3.27976 7 4.11984 7 5.8 7L7.28741 7C7.91355 7 8.22663 7 8.5108 7.0863C8.76238 7.1627 8.99643 7.28796 9.19955 7.45491C9.42899 7.64349 9.60265 7.90398 9.94997 8.42496L11 10H14.2Z" fill="#000"></path></mask></defs></g></svg>',
   box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>',
   dollar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
   flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4a1 1 0 0 1 1.4-.9L18 8l-12.6 5L4 22Z"/></svg>',
@@ -558,11 +559,11 @@ let theme = (function(){
   return 'light';
 })();
 const sortState = (function(){
-  try{ const s=JSON.parse(localStorage.getItem('stockflow_sort')); if(s) return {inv:s.inv||'default',quote:s.quote||'default',po:s.po||'default',req:s.req||'default',proj:s.proj||'default'}; }catch(e){}
-  return {inv:'default',quote:'default',po:'default',req:'default',proj:'default'};
+  try{ const s=JSON.parse(localStorage.getItem('stockflow_sort')); if(s) return {inv:s.inv||'default',quote:s.quote||'default',po:s.po||'default',req:s.req||'default',proj:s.proj||'default',docs:s.docs||'default'}; }catch(e){}
+  return {inv:'default',quote:'default',po:'default',req:'default',proj:'default',docs:'default'};
 })();
-const selMode = {inv:false, quote:false, po:false, req:false, proj:false};
-const selState = {inv:new Set(), quote:new Set(), po:new Set(), req:new Set(), proj:new Set()};
+const selMode = {inv:false, quote:false, po:false, req:false, proj:false, docs:false};
+const selState = {inv:new Set(), quote:new Set(), po:new Set(), req:new Set(), proj:new Set(), docs:new Set()};
 
 function toggleSelMode(page){
   selMode[page] = !selMode[page];
@@ -629,6 +630,7 @@ function getVisibleIds(page){
   if(page==='po') return [...document.querySelectorAll('[data-page="po"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
   if(page==='req') return [...document.querySelectorAll('[data-page="req"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
   if(page==='proj') return [...document.querySelectorAll('[data-page="proj"] [data-page-idx]')].map(e=>parseInt(e.dataset.pageIdx,10));
+  if(page==='docs') return [...document.querySelectorAll('[data-page="docs"] [data-page-idx]')].map(e=>e.dataset.pageIdx);
   return [];
 }
 
@@ -636,7 +638,7 @@ function updateCheckAll(page){
   const ids = getVisibleIds(page);
   const s = selState[page];
   const allChecked = ids.length>0 && ids.every(i=>s.has(i));
-  const el = document.getElementById(page==='quote'?'quoteCheckAll':page==='po'?'poCheckAll':page==='proj'?'projCheckAll':'');
+  const el = document.getElementById(page==='quote'?'quoteCheckAll':page==='po'?'poCheckAll':page==='proj'?'projCheckAll':page==='docs'?'docsCheckAll':'');
   if(el) el.checked = allChecked;
 }
 
@@ -656,7 +658,19 @@ function bulkDeleteItems(page){
   else if(page==='po'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>purchaseOrders.splice(i,1));}
   else if(page==='req'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>reqsData.splice(i,1));}
   else if(page==='proj'){const arr=[...s].sort((a,b)=>b-a);arr.forEach(i=>projects.splice(i,1));}
-  s.clear(); navigate(page==='inv'?'inventory':page==='quote'?'sales':page==='po'?'purchasing':page==='req'?'issues':'projects');
+  else if(page==='docs'){
+    const rows=[...s].map(k=>k.split(':').map(Number));
+    const stand = rows.filter(([idx])=>idx===-1).map(([,wi])=>wi).sort((a,b)=>b-a);
+    stand.forEach(wi=>standaloneWorks.splice(wi,1));
+    if(stand.length) syncStandaloneWorks();
+    const byProj={};
+    rows.filter(([idx])=>idx!==-1).forEach(([idx,wi])=>{(byProj[idx]=byProj[idx]||[]).push(wi);});
+    Object.keys(byProj).forEach(pi=>{
+      byProj[pi].sort((a,b)=>b-a).forEach(wi=>getCraneWorks(projects[+pi]).splice(wi,1));
+      syncCurrentProject(+pi);
+    });
+  }
+  s.clear(); navigate(page==='inv'?'inventory':page==='quote'?'sales':page==='po'?'purchasing':page==='req'?'issues':page==='docs'?'documents':'projects');
 }
 
 function t(path){
@@ -822,6 +836,31 @@ function saveProjectsToStorage(){
   try{ localStorage.setItem('stockflow_projects', JSON.stringify(projects)); }catch(e){}
 }
 const projects = withFirestoreSync(loadProjectsFromStorage(), 'projects', 'id');
+
+/* Work sheets that deliberately belong to no project (added straight from the
+   Documents section). Same sheet shape as p.works, but with idx = -1 wherever a
+   record handler needs coordinates. */
+function loadStandaloneWorks(){
+  try{ const s = localStorage.getItem('stockflow_standalone_works'); if(s){ const a = JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
+  return [];
+}
+function saveStandaloneWorks(){
+  try{ localStorage.setItem('stockflow_standalone_works', JSON.stringify(standaloneWorks)); }catch(e){}
+}
+function syncStandaloneWorks(){
+  saveStandaloneWorks();
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('standalone_works', standaloneWorks, 'id');
+  }
+}
+const standaloneWorks = withFirestoreSync(loadStandaloneWorks(), 'standalone_works', 'id');
+
+/* Returns the work list of a project, or the standalone list for idx === -1. */
+function craneWorksOf(idx){
+  if(idx === -1) return standaloneWorks;
+  const p = projects[idx];
+  return p ? getCraneWorks(p) : [];
+}
 
 /* Nested edits inside a project (phases, images, notes, team, docs, risks)
    mutate a sub-array/object inside a project record, not the `projects`
@@ -1540,7 +1579,8 @@ const LSORT = {
   inv:[{v:'default',k:'default'},{v:'name-asc',k:'nameAZ'},{v:'name-desc',k:'nameZA'},{v:'sku',k:'id'},{v:'stock',k:'stock'},{v:'category',k:'category'}],
   po:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'supplier',k:'supplier'},{v:'total',k:'total'}],
   req:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'dept',k:'dept'},{v:'priority',k:'priority'}],
-  proj:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'name',k:'name'},{v:'client',k:'customer'},{v:'value',k:'value'}]
+  proj:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'name',k:'name'},{v:'client',k:'customer'},{v:'value',k:'value'}],
+  docs:[{v:'default',k:'default'},{v:'date-asc',k:'dateOld'},{v:'date-desc',k:'dateNew'},{v:'id',k:'id'},{v:'project',k:'name'},{v:'hours',k:'total'},{v:'worktype',k:'category'}]
 };
 function liquidSortLabel(list, val){
   const it = list.find(o=>o.v===val) || list[0];
@@ -3977,7 +4017,7 @@ function renderUserPermsGrid(perms){
   grid.innerHTML = selectable.map(p=>`
     <label class="perm-chip ${set.has(p)?'on':''}">
       <input type="checkbox" value="${p}" ${set.has(p)?'checked':''}>
-      <span>${L.nav[p]||p}</span>
+      <span>${(L.nav && L.nav[p]) || (p==='documents' ? docsText().nav : p)}</span>
     </label>`).join('');
 }
 
@@ -4030,7 +4070,7 @@ function saveUser(){
     u.permissions = readUserPerms();
   } else {
     const perms = readUserPerms();
-    usersData.unshift({name, email, password:encodePW(password), role, dept, deptAr:dept, init, permissions:perms});
+    usersData.unshift({name, email, password:encodePW(password), role, dept, deptAr:dept, init, permissions:perms, permSchema:2});
   }
   syncLoginUsers();
   syncUsers();
@@ -4579,9 +4619,1030 @@ function renderProjTeamTab(p, idx, L){
   return `<div style="margin-bottom:12px;"><button class="btn-mini" onclick="showAddTeamModal(${idx})">+ ${L.addMember}</button></div>${p.team.length ? `<div class="table-card"><table><thead><tr><th>${L.teamMember}</th><th>${L.role}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${p.team.map((m,i) => `<tr><td>${m.name}</td><td>${lang==='en'?m.role:m.roleAr}</td><td><div class="row-actions"><button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteProjectTeamMember(${idx},${i})">${ICONS.trash}</button></div></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">'+ICONS.users+'<div>'+L.noTeam+'</div></div>'}`;
 }
 
+/* Sub-view of the project Documents tab: 'files' (uploads) or 'works'
+   (data-entry crane work sheets). Kept in a module-level variable so the
+   choice survives re-renders triggered by sync/delete/tab switches. */
+let projDocsSub = 'files';
+
 function renderProjDocsTab(p, idx, L){
+  const works = Array.isArray(p.works) ? p.works : [];
+  const sub = `<div class="cw-subnav">
+    <button class="cw-chip${projDocsSub==='works'?'':' active'}" onclick="switchProjDocsSub('files',${idx})">${lang==='en'?'Documents':'المستندات'}<span class="cw-chip-n">${(p.docs||[]).length}</span></button>
+    <button class="cw-chip${projDocsSub==='works'?' active':''}" onclick="switchProjDocsSub('works',${idx})">${lang==='en'?'Crane Works':'أعمال'}<span class="cw-chip-n">${works.length}</span></button>
+  </div>`;
+  return sub + (projDocsSub==='works' ? renderCraneWorksList(p, idx) : renderDocsFilesList(p, idx, L));
+}
+
+function switchProjDocsSub(view, idx){
+  projDocsSub = (view==='works') ? 'works' : 'files';
+  const body = document.getElementById('projDetailBody');
+  if(body) body.innerHTML = renderProjDocsTab(projects[idx], idx, STR[lang].projects);
+}
+
+function renderDocsFilesList(p, idx, L){
   const fileIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
   return `<div style="margin-bottom:12px;"><button class="btn-mini" onclick="showAddDocModal(${idx})">+ ${L.addDocument}</button></div>${p.docs.length ? `<div class="table-card"><table><thead><tr><th>${L.documentName}</th><th>${L.docType}</th><th>${lang==='en'?'File':'الملف'}</th><th>${L.uploadDate}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${p.docs.map((d,i) => `<tr><td>${escapeHtml(d.name)}</td><td><span class="cat-tag">${escapeHtml(d.type)}</span></td><td>${d.url ? `<a href="${escapeHtml(d.url)}" download="${escapeHtml(d.file||d.name)}" style="color:var(--blue);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">${fileIcon}${escapeHtml(d.file)||(lang==='en'?'View':'عرض')}</a>` : '<span style="color:var(--text-3);">—</span>'}</td><td>${d.date}</td><td><div class="row-actions"><button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteProjectDoc(${idx},${i})">${ICONS.trash}</button></div></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">'+ICONS.inbox+'<div>'+L.noDocs+'</div></div>'}`;
+}
+
+/* ===================================================================
+   CRANE WORKS (أعمال الكرين) — data-entry sheets inside Documents
+   -------------------------------------------------------------------
+   Each record is a self-contained A4 work sheet: 10 header fields plus
+   a dynamic list of work items, rendered by buildCraneSheet() and
+   printed through a dedicated print host so nothing else leaks onto
+   the page.
+================================================================== */
+function getCraneWorks(p){
+  if(!p) return [];
+  if(!Array.isArray(p.works)) p.works = [];
+  return p.works;
+}
+
+function craneText(){
+  return lang==='en' ? {
+    newWork:'New Work Sheet', editWork:'Edit Work Sheet', works:'Crane Works', noWorks:'No work sheets yet',
+    issueDate:'Issue Date', workDate:'Work Date', projectNo:'Project No.', supervisor:'Site Supervisor',
+    projectName:'Project Name', workType:'Work Type', location:'Work Location', weight:'Crane Weight',
+    driver:'Driver Name', contact:'Contact No.', preparedBy:'Prepared by', editedBy:'Last edited by',
+    no:'#', desc:'Description', start:'Start', end:'End', hours:'Total Hours',
+    addItem:'Add item', items:'Items', save:'Save', cancel:'Cancel', print:'Print / PDF',
+    preview:'Preview', edit:'Edit', del:'Delete', saved:'Work sheet saved!', updated:'Work sheet updated!',
+    removed:'Work sheet deleted.', needName:'Enter the project name first.',
+    title:'Crane Works', org:'Abu Duhair Iron Factory', orgEn:'Abu Duhair Iron Factory',
+    workDateCol:'Work Date', locationCol:'Location', typeCol:'Work Type', nameCol:'Project Name',
+    descPh:'Work description...', actions:'Actions'
+  } : {
+    newWork:'عمل جديد', editWork:'تعديل العمل', works:'أعمال', noWorks:'لا توجد أعمال بعد',
+    issueDate:'تاريخ الأصدار', workDate:'تاريخ العمل', projectNo:'رقم المشروع', supervisor:'مسؤول الموقع',
+    projectName:'اسم المشروع', workType:'نوع العمل', location:'موقع العمل', weight:'وزن الكرين',
+    driver:'اسم السائق', contact:'رقم التواصل', preparedBy:'أعد بواسطة', editedBy:'آخر تعديل بواسطة',
+    no:'#', desc:'الوصف', start:'البدء', end:'الانتهاء', hours:'إجمالي عدد الساعات',
+    addItem:'بند', items:'البنود', save:'حفظ', cancel:'إلغاء', print:'طباعة / PDF',
+    preview:'معاينة', edit:'تعديل', del:'حذف', saved:'تم حفظ العمل!', updated:'تم تعديل العمل!',
+    removed:'تم حذف العمل.', needName:'أدخل اسم المشروع أولاً.',
+    title:'أعمال الكرين', org:'مصنع أبو ظهير للحديد', orgEn:'Abu Duhair Iron Factory',
+    workDateCol:'تاريخ العمل', locationCol:'موقع العمل', typeCol:'نوع العمل', nameCol:'اسم المشروع',
+    descPh:'وصف العمل...', actions:'إجراءات'
+  };
+}
+
+function renderCraneWorksList(p, idx){
+  const T = craneText();
+  const works = getCraneWorks(p);
+  const bar = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+    <button class="btn-mini" onclick="showCraneWorkModal(${idx})">+ ${T.newWork}</button>
+  </div>`;
+  if(!works.length) return bar + `<div class="empty-state">${ICONS.inbox}<div>${T.noWorks}</div></div>`;
+  return bar + `<div class="table-card"><table><thead><tr>
+    <th>${T.no}</th><th>${T.nameCol}</th><th>${T.typeCol}</th><th>${T.locationCol}</th>
+    <th>${T.workDateCol}</th><th>${T.items}</th><th>${T.actions}</th></tr></thead><tbody>
+    ${works.map((w,i) => `<tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(w.projectName||'—')}</td>
+      <td>${escapeHtml(cwWorkTypeLabel(w.workType)||'—')}</td>
+      <td>${escapeHtml(w.location||'—')}</td>
+      <td>${escapeHtml(w.workDate||'—')}</td>
+      <td><span class="cat-tag">${(w.items||[]).length}</span></td>
+      <td><div class="row-actions">
+        <button title="${T.preview}" onclick="openCranePreview(${idx},${i})">${ICONS.eye}</button>
+        <button title="${T.edit}" onclick="showCraneWorkModal(${idx},${i})">${ICONS.edit}</button>
+        <button title="${T.del}" onclick="deleteCraneWork(${idx},${i})">${ICONS.trash}</button>
+      </div></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function cwField(id, label, val, type, extra){
+  return `<div class="field"><label>${label}</label><input id="${id}" type="${type||'text'}" value="${escapeHtml(val||'')}" ${extra||''}></div>`;
+}
+
+/* The factory runs a fixed crane fleet, so the capacity is a choice and not a
+   free-text field. Stored as the bare tonnage ("15") and the unit is appended
+   when rendered, which keeps the value clean for search/sort later. */
+const CRANE_TONS = [15, 25, 50, 80];
+
+/* Pull the tonnage out of anything previously typed by hand ("50T", "50 ton",
+   "50") so old records still light up the matching option. */
+function cwWeightValue(v){
+  const m = String(v==null?'':v).match(/\d+(?:\.\d+)?/);
+  return m ? m[0] : '';
+}
+
+function cwWeightLabel(v){
+  const t = cwWeightValue(v);
+  if(!t) return '';
+  return lang==='en' ? t + ' Tons' : t + ' طن';
+}
+
+function cwTonsOptions(){
+  return CRANE_TONS.map(n => [String(n), cwWeightLabel(String(n))]);
+}
+
+/* Site supervisors on the current crew. Like work types, `id` is what gets
+   stored and the ar/en labels follow the active language, so a sheet saved in
+   Arabic still prints the latinised name afterwards. الخيرات is a known
+   supervisor kept here as an alias so any existing record carrying that name
+   still translates, but it is not offered in the dropdown. */
+const CRANE_SUPERVISORS = [
+  { id:'hussein', ar:'حسين',   en:'Hussein' },
+  { id:'zakir',   ar:'زاكير',   en:'Zakir' },
+  { id:'taleb',   ar:'طالب',    en:'Taleb' }
+];
+const CRANE_SUPERVISOR_ALIASES = [
+  { id:'khairat', ar:'الخيرات', en:'Al-Khairat' }
+];
+
+function cwSupervisorAll(){
+  return CRANE_SUPERVISORS.concat(CRANE_SUPERVISOR_ALIASES);
+}
+
+function cwSupervisorValue(v){
+  const s = String(v == null ? '' : v);
+  const hit = cwSupervisorAll().find(t => t.id === s || t.ar === s || t.en === s);
+  return hit ? hit.id : s;
+}
+
+function cwSupervisorLabel(v){
+  const id = cwSupervisorValue(v);
+  const t = cwSupervisorAll().find(x => x.id === id);
+  return t ? (lang === 'en' ? t.en : t.ar) : id;
+}
+
+function cwSupervisorOptions(){
+  return CRANE_SUPERVISORS.map(t => [t.id, lang === 'en' ? t.en : t.ar]);
+}
+
+/* Work types. `id` is what gets stored, never the displayed text, so a record
+   saved while the app was in Arabic still renders in English afterwards. */
+const CRANE_WORK_TYPES = [
+  { id:'erection', ar:'تركيب هيكل', en:'Structure Erection' },
+  { id:'lifting',  ar:'رفع مواد',    en:'Materials Lifting' },
+  { id:'tanks',    ar:'خزانات',      en:'Tanks' },
+  { id:'prefabs',  ar:'غرف جاهزة',   en:'Prefabricated Rooms' },
+  { id:'other',    ar:'اخرى',        en:'Other' }
+];
+
+/* Accepts an id, the old Arabic label, or the English label, and returns the
+   id. Anything unrecognised is passed through untouched so no old record is
+   ever silently rewritten. */
+function cwWorkTypeValue(v){
+  const s = String(v==null?'':v).trim();
+  if(!s) return '';
+  return (CRANE_WORK_TYPES.find(x => x.id===s)
+    || CRANE_WORK_TYPES.find(x => x.ar===s)
+    || CRANE_WORK_TYPES.find(x => x.en.toLowerCase()===s.toLowerCase())
+    || { id:s }).id;
+}
+
+function cwWorkTypeLabel(v){
+  const t = CRANE_WORK_TYPES.find(x => x.id===cwWorkTypeValue(v));
+  return t ? (lang==='en' ? t.en : t.ar) : '';
+}
+
+function cwWorkTypeOptions(){
+  return CRANE_WORK_TYPES.map(x => [x.id, lang==='en' ? x.en : x.ar]);
+}
+
+function cwItemRow(it, n, T){
+  it = it || {};
+  return `<tr>
+    <td class="cw-ri">${n}</td>
+    <td><input type="text" data-f="desc" value="${escapeHtml(it.desc||'')}" placeholder="${T.descPh}"></td>
+    <td><input type="time" data-f="start" value="${escapeHtml(it.start||'')}"></td>
+    <td><input type="time" data-f="end" value="${escapeHtml(it.end||'')}"></td>
+    <td><input type="text" data-f="hours" value="${escapeHtml(it.hours||'')}" placeholder="0" inputmode="decimal"></td>
+    <td class="cw-rdel"><button type="button" title="${T.del}" onclick="cwRemoveRow(this)">${ICONS.x}</button></td>
+  </tr>`;
+}
+
+function cwRenumberRows(){
+  const body = document.getElementById('cwItemsBody');
+  if(!body) return;
+  body.querySelectorAll('tr').forEach((tr,i) => {
+    const cell = tr.querySelector('.cw-ri');
+    if(cell) cell.textContent = i+1;
+  });
+}
+
+function cwAddRow(){
+  const body = document.getElementById('cwItemsBody');
+  if(!body) return;
+  body.insertAdjacentHTML('beforeend', cwItemRow({}, body.querySelectorAll('tr').length+1, craneText()));
+  cwWireRows();
+  cwRenumberRows();
+  const rows = body.querySelectorAll('tr');
+  const last = rows[rows.length-1];
+  last?.querySelector('input')?.focus();
+}
+
+function cwRemoveRow(btn){
+  const body = document.getElementById('cwItemsBody');
+  if(!body) return;
+  const rows = body.querySelectorAll('tr');
+  if(rows.length<=1){ rows[0].querySelectorAll('input').forEach(i => i.value=''); return; }
+  btn.closest('tr')?.remove();
+  cwRenumberRows();
+}
+
+/* Fill "Total Hours" from Start/End when the user leaves it blank. */
+function cwWireRows(){
+  const body = document.getElementById('cwItemsBody');
+  if(!body) return;
+  const mins = t => { if(!t) return null; const [h,m] = t.split(':').map(Number); return (h*60)+m; };
+  body.querySelectorAll('tr').forEach(tr => {
+    const start = tr.querySelector('[data-f="start"]');
+    const end = tr.querySelector('[data-f="end"]');
+    const hours = tr.querySelector('[data-f="hours"]');
+    if(!start || !end || !hours) return;
+    const auto = () => {
+      if(hours.value.trim()) return;
+      const a = mins(start.value), b = mins(end.value);
+      if(a===null || b===null) return;
+      let d = b - a; if(d < 0) d += 24*60;
+      const h = Math.floor(d/60), m = d%60;
+      hours.value = h ? (h+(m?('.'+String(m).padStart(2,'0')):'')) : (m/60).toFixed(2);
+    };
+    end.removeEventListener('change', auto);
+    end.addEventListener('change', auto);
+  });
+}
+
+/* Name of the signed-in account. Used for the "Prepared by" stamp so the
+   sheet carries the real user from the system instead of a typed name -
+   the same idea as the quotation's `createdBy` in the Sales section. */
+function cwActorName(){
+  return String((typeof profileData !== 'undefined' && profileData && profileData.name) || '').trim();
+}
+
+/* Whoever originally created the sheet: the stored creator when we have one,
+   otherwise fall back to the legacy free-text field, then the signed-in user
+   so sheets created before this stamp existed still show somebody. */
+function cwCreatorOf(w){
+  if(!w) return '';
+  if(w.createdBy && w.createdBy.name) return w.createdBy.name;
+  if(w.preparedBy) return w.preparedBy;
+  return cwActorName();
+}
+
+/* ===================================================================
+   SHARED DROPDOWN — the single standard selector for the whole app.
+   Any new dropdown must be built with this component so every picker
+   looks and behaves the same. Do NOT add a bare <select> or invent a
+   new picker. Styles live in css/style.css under the "SHARED COMPONENT"
+   block: .sel-root .sel-trigger .sel-value .sel-end .sel-clear
+   .sel-ind .sel-pop .sel-opt .sel-empty
+
+   HOW TO USE
+     1. Markup:  ${selField({ id, label, value, options })}
+     2. Wire it: call wireSelFields() + bindSelDismiss() right after the
+        element is added to the DOM (both are idempotent).
+     3. Read it: document.getElementById(id).value  -> a plain string.
+        The value lives in a hidden input, so existing form collectors
+        and saved record shapes are unaffected.
+
+   OPTIONS
+     id          required, the hidden input's id — how you read the value
+     label       the field label
+     value       currently selected value ('' for none)
+     options     [[value,label], ...]  — value is what gets stored
+     placeholder text when nothing is picked (default "Select..." / "اختر...")
+     hasClear    set false to hide the "x" reset button (default true)
+     onChange    fn(value) fired on pick and on clear
+
+   BEHAVIOUR BUILT IN
+     popover opens under the trigger and flips up when there is no room
+     (scrollable modals would clip it), click-outside and Escape to close,
+     ArrowUp/ArrowDown/Enter/Space keyboard support, RTL alignment, and
+     both light and dark themes.
+   A stored value that is not in `options` is still displayed and kept, so
+   opening an old record never silently drops its value.
+   =================================================================== */
+const SEL_ICONS = {
+  check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+  chevron:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  x:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+};
+const SEL_REG = Object.create(null);
+let selSeq = 0;
+
+function selField(o){
+  const uid = 'selfld' + (++selSeq);
+  const cur = o.value==null?'':String(o.value);
+  const options = o.options || [];
+  const hit = options.find(x => String(x[0])===cur);
+  const placeholder = o.placeholder || (lang==='en' ? 'Select...' : 'اختر...');
+  const shown = hit ? hit[1] : (cur ? (o.format ? (o.format(cur) || placeholder) : cur) : placeholder);
+  SEL_REG[uid] = { options, placeholder, inputId:o.id, onChange:o.onChange, format:o.format };
+  const lbl = o.noLabel ? '' : `<label>${o.label}</label>`;
+  return `<div class="field">${lbl}
+    <div class="sel-root" data-sel-root="${uid}">
+      <input type="hidden" id="${escapeHtml(o.id)}" value="${escapeHtml(cur)}">
+      <div class="sel-anchor">
+        <button type="button" class="sel-trigger${hit?' has-value':''}" aria-haspopup="listbox" aria-expanded="false">
+          <span class="sel-value${hit?'':' is-placeholder'}">${escapeHtml(shown)}</span>
+          <span class="sel-end">
+            ${o.hasClear===false ? '' : `<span class="sel-clear" data-sel-clear="1" title="${escapeHtml(lang==='en'?'Clear':'إزالة')}" aria-label="${escapeHtml(lang==='en'?'Clear selection':'إزالة الاختيار')}">${SEL_ICONS.x}</span>`}
+            <span class="sel-ind">${SEL_ICONS.chevron}</span>
+          </span>
+        </button>
+        <div class="sel-pop" role="listbox"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* Wires every not-yet-wired selField() in the document. Idempotent, so call it
+   after any innerHTML render that may contain selectors. */
+function wireSelFields(){
+  document.querySelectorAll('.sel-root:not([data-sel-wired])').forEach(anchor => {
+    const cfg = SEL_REG[anchor.getAttribute('data-sel-root')];
+    if(!cfg) return;
+    anchor.setAttribute('data-sel-wired','1');
+    const trig = anchor.querySelector('.sel-trigger');
+    const valEl = anchor.querySelector('.sel-value');
+    const pop = anchor.querySelector('.sel-pop');
+    const input = document.getElementById(cfg.inputId);
+    const keys = ['ArrowDown','ArrowUp','Enter',' '];
+    let active = -1;
+
+    const picked = () => cfg.options.find(x => input && String(x[0])===String(input.value));
+
+    function paint(){
+      selPaint(cfg, valEl, trig, input ? input.value : '');
+    }
+    function render(){
+      if(!cfg.options.length){
+        pop.innerHTML = `<div class="sel-empty">${escapeHtml(lang==='en'?'No options':'لا خيارات')}</div>`;
+        return;
+      }
+      const s = picked();
+      pop.innerHTML = cfg.options.map(([v,t],i) => {
+        const sel = s && String(s[0])===String(v);
+        return `<div class="sel-opt${sel?' is-selected':''}" role="option" tabindex="-1" data-i="${i}" aria-selected="${sel?'true':'false'}">
+          <span>${escapeHtml(t)}</span><span class="check">${SEL_ICONS.check}</span></div>`;
+      }).join('');
+    }
+    function markActive(){
+      [...pop.children].forEach((el,i) => el.classList.toggle('is-active', i===active));
+    }
+    function close(){
+      pop.classList.remove('is-open','is-up');
+      trig.classList.remove('is-open');
+      trig.setAttribute('aria-expanded','false');
+    }
+    function place(){
+      // the modal itself scrolls, so flip the panel up when the room below the
+      // trigger is too small instead of letting it get clipped
+      pop.classList.remove('is-up');
+      const r = trig.getBoundingClientRect();
+      const room = window.innerHeight - r.bottom;
+      if(room < pop.offsetHeight + 10 && r.top > room) pop.classList.add('is-up');
+    }
+    function open(){
+      render();
+      pop.classList.add('is-open');
+      trig.classList.add('is-open');
+      trig.setAttribute('aria-expanded','true');
+      place();
+      const s = picked();
+      active = s ? cfg.options.findIndex(x => String(x[0])===String(s[0])) : -1;
+      markActive();
+    }
+    function pick(i){
+      const opt = cfg.options[i];
+      if(!opt) return;
+      if(input) input.value = String(opt[0]);
+      paint();
+      close();
+      if(cfg.onChange) cfg.onChange(String(opt[0]));
+    }
+    function clearSelection(e){
+      e.stopPropagation();
+      if(input) input.value = '';
+      paint();
+      close();
+      if(cfg.onChange) cfg.onChange('');
+    }
+
+    trig.addEventListener('click', () => pop.classList.contains('is-open') ? close() : open());
+    anchor.querySelector('[data-sel-clear]')?.addEventListener('click', clearSelection);
+    pop.addEventListener('click', e => {
+      const row = e.target.closest('.sel-opt');
+      if(row) pick(Number(row.dataset.i));
+    });
+    trig.addEventListener('keydown', e => {
+      if(keys.includes(e.key)) e.preventDefault();
+      if(!pop.classList.contains('is-open')){
+        if(keys.includes(e.key)) open();
+        return;
+      }
+      if(e.key==='ArrowDown'){ active = Math.min(active+1, cfg.options.length-1); markActive(); }
+      else if(e.key==='ArrowUp'){ active = Math.max(active-1, 0); markActive(); }
+      else if(e.key==='Enter' || e.key===' '){ if(active>=0) pick(active); }
+      else if(e.key==='Escape'){ close(); }
+    });
+  });
+}
+
+/* Repaints one selector's trigger text from a value, mapping through the
+   option list first and falling back to a `format` hook for values that are
+   not options (legacy ids, aliases). Shared by paint() and selSetValue(). */
+function selPaint(cfg, valEl, trig, value){
+  const s = cfg.options.find(x => String(x[0])===String(value));
+  if(s){ valEl.textContent = s[1]; valEl.classList.remove('is-placeholder'); trig.classList.add('has-value'); }
+  else {
+    const raw = String(value == null ? '' : value);
+    valEl.textContent = raw ? (cfg.format ? (cfg.format(raw) || cfg.placeholder) : raw) : cfg.placeholder;
+    valEl.classList.add('is-placeholder');
+    trig.classList.remove('has-value');
+  }
+}
+
+/* Programmatically set a selector's value — used by clear buttons and other
+   code that must change a saved selection without re-rendering the DOM. */
+function selSetValue(inputId, value){
+  const input = document.getElementById(inputId);
+  const anchor = input && input.closest('.sel-root');
+  if(!input || !anchor) return;
+  input.value = value == null ? '' : String(value);
+  const cfg = SEL_REG[anchor.getAttribute('data-sel-root')];
+  if(!cfg) return;
+  selPaint(cfg, anchor.querySelector('.sel-value'), anchor.querySelector('.sel-trigger'), input.value);
+}
+
+/* Registered once for the whole app: a click anywhere outside an open
+   selector closes it, matching the supplied component. */
+let cwSelDocBound = false;
+function bindSelDismiss(){
+  if(cwSelDocBound) return;
+  cwSelDocBound = true;
+  document.addEventListener('click', e => {
+    document.querySelectorAll('.sel-trigger.is-open').forEach(trig => {
+      const anchor = trig.closest('.sel-root');
+      if(anchor && anchor.contains(e.target)) return;
+      trig.classList.remove('is-open');
+      trig.setAttribute('aria-expanded','false');
+      anchor?.querySelector('.sel-pop')?.classList.remove('is-open','is-up');
+    });
+  });
+  // Escape from anywhere, not just while the trigger has focus
+  document.addEventListener('keydown', e => {
+    if(e.key!=='Escape') return;
+    document.querySelectorAll('.sel-trigger.is-open').forEach(trig => {
+      trig.classList.remove('is-open');
+      trig.setAttribute('aria-expanded','false');
+      trig.closest('.sel-root')?.querySelector('.sel-pop')?.classList.remove('is-open','is-up');
+    });
+  });
+}
+
+function collectCraneForm(){
+  const g = id => document.getElementById(id)?.value?.trim() || '';
+  const body = document.getElementById('cwItemsBody');
+  const items = body ? [...body.querySelectorAll('tr')].map(tr => {
+    const v = f => tr.querySelector(`[data-f="${f}"]`)?.value?.trim() || '';
+    return { desc:v('desc'), start:v('start'), end:v('end'), hours:v('hours') };
+  }).filter(it => it.desc || it.start || it.end || it.hours) : [];
+  return {
+    issueDate:g('cwIssueDate'), workDate:g('cwWorkDate'), projectNo:g('cwProjectNo'),
+    supervisor:g('cwSupervisor'), projectName:g('cwProjectName'), workType:g('cwWorkType'),
+    location:g('cwLocation'), weight:g('cwWeight'), driver:g('cwDriver'),
+    contact:g('cwContact'), preparedBy:g('cwPreparedBy'), items
+  };
+}
+
+function showCraneWorkModal(idx, wi){
+  const standalone = idx === -1;
+  const p = standalone ? null : projects[idx];
+  if(!standalone && !p) return;
+  const works = standalone ? standaloneWorks : getCraneWorks(p);
+  const T = craneText();
+  const editing = (wi!==undefined && wi!==null) ? works[wi] : null;
+  const today = new Date().toISOString().split('T')[0];
+  // "Prepared by" is stamped from the signed-in account: the current user on
+  // create, the original creator when editing. Never typed by hand.
+  const creatorName = editing ? (cwCreatorOf(editing) || cwActorName()) : cwActorName();
+  const w = editing || {
+    issueDate: today, workDate: today,
+    projectNo: standalone ? '' : (p.id || ''),
+    projectName: standalone ? '' : (lang==='en' ? p.name : (p.nameAr || p.name)),
+    items:[{}]
+  };
+  const items = (w.items && w.items.length) ? w.items : [{}];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.style.cssText = 'z-index:9999;overflow-y:auto;';
+  overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+  overlay.innerHTML = `<div class="modal cw-modal-wide">
+    <h3>${editing ? T.editWork : T.newWork}</h3>
+    <div class="cw-form-grid">
+      ${cwField('cwIssueDate', T.issueDate, w.issueDate, 'date')}
+      ${cwField('cwWorkDate', T.workDate, w.workDate, 'date')}
+      ${cwField('cwProjectNo', T.projectNo, w.projectNo, 'text', 'dir="ltr"')}
+      ${selField({id:'cwSupervisor', label:T.supervisor, value:cwSupervisorValue(w.supervisor), options:cwSupervisorOptions(), format:cwSupervisorLabel})}
+      ${cwField('cwProjectName', T.projectName, w.projectName, 'text')}
+      ${selField({id:'cwWorkType', label:T.workType, value:cwWorkTypeValue(w.workType), options:cwWorkTypeOptions()})}
+      ${cwField('cwLocation', T.location, w.location, 'text')}
+      ${selField({id:'cwWeight', label:T.weight, value:cwWeightValue(w.weight), options:cwTonsOptions()})}
+      ${cwField('cwDriver', T.driver, w.driver, 'text')}
+      ${cwField('cwContact', T.contact, w.contact, 'tel', 'dir="ltr"')}
+      ${cwField('cwPreparedBy', T.preparedBy, creatorName, 'text', 'readonly class="cw-ro"')}
+    </div>
+    <div class="cw-items-bar">
+      <span class="cw-items-title">${T.items}</span>
+      <button type="button" class="btn-mini" onclick="cwAddRow()">+ ${T.addItem}</button>
+    </div>
+    <div class="cw-items-wrap">
+      <table class="cw-items">
+        <thead><tr><th>${T.no}</th><th>${T.desc}</th><th>${T.start}</th><th>${T.end}</th><th>${T.hours}</th><th></th></tr></thead>
+        <tbody id="cwItemsBody">${items.map((it,i) => cwItemRow(it, i+1, T)).join('')}</tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="this.closest('.modal-overlay').remove()">${T.cancel}</button>
+      <button class="btn btn-primary" id="cwSave">${T.save}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  cwWireRows();
+  wireSelFields();
+  bindSelDismiss();
+  setTimeout(() => document.getElementById('cwProjectName')?.focus(), 50);
+  document.getElementById('cwSave')?.addEventListener('click', () => {
+    const data = collectCraneForm();
+    if(!data.projectName){ showToast(T.needName); return; }
+    const now = new Date().toISOString();
+    const who = cwActorName();
+    if(editing){
+      // Keep the original creator pinned and just append to the edit trail,
+      // mirroring how quotations record `createdBy` + `edits` in Sales.
+      editing.createdBy = (editing.createdBy && editing.createdBy.name)
+        ? {name:editing.createdBy.name, at:editing.createdBy.at || editing.createdAt || now}
+        : {name: cwCreatorOf(editing) || who, at: editing.createdAt || now};
+      editing.createdAt = editing.createdAt || now;
+      editing.edits = Array.isArray(editing.edits) ? editing.edits : [];
+      if(who) editing.edits.push({name: who, at: now});
+      // the stamp always mirrors the real creator, never a typed value
+      data.preparedBy = editing.createdBy.name;
+      Object.assign(editing, data, { updatedAt: now });
+    } else {
+      works.push(Object.assign({
+        id:'CW-'+Date.now().toString(36).toUpperCase(),
+        createdAt: now,
+        createdBy: {name: who, at: now},
+        edits: []
+      }, data, { preparedBy: who || data.preparedBy }));
+    }
+    if(standalone) syncStandaloneWorks(); else syncCurrentProject(idx);
+    overlay.remove();
+    const body = document.getElementById('projDetailBody');
+    if(body && !standalone) body.innerHTML = renderProjDocsTab(p, idx, STR[lang].projects);
+    if(document.getElementById('docsResults')) docsUpdateResults();
+    showToast(editing ? T.updated : T.saved);
+  });
+}
+
+async function deleteCraneWork(idx, wi){
+  const standalone = idx === -1;
+  const p = standalone ? null : projects[idx];
+  if(!standalone && !p) return;
+  const works = standalone ? standaloneWorks : getCraneWorks(p);
+  if(!works[wi]) return;
+  const T = craneText();
+  const ok = await showConfirm(lang==='en'?'Delete this work sheet?':'هل تريد حذف هذا العمل؟');
+  if(!ok) return;
+  works.splice(wi, 1);
+  if(standalone) syncStandaloneWorks(); else syncCurrentProject(idx);
+  const body = document.getElementById('projDetailBody');
+  if(body && !standalone) body.innerHTML = renderProjDocsTab(p, idx, STR[lang].projects);
+  if(document.getElementById('docsResults')) docsUpdateResults();
+  showToast(T.removed);
+}
+
+/* ---- A4 sheet ---------------------------------------------------- */
+function cwInitials(name){
+  const parts = String(name||'').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return '—';
+  if(parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function buildCraneSheet(p, w){
+  const T = craneText();
+  const items = (w.items && w.items.length) ? w.items : [{}];
+  const rows = items.map((it,i) => `<tr>
+      <td class="cw-td-idx">${i+1}</td>
+      <td>${escapeHtml(it.desc||'')}</td>
+      <td class="cw-td-time">${escapeHtml(it.start||'')}</td>
+      <td class="cw-td-time">${escapeHtml(it.end||'')}</td>
+      <td class="cw-td-hours">${escapeHtml(it.hours||'')}</td>
+    </tr>`).join('');
+  const creator = cwCreatorOf(w);
+  const lastEdit = (w && Array.isArray(w.edits) && w.edits.length)
+    ? w.edits.filter(e => e && e.name).slice(-1)[0]
+    : null;
+  return `<div class="cw-sheet" dir="rtl">
+    <div class="cw-head">
+      <span class="cw-logo-box">
+        <img class="cw-logo" src="assets/aif-logo.png" alt="AIF" onerror="this.style.display='none'">
+        <span class="cw-logo-fb">AIF</span>
+      </span>
+      <div class="cw-org">
+        <b>${T.org}</b>
+        <span>${T.orgEn}</span>
+      </div>
+      <h1 class="cw-title">${T.title}</h1>
+    </div>
+    <hr class="cw-rule">
+    <div class="cw-grid">
+      <div class="cw-gl">${T.issueDate}</div><div class="cw-gf">${escapeHtml(w.issueDate||'')}</div>
+      <div class="cw-gl">${T.workDate}</div><div class="cw-gf">${escapeHtml(w.workDate||'')}</div>
+      <div class="cw-gl">${T.projectNo}</div><div class="cw-gf is-ltr">${escapeHtml(w.projectNo||'')}</div>
+      <div class="cw-gl">${T.supervisor}</div><div class="cw-gf">${escapeHtml(cwSupervisorLabel(w.supervisor))}</div>
+      <div class="cw-gl">${T.projectName}</div><div class="cw-gf">${escapeHtml(w.projectName||'')}</div>
+      <div class="cw-gl">${T.workType}</div><div class="cw-gf">${escapeHtml(cwWorkTypeLabel(w.workType))}</div>
+      <div class="cw-gl">${T.location}</div><div class="cw-gf">${escapeHtml(w.location||'')}</div>
+      <div class="cw-gl">${T.weight}</div><div class="cw-gf">${escapeHtml(cwWeightLabel(w.weight))}</div>
+      <div class="cw-gl">${T.driver}</div><div class="cw-gf">${escapeHtml(w.driver||'')}</div>
+      <div class="cw-gl">${T.contact}</div><div class="cw-gf is-ltr">${escapeHtml(w.contact||'')}</div>
+    </div>
+    <div class="cw-tbl-wrap">
+      <table class="cw-tbl">
+        <thead><tr>
+          <th class="cw-th-idx">${T.no}</th><th>${T.desc}</th>
+          <th class="cw-th-time">${T.start}</th><th class="cw-th-time">${T.end}</th>
+          <th class="cw-th-hours">${T.hours}</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="cw-foot">
+      <span class="cw-foot-label">${T.preparedBy} :</span>
+      <span class="cw-foot-name">${escapeHtml(creator)}</span>
+      <span class="cw-avatar">${cwInitials(creator)}</span>
+      ${lastEdit ? `<span class="cw-foot-label" style="margin-inline-start:auto;">${T.editedBy} :</span>
+      <span class="cw-foot-name">${escapeHtml(lastEdit.name)}</span>
+      <span class="cw-avatar">${cwInitials(lastEdit.name)}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+let cwFitHandler = null;
+function fitCranePreview(){
+  const scroll = document.getElementById('cwPreviewScroll');
+  const holder = document.getElementById('cwPreviewHolder');
+  const sheet = holder?.querySelector('.cw-sheet');
+  if(!scroll || !holder || !sheet) return;
+  sheet.style.transform = 'none';
+  const w = sheet.offsetWidth, h = sheet.offsetHeight;
+  if(!w || !h) return;
+  const scale = Math.min(1, (scroll.clientWidth - 24) / w);
+  sheet.style.transformOrigin = 'top left';
+  sheet.style.transform = `scale(${scale})`;
+  holder.style.width = Math.round(w*scale) + 'px';
+  holder.style.height = Math.round(h*scale) + 'px';
+}
+
+function openCranePreview(idx, wi){
+  const standalone = idx === -1;
+  const p = standalone ? null : projects[idx];
+  const w = standalone ? standaloneWorks[wi] : getCraneWorks(p)[wi];
+  if(!w) return;
+  const T = craneText();
+  if(cwFitHandler) window.removeEventListener('resize', cwFitHandler);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.id = 'cwPreviewOverlay';
+  overlay.style.cssText = 'z-index:10000;overflow-y:auto;';
+  const close = () => {
+    if(cwFitHandler){ window.removeEventListener('resize', cwFitHandler); cwFitHandler = null; }
+    overlay.remove();
+  };
+  overlay.onclick = e => { if(e.target===overlay) close(); };
+  overlay.innerHTML = `<div class="modal cw-preview-modal">
+    <div class="cw-preview-bar">
+      <div class="cw-preview-title">${escapeHtml(w.projectName||T.works)}</div>
+      <div class="cw-preview-actions">
+        <button class="btn-mini" onclick="editFromCranePreview(${idx},${wi})">${T.edit}</button>
+        <button class="btn btn-primary btn-mini" onclick="printCraneWork(${idx},${wi})">${T.print}</button>
+        <button class="btn-mini" onclick="closeCranePreview()">${lang==='en'?'Close':'إغلاق'}</button>
+      </div>
+    </div>
+    <div class="cw-preview-scroll" id="cwPreviewScroll">
+      <div id="cwPreviewHolder" class="cw-preview-holder">${buildCraneSheet(p, w)}</div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  cwFitHandler = fitCranePreview;
+  window.addEventListener('resize', cwFitHandler);
+  requestAnimationFrame(fitCranePreview);
+  setTimeout(fitCranePreview, 120);
+}
+
+function closeCranePreview(){
+  const overlay = document.getElementById('cwPreviewOverlay');
+  if(cwFitHandler){ window.removeEventListener('resize', cwFitHandler); cwFitHandler = null; }
+  overlay?.remove();
+}
+
+function editFromCranePreview(idx, wi){
+  closeCranePreview();
+  setTimeout(() => showCraneWorkModal(idx, wi), 80);
+}
+
+/* Prints only the sheet: the app's print rule hides every other body child,
+   and #cwPrintHost is exempted there. The A4/zero-margin page size is injected
+   as a throwaway stylesheet so it exists *only* during this print job and
+   cannot affect the PO / quote / issue printouts. */
+function printCraneWork(idx, wi){
+  const standalone = idx === -1;
+  const p = standalone ? null : projects[idx];
+  const w = standalone ? standaloneWorks[wi] : getCraneWorks(p)[wi];
+  if(!w) return;
+  let host = document.getElementById('cwPrintHost');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'cwPrintHost';
+    document.body.appendChild(host);
+  }
+  const pageStyle = document.createElement('style');
+  pageStyle.id = 'cwPrintPageStyle';
+  pageStyle.textContent = '@page{size:A4;margin:0;}';
+  document.head.appendChild(pageStyle);
+  host.innerHTML = buildCraneSheet(p, w);
+  let done = false;
+  const cleanup = () => {
+    if(done) return;
+    done = true;
+    host.innerHTML = '';
+    pageStyle.remove();
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 60000);   // guard: some browsers skip afterprint
+  setTimeout(() => window.print(), 80);
+}
+
+/* ===================================================================
+   DOCUMENTS — standalone sidebar section
+   -------------------------------------------------------------------
+   `documents` is a first-class app section in its own right: it has its
+   own nav entry, its own renderer and its own permission checkbox, and
+   is deliberately NOT derived from the `projects` permission.
+
+   It lists the crane work sheets of every project in one place. The
+   records    still live on their project (`p.works`) so the per-project
+   view keeps working and nothing is duplicated on disk.
+================================================================= */
+/* The `documents` icon lives in the ICONS literal as `docs`, like every other
+   nav icon; the nav CSS sizes it to 18x18. */
+
+function docsText(){
+  return lang==='en' ? {
+    nav:'Documents', title:'Documents', sub:'Crane work sheets from all projects',
+    newWork:'New Work Sheet', works:'Work Sheets', search:'Search…',
+    allProjects:'All projects', project:'Project', workType:'Work Type', location:'Location',
+    workDate:'Work Date', issueDate:'Issue Date', supervisor:'Supervisor', driver:'Driver',
+    items:'Items', hours:'Hours', actions:'Actions', preview:'Preview', edit:'Edit',
+    del:'Delete', print:'Print', clear:'Clear', noWorks:'No work sheets yet',
+    noProjects:'Create a project first', filtered:'of', showAll:'Showing all',
+    statSheets:'Work Sheets', statProjects:'Projects', statHours:'Total Hours',
+    needProject:'Create a project first — a work sheet belongs to a project.',
+    noProject:'No project', attachTo:'Attach the sheet to a project, or leave it standalone.',
+    continue:'Continue', cancel:'Cancel',
+    added:'Work sheet added.', copied:'Copied.', openProject:'Open project'
+  } : {
+    nav:'المستندات', title:'المستندات', sub:'أعمال الكرين من كل المشاريع',
+    newWork:'عمل جديد', works:'الأعمال', search:'بحث…',
+    allProjects:'كل المشاريع', project:'المشروع', workType:'نوع العمل', location:'الموقع',
+    workDate:'تاريخ العمل', issueDate:'تاريخ الإصدار', supervisor:'مسؤول الموقع', driver:'السائق',
+    items:'البنود', hours:'الساعات', actions:'إجراءات', preview:'معاينة', edit:'تعديل',
+    del:'حذف', print:'طباعة', clear:'مسح', noWorks:'لا توجد أعمال بعد',
+    noProjects:'أنشئ مشروعًا أولًا', filtered:'من', showAll:'عرض الكل',
+    statSheets:'أعمال', statProjects:'مشاريع', statHours:'إجمالي الساعات',
+    needProject:'أنشئ مشروعًا أولًا — العمل يُسجَّل داخل مشروع.',
+    noProject:'بدون مشروع', attachTo:'اربط العمل بمشروع، أو اتركه بدون مشروع.',
+    continue:'متابعة', cancel:'إلغاء',
+    added:'تمت إضافة العمل.', copied:'تم النسخ.', openProject:'فتح المشروع'
+  };
+}
+
+let docsFilter = { q:'', proj:'all' };
+
+/* Every work sheet in the app, flattened with its project coordinates so
+   the existing per-record handlers (preview / edit / delete / print) can be
+   reused as-is. Standalone sheets (no project) use idx = -1 and p = null.
+   Newest work date first. */
+function allCraneWorks(){
+  const out = [];
+  projects.forEach((p, idx) => {
+    getCraneWorks(p).forEach((w, wi) => out.push({ p, idx, w, wi }));
+  });
+  standaloneWorks.forEach((w, wi) => out.push({ p:null, idx:-1, w, wi }));
+  out.sort((a,b) => String(b.w.workDate||b.w.createdAt||'').localeCompare(String(a.w.workDate||a.w.createdAt||'')));
+  return out;
+}
+
+function docsTotalHours(w){
+  return (w.items||[]).reduce((s,it) => {
+    const n = parseFloat(String(it.hours||'').replace(',','.'));
+    return s + (isFinite(n) ? n : 0);
+  }, 0);
+}
+
+function docsFmtHours(n){
+  return (Math.round(n*100)/100).toString();
+}
+
+function docsMatches(row, T){
+  if(docsFilter.proj === 'none'){ if(row.idx !== -1) return false; }
+  else if(docsFilter.proj !== 'all' && String(row.idx) !== String(docsFilter.proj)) return false;
+  const q = docsFilter.q.trim().toLowerCase();
+  if(!q) return true;
+  const p = row.p, w = row.w;
+  // both the stored value and the label in the active language, so searching
+  // "خزانات" works in Arabic and "tanks" works in English
+  const hay = [w.projectName, w.workType, cwWorkTypeLabel(w.workType), w.location, w.supervisor, cwSupervisorLabel(w.supervisor), w.driver, w.contact,
+               w.projectNo, w.preparedBy, p ? p.id : '',
+               p ? (lang==='en' ? p.name : (p.nameAr||p.name)) : T.noProject,
+               (w.items||[]).map(it => it.desc).join(' ')].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+function renderDocuments(){
+  const T = docsText();
+  const L = STR[lang];
+  return `<div data-page="docs">
+    ${liquidSortHTMLDefs()}
+    <div class="docs-toolbar">
+      <div class="docs-search">
+        <span class="docs-search-ico">${ICONS.reports}</span>
+        <input id="docsSearch" type="text" value="${escapeHtml(docsFilter.q)}" placeholder="${T.search}" oninput="docsOnSearch(this.value)">
+      </div>
+      <div class="docs-proj-filter">
+        ${selField({id:'docsProjSelect', noLabel:true, value:docsFilter.proj, hasClear:false,
+          options:[
+            ['all', T.allProjects],
+            ['none', T.noProject],
+            ...projects.map((p,i)=>[String(i), lang==='en'?p.name:(p.nameAr||p.name)])
+          ],
+          onChange:v => docsSetProj(v)})}
+      </div>
+      <div class="sort-control liquid-sort">
+        ${liquidSortHTML('docsSort', LSORT.docs, sortState.docs)}
+      </div>
+      <button class="btn" id="docs-selModeBtn" onclick="toggleSelMode('docs')">${ICONS.checkSquare} <span class="sel-btn-text">${L.sel.selectMode}</span></button>
+      <button class="btn-mini" onclick="docsNewWork()">+ ${T.newWork}</button>
+      <button class="btn-mini btn-ghost" id="docsClearBtn" onclick="docsClear()">${T.clear}</button>
+    </div>
+    <div class="bulk-bar" id="bulkBar-docs"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('docs')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('docs')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('docs')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
+    <div id="docsStats"></div>
+    <div id="docsResults"></div>
+  </div>`;
+}
+
+/* Only the stats + results are swapped on a filter change. The search input
+   keeps its DOM node, so focus and the caret survive every keystroke. */
+function docsUpdateResults(){
+  const T = docsText();
+  const all = allCraneWorks();
+  const rows = docsSortRows(all.filter(r => docsMatches(r, T)));
+  const projectsWithWorks = new Set(all.filter(r => r.idx !== -1).map(r => r.idx)).size;
+  const totalHours = all.reduce((s,r) => s + docsTotalHours(r.w), 0);
+
+  const clear = document.getElementById('docsClearBtn');
+  if(clear) clear.style.display = (docsFilter.q || docsFilter.proj !== 'all') ? '' : 'none';
+
+  const statsEl = document.getElementById('docsStats');
+  if(statsEl) statsEl.innerHTML = `<div class="docs-stats">
+    <div class="docs-stat"><div class="docs-stat-n">${all.length}</div><div class="docs-stat-l">${T.statSheets}</div></div>
+    <div class="docs-stat"><div class="docs-stat-n">${projectsWithWorks}</div><div class="docs-stat-l">${T.statProjects}</div></div>
+    <div class="docs-stat"><div class="docs-stat-n">${docsFmtHours(totalHours)}</div><div class="docs-stat-l">${T.statHours}</div></div>
+  </div>`;
+
+  const resEl = document.getElementById('docsResults');
+  if(!resEl) return;
+  if(!rows.length){
+    resEl.innerHTML = `<div class="empty-state">${ICONS.inbox}<div>${T.noWorks}</div>
+      ${all.length ? '' : `<button class="btn-mini" style="margin-top:12px;" onclick="docsNewWork()">+ ${T.newWork}</button>`}</div>`;
+    return;
+  }
+  resEl.innerHTML = `<div class="table-card"><table class="docs-table"><thead><tr>
+    <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="docsCheckAll" onchange="toggleAllSel('docs')"></th>
+    <th>${T.issueDate}</th><th>${T.project}</th><th>${T.workType}</th><th>${T.workDate}</th>
+    <th>${T.location}</th><th>${T.supervisor}</th><th>${T.items}</th><th>${T.hours}</th>
+    <th style="text-align:left;">${T.actions}</th></tr></thead><tbody>
+    ${rows.map(r=>{
+      const { p, idx, w, wi } = r;
+      const hours = docsTotalHours(w);
+      return `<tr data-page-idx="${idx}:${wi}">
+        <td class="sel-check-col" style="display:none;"><input type="checkbox" class="row-check" data-idx="${idx}:${wi}" onchange="toggleSel('docs',this.dataset.idx,this)"></td>
+        <td style="white-space:nowrap;">${escapeHtml(w.issueDate||'—')}</td>
+        <td><div style="font-weight:700;">${escapeHtml(w.projectName || (p ? (lang==='en'?p.name:p.nameAr||p.name) : T.noProject) || '—')}</div>
+            <div style="font-size:10px;color:var(--text-3);">${escapeHtml(w.projectNo || (p ? p.id : (w.projectName ? T.noProject : '')))}</div></td>
+      <td>${escapeHtml(cwWorkTypeLabel(w.workType)||'—')}</td>
+        <td style="white-space:nowrap;">${escapeHtml(w.workDate||'—')}</td>
+        <td>${escapeHtml(w.location||'—')}</td>
+        <td>${escapeHtml(cwSupervisorLabel(w.supervisor)||'—')}</td>
+        <td><span class="cat-tag">${(w.items||[]).length}</span></td>
+        <td style="font-weight:700;white-space:nowrap;">${hours ? docsFmtHours(hours) : '—'}</td>
+        <td><div class="row-actions">
+          <button title="${T.preview}" onclick="openCranePreview(${idx},${wi})">${ICONS.eye}</button>
+          <button title="${T.edit}" onclick="showCraneWorkModal(${idx},${wi})">${ICONS.edit}</button>
+          <button title="${T.del}" onclick="deleteCraneWork(${idx},${wi})">${ICONS.trash}</button>
+        </div></td></tr>`;
+    }).join('')}
+  </tbody></table></div>`;
+  docsApplySelUI();
+}
+
+/* Applies the active sort option (same control as Sales) to docs rows. */
+function docsSortRows(rows){
+  const sv = sortState.docs;
+  if(!sv || sv==='default') return rows;
+  const projName = r => r.p ? (lang==='en'?r.p.name:(r.p.nameAr||r.p.name)) : String(r.w.projectName||'');
+  return [...rows].sort((a,b)=>{
+    const A=a.w, B=b.w;
+    if(sv==='date-asc') return String(A.issueDate||'').localeCompare(String(B.issueDate||''));
+    if(sv==='date-desc') return String(B.issueDate||'').localeCompare(String(A.issueDate||''));
+    if(sv==='id') return String(A.id||'').localeCompare(String(B.id||''));
+    if(sv==='project') return projName(a).localeCompare(projName(b));
+    if(sv==='hours') return docsTotalHours(A)-docsTotalHours(B);
+    if(sv==='worktype') return String(cwWorkTypeLabel(A.workType)||'').localeCompare(String(cwWorkTypeLabel(B.workType)||''));
+    return 0;
+  });
+}
+
+/* The docs table is re-rendered on every filter change, so selection-mode
+   implies: restores inline styles/checks that toggleSelMode() only set once. */
+function docsApplySelUI(){
+  const on = selMode.docs;
+  document.querySelectorAll('[data-page="docs"] .sel-check-col').forEach(el=>{
+    el.style.display = on ? '' : 'none';
+    if(!on){ const cb = el.querySelector('input'); if(cb) cb.checked = false; }
+  });
+  document.querySelector('[data-page="docs"] .table-card')?.classList.toggle('sel-active', on);
+  if(on){
+    document.querySelectorAll('[data-page="docs"] .sel-check-col input.row-check').forEach(cb=>{
+      const has = selState.docs.has(cb.dataset.idx);
+      cb.checked = has;
+      const tr = cb.closest('tr');
+      if(tr) tr.classList.toggle('selected-row', has);
+    });
+  }
+  updateCheckAll('docs');
+}
+
+function docsOnSearch(v){
+  docsFilter.q = v;
+  docsUpdateResults();
+}
+
+function docsSetProj(v){
+  docsFilter.proj = v;
+  docsUpdateResults();
+}
+
+function docsClear(){
+  docsFilter = { q:'', proj:'all' };
+  const inp = document.getElementById('docsSearch');
+  if(inp) inp.value = '';
+  selSetValue('docsProjSelect', 'all');
+  docsUpdateResults();
+}
+
+/* A work sheet can either belong to a project or stand on its own (idx = -1).
+   Offer both every time; when a project filter is active it is preselected.
+   With zero projects the list only offers the standalone option. */
+function docsNewWork(){
+  const T = docsText();
+  const presel = (docsFilter.proj !== 'all' && docsFilter.proj !== 'none')
+    ? parseInt(docsFilter.proj, 10) : -1;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.style.cssText = 'z-index:9999;';
+  overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+  overlay.innerHTML = `<div class="modal" style="max-width:420px;">
+    <h3>${T.newWork}</h3>
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:10px;">${T.attachTo}</div>
+    ${selField({id:'cwNewOwner', label:T.project, value:presel === -1 ? 'none' : String(presel), hasClear:false,
+      options:[
+        ['none', T.noProject],
+        ...projects.map((p,i)=>[String(i), lang==='en'?p.name:(p.nameAr||p.name)])
+      ]})}
+    <div class="modal-actions">
+      <button class="btn" onclick="this.closest('.modal-overlay').remove()">${T.cancel}</button>
+      <button class="btn btn-primary" id="cwNewOwnerGo">${T.continue}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  wireSelFields();
+  bindSelDismiss();
+  document.getElementById('cwNewOwnerGo').onclick = () => {
+    const v = document.getElementById('cwNewOwner').value;
+    overlay.remove();
+    showCraneWorkModal(v === 'none' ? -1 : parseInt(v, 10));
+  };
 }
 
 function renderProjGalleryTab(p, idx, L){
@@ -4713,7 +5774,7 @@ function saveProject(idx){
       progress:0, status:get('pmStatus')||'active', priority:get('pmPriority')||'medium',
       notes:get('pmNotes'), notesAr:get('pmNotesAr'),
       phases: defaultPhases.map(dp => ({id:dp.id, name:dp.name, nameAr:dp.nameAr, status:'notStarted', start:'', end:'', resp:'', notes:'', notesAr:'', progress:0})),
-      materials:[], team:[], docs:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
+      materials:[], team:[], docs:[], works:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
     });
   }
   syncCurrentProject(idx !== null ? idx : undefined);
@@ -5633,7 +6694,7 @@ function deleteTask(idx){
 }
 
 
-const PAGES = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','users','notifications','settings'];
+const PAGES = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','documents','tasks','users','notifications','settings'];
 
 // ---------------------------------------------------------------------------
 // SECTION PERMISSIONS
@@ -5641,11 +6702,11 @@ const PAGES = ['dashboard','inventory','warehouses','sales','purchasing','issues
 // listing which app sections they can see. Root admins always get full
 // access. `dashboard` and `notifications` are always allowed.
 // ---------------------------------------------------------------------------
-const ALL_SECTIONS = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','users','notifications','settings'];
+const ALL_SECTIONS = ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','documents','tasks','users','notifications','settings'];
 const SECTION_DEFAULT_PERMS = {
-  admin: ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','users','notifications','settings'],
-  manager: ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','tasks','notifications','settings'],
-  supervisor: ['dashboard','inventory','warehouses','issues','movements','tasks','projects','notifications'],
+  admin: ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','documents','tasks','users','notifications','settings'],
+  manager: ['dashboard','inventory','warehouses','sales','purchasing','issues','movements','reports','projects','documents','tasks','notifications','settings'],
+  supervisor: ['dashboard','inventory','warehouses','issues','movements','tasks','projects','documents','notifications'],
   employee: ['dashboard','inventory','issues','tasks','notifications'],
 };
 let currentUserIsRoot = false;
@@ -5682,6 +6743,7 @@ function applyCurrentUserPerms(user){
 const RENDERERS = {
   dashboard:renderDashboard, inventory:renderInventory, warehouses:renderWarehouses,
   purchasing:renderPurchasing, issues:renderIssues, movements:renderMovements, projects:renderProjects,
+  documents:renderDocuments,
   tasks:renderTasks, sales:renderSales, reports:renderReports, users:renderUsers, notifications:renderNotifications, settings:renderSettings,
 };
 let currentPage = 'dashboard';
@@ -5692,11 +6754,15 @@ function buildNav(){
   const iconKey = {
     dashboard:'dashboard', inventory:'inventory', warehouses:'warehouse',
     sales:'sales', purchasing:'purchase', issues:'issue', movements:'movements',
-    reports:'reports', projects:'projects', tasks:'tasks', users:'users', notifications:'notifications', settings:'settings'
+    reports:'reports', projects:'projects', documents:'docs', tasks:'tasks', users:'users', notifications:'notifications', settings:'settings'
   };
+  /* `documents` is intentionally absent from the STR dictionaries (the
+     Arabic table in that file has a broken encoding), so fall back to the
+     bilingual docsText() labels instead of showing the raw key. */
+  const navLabel = p => (L.nav && L.nav[p]) || (p==='documents' ? docsText().nav : p);
   navList.innerHTML = PAGES.filter(canAccessPage).map(p=>`
-    <button class="nav-item ${p===currentPage?'active':''}" data-page="${p}" data-tooltip="${L.nav[p]||p}">
-      ${ICONS[iconKey[p]]||''}<span>${L.nav[p]||p}</span>
+    <button class="nav-item ${p===currentPage?'active':''}" data-page="${p}" data-tooltip="${escapeHtml(navLabel(p))}">
+      ${ICONS[iconKey[p]]||''}<span>${escapeHtml(navLabel(p))}</span>
       ${p==='notifications'?'<span class="dot"></span>':''}
     </button>`).join('');
   navList.querySelectorAll('.nav-item').forEach(btn=>{
@@ -5710,11 +6776,14 @@ function navigate(page, opts){
   try{ localStorage.setItem('stockflow_last_page', page); }catch(e){}
   const L = STR[lang];
   const contentEl = document.getElementById('content');
-  const iconKey = {dashboard:'dashboard',inventory:'inventory',warehouses:'warehouse',sales:'sales',purchasing:'purchase',issues:'issue',movements:'movements',reports:'reports',projects:'projects',tasks:'tasks',users:'users',notifications:'notifications',settings:'settings'};
+  const iconKey = {dashboard:'dashboard',inventory:'inventory',warehouses:'warehouse',sales:'sales',purchasing:'purchase',issues:'issue',movements:'movements',reports:'reports',projects:'projects',documents:'docs',tasks:'tasks',users:'users',notifications:'notifications',settings:'settings'};
+  // `documents` has no STR entry, so guard instead of crashing on L.page[page][0].
+  const T = page==='documents' ? docsText() : null;
+  const pageMeta = (L.page && L.page[page]) || (T ? [T.title, T.sub] : [page, '']);
   const pageTitleEl = document.getElementById('pageTitle');
   pageTitleEl.dataset.page = page;
-  pageTitleEl.innerHTML = `<span class="page-title-icon">${ICONS[iconKey[page]]||''}</span><span class="page-title-text">${L.page[page][0]}</span>`;
-  document.getElementById('pageSub').textContent = L.page[page][1];
+  pageTitleEl.innerHTML = `<span class="page-title-icon">${ICONS[iconKey[page]]||''}</span><span class="page-title-text">${escapeHtml(pageMeta[0])}</span>`;
+  document.getElementById('pageSub').textContent = pageMeta[1];
   // Quiet mode re-renders the page WITHOUT the enter animation. Used after
   // save/edit/status changes: the realtime echo already triggers one full
   // animated navigate, so a second animated one would make the page flicker
@@ -5726,7 +6795,7 @@ function navigate(page, opts){
   if(!opts || !opts.quiet) contentEl.classList.add('page-enter');
   buildNav();
   postRenderHooks(page);
-  ['inv','quote','po','req','proj'].forEach(p => updateBulkBar(p));
+  ['inv','quote','po','req','proj','docs'].forEach(p => updateBulkBar(p));
   contentEl.scrollTop = 0;
   // Close sidebar on mobile after navigation
   if(window.innerWidth <= 900){
@@ -5762,6 +6831,16 @@ function mountProjectsChart(){
 }
 
 function postRenderHooks(page){
+  if(page==='documents'){
+    docsUpdateResults();
+    wireSelFields();
+    bindSelDismiss();
+    liquidSortBind('docsSort', LSORT.docs, v=>{
+      sortState.docs = v;
+      saveSortState();
+      docsUpdateResults();
+    });
+  }
   if(page==='sales'){
     renderQuoteRows();
     document.getElementById('newQuoteBtn').addEventListener('click', ()=>openQuoteModal(null));
@@ -6137,7 +7216,7 @@ document.getElementById('userRole').addEventListener('change', ()=>{
   if(userPermDirty) return;
   renderUserPermsGrid(defaultPermsForRole(document.getElementById('userRole').value));
 });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.getElementById('userModalOverlay').style.display==='flex') closeUserModal(); });
+document.addEventListener('keydown', e=>{ const um=document.getElementById('userModalOverlay'); if(e.key==='Escape' && um && um.style.display==='flex') closeUserModal(); });
 
 /* ===================================================================
    MODAL — View (read-only)
@@ -8107,7 +9186,20 @@ async function resolveAuthUser(email, fallbackName){
     if(!rec) return null;
     const key = ['admin','manager','supervisor','employee'].includes(rec.role) ? rec.role : 'employee';
     const info = getRoleInfo(key);
-    return { name: rec.name || fallbackName || email.split('@')[0], email, roleKey:key, role: info.label, roleAr: info.labelAr, isRoot:false, permissions: rec.permissions };
+    // One-time migration for staff records saved before the `documents`
+    // section existed: add it and stamp permSchema so it is a TRUE one-time
+    // grant. Without the stamp this would re-add the key on every login and
+    // silently override an admin's later explicit opt-out (unchecking the box
+    // would appear to do nothing). New users are created with permSchema 2 by
+    // saveUser, so they are never treated as legacy.
+    const PERM_SCHEMA = 2;
+    let perms = Array.isArray(rec.permissions) ? rec.permissions.slice() : [];
+    const isLegacy = Number(rec.permSchema || 0) < PERM_SCHEMA;
+    if(isLegacy){
+      if(!perms.includes('documents')) perms.push('documents');
+      try{ window.StockFlowBackend.syncRow('users', {...rec, permissions: perms, permSchema: PERM_SCHEMA}, 'email'); }catch(e){}
+    }
+    return { name: rec.name || fallbackName || email.split('@')[0], email, roleKey:key, role: info.label, roleAr: info.labelAr, isRoot:false, permissions: perms };
   }catch(err){
     console.error('[StockFlow] resolveAuthUser failed:', err);
     return null;
