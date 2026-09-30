@@ -1488,8 +1488,6 @@ function pgReset(page, filter, statusF){
 function renderPager(page, total){
   const foot = document.getElementById('pgFoot-' + page);
   if(!foot) return;
-  /* the sticky pager needs its card to stop clipping it */
-  foot.closest('.table-card')?.classList.add('has-pager');
   const pages = pgTotalPages(total);
   let cur = Math.min(Math.max(1, pgState[page] || 1), pages);
   pgState[page] = cur;
