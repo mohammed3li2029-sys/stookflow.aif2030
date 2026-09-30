@@ -1425,6 +1425,154 @@ function setQuoteStatus(idx, status){
   renderQuoteRows(document.getElementById('quoteSearch')?.value||'', document.getElementById('quoteFilterStatus')?.value||'');
 }
 
+/* ---------------------------------------------------------------------------
+   Table pagination — one shared pager for every list in the app.
+   Same footer design as the reference snippet: a summary on one side and the
+   page buttons on the other, always showing the first page, the last page, the
+   current page and one neighbour on each side (… in between).
+   Rows are sliced after filtering/sorting, so the search box, the status
+   filter, the sort control and the row selection all keep working: the
+   selection helpers read the rendered rows, so "select all" now acts on the
+   page you are looking at.
+--------------------------------------------------------------------------- */
+const PG_SIZE = 10;
+const PG_KEYS = ['quote','inv','po','req','proj','docs','mov','users','cw'];
+const pgState = {};
+PG_KEYS.forEach(k => { pgState[k] = 1; });
+const pgSig = {};
+
+function pgTotalPages(total){ return Math.max(1, Math.ceil(total / PG_SIZE)); }
+
+/* Any list can get a pager key (the reports build one per report), so keys
+   are created the first time a table asks for them. */
+function pgKey(key){
+  if(!Object.prototype.hasOwnProperty.call(pgState, key)){ pgState[key] = 1; pgSig[key] = undefined; }
+  return key;
+}
+
+function pgPageList(cur, total){
+  const pages = [];
+  const winStart = Math.max(2, cur - 1);
+  const winEnd   = Math.min(total - 1, cur + 1);
+  pages.push(1);
+  if(winStart > 2) pages.push('…');
+  for(let p = winStart; p <= winEnd; p++) pages.push(p);
+  if(winEnd < total - 1) pages.push('…');
+  if(total > 1) pages.push(total);
+  return pages;
+}
+
+/* Slices `list` down to the current page and paints the footer.
+   `sig` is the filter/sort/language signature: when it changes (a new search,
+   filter, sort or language) the list starts again from page 1. */
+function pgWindow(key, list, sig){
+  pgKey(key);
+  if(sig !== undefined && sig !== pgSig[key]){ pgSig[key] = sig; pgState[key] = 1; }
+  const pages = pgTotalPages(list.length);
+  if(!(pgState[key] >= 1)) pgState[key] = 1;
+  if(pgState[key] > pages) pgState[key] = pages;
+  const start = (pgState[key] - 1) * PG_SIZE;
+  renderPager(key, list.length);
+  /* Documents, projects, purchase orders, requests, project works and the
+     report tables are built as one HTML string, so their footer is inserted
+     after this call. Repaint it on the next frame, once the markup is in. */
+  if(typeof requestAnimationFrame === 'function') requestAnimationFrame(()=>renderPager(key, list.length));
+  return list.slice(start, start + PG_SIZE);
+}
+
+function pgReset(page, filter, statusF){
+  pgState[page] = 1;
+  pgSig[page] = [filter, statusF, sortState[page], lang].join('|');
+}
+
+function renderPager(page, total){
+  const foot = document.getElementById('pgFoot-' + page);
+  if(!foot) return;
+  /* the sticky pager needs its card to stop clipping it */
+  foot.closest('.table-card')?.classList.add('has-pager');
+  const pages = pgTotalPages(total);
+  let cur = Math.min(Math.max(1, pgState[page] || 1), pages);
+  pgState[page] = cur;
+  if(total === 0){ foot.innerHTML = ''; foot.style.display = 'none'; return; }
+  foot.style.display = '';
+
+  const from = (cur - 1) * PG_SIZE + 1;
+  const to   = Math.min(cur * PG_SIZE, total);
+  const summary = lang === 'en'
+    ? `Showing <b>${from}-${to}</b> of <b>${total}</b>`
+    : `عرض <b>${from}-${to}</b> من <b>${total}</b>`;
+
+  const arrow = d => `<svg class="pg-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+  let html = `<div class="pg-summary">${summary}</div><div class="pagination">`;
+  html += `<button class="pg-btn" onclick="pgGo('${page}',${cur - 1})" ${cur === 1 ? 'disabled' : ''} aria-label="${lang==='en'?'Previous':'السابق'}">${arrow('M15 18l-6-6 6-6')}</button>`;
+  pgPageList(cur, pages).forEach(p => {
+    html += p === '…'
+      ? '<span class="pg-ellipsis">…</span>'
+      : `<button class="pg-btn ${p === cur ? 'is-active' : ''}" onclick="pgGo('${page}',${p})">${p}</button>`;
+  });
+  html += `<button class="pg-btn" onclick="pgGo('${page}',${cur + 1})" ${cur === pages ? 'disabled' : ''} aria-label="${lang==='en'?'Next':'التالي'}">${arrow('M9 18l6-6-6-6')}</button>`;
+  foot.innerHTML = html + '</div>';
+}
+
+/* Pages that rebuild themselves through navigate() lose their toolbar inputs,
+   so paging has to carry the values across the re-render. */
+const pgKeep = {};
+const pgPending = {};
+function pgCapture(page, ids){
+  pgKeep[page] = pgKeep[page] || {};
+  pgPending[page] = true;
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) pgKeep[page][id] = el.value;
+  });
+}
+function pgRestore(page, ids){
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    const v  = (pgKeep[page] || {})[id];
+    if(el && v != null && el.value !== v) el.value = v;
+  });
+  pgPending[page] = false;
+}
+function pgField(page, id){
+  /* While a page change is in flight the toolbar has just been rebuilt empty,
+     so read what pgCapture saved instead of the fresh inputs. */
+  if(pgPending[page]) return (pgKeep[page] || {})[id] || '';
+  const el = document.getElementById(id);
+  if(el) return el.value;
+  return (pgKeep[page] || {})[id] || '';
+}
+
+/* Kept out of the inline handler because the page key comes from the DOM —
+   validated here — and because each page re-renders itself with whatever
+   filters are currently in its toolbar. */
+function pgGo(page, p){
+  if(!Object.prototype.hasOwnProperty.call(pgState, page)) return;
+  pgState[page] = p;
+  const val = id => document.getElementById(id)?.value || '';
+  switch(page){
+    case 'quote': renderQuoteRows(val('quoteSearch'), val('quoteFilterStatus')); break;
+    case 'inv':   renderInvRows(val('invSearch'), val('invFilterStatus'), val('invFilterCat')); break;
+    case 'po':
+      pgCapture('po', ['poSearch']);
+      navigate('purchasing', {quiet:true});
+      pgRestore('po', ['poSearch']);
+      break;
+    case 'req':   navigate('issues', {quiet:true}); break;
+    case 'proj':
+      pgCapture('proj', ['projSearch','projStatusFilter','projPriorityFilter']);
+      navigate('projects', {quiet:true});
+      pgRestore('proj', ['projSearch','projStatusFilter','projPriorityFilter']);
+      break;
+    case 'docs':  docsUpdateResults(); break;
+    case 'mov':   renderMovRows(val('movFilterType')); break;
+    case 'users': renderUsersRows(); break;
+    case 'cw':    pgRefreshCraneWorks(); break;
+    default:
+      if(page.startsWith('rep_')) navigate('reports', {quiet:true});
+  }
+}
+
 function renderQuoteRows(filter='', statusF=''){
   const tbody = document.getElementById('quoteTbody');
   if(!tbody) return;
@@ -1447,11 +1595,15 @@ function renderQuoteRows(filter='', statusF=''){
       return 0;
     });
   }
+  // a new search / filter / sort / language starts again from page 1
+  const sig = [filter, statusF, sv, lang].join('|');
   if(rows.length===0){
     tbody.innerHTML = '    <tr><td colspan="9"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
+    renderPager('quote', 0);
     return;
   }
-  tbody.innerHTML = rows.map(({q, idx})=>{
+  const pageRows = pgWindow('quote', rows, sig);
+  tbody.innerHTML = pageRows.map(({q, idx})=>{
     const open = openQuotePanels.has(q.id);
     return `
     <tr class="data-quote-row ${selState.quote.has(idx)?'selected-row':''} ${open?'is-open':''}" data-qid="${q.id}" data-page-idx="${idx}">
@@ -1713,6 +1865,7 @@ function renderSales(){
       </tr></thead>
       <tbody id="quoteTbody"></tbody>
     </table>
+    <div class="pg-footer" id="pgFoot-quote"></div>
   </div>
 </div>`;
 };
@@ -2580,6 +2733,7 @@ function saveQuotation(){
     quotations[editingQuoteIdx] = q;
   } else {
     quotations.unshift(q);
+    pgReset('quote', '', '');   // a new quotation is prepended, show page 1
   }
   
   closeQuoteModal();
@@ -3181,6 +3335,7 @@ function renderInventory(){
       </tr></thead>
       <tbody id="invTbody"></tbody>
     </table>
+    <div class="pg-footer" id="pgFoot-inv"></div>
   </div>
 </div>`;
 }
@@ -3222,9 +3377,11 @@ function renderInvRows(filter='', statusF='', catF=''){
   }
   if(rows.length===0){
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">${ICONS.box}<div>${lang==='en'?'No items match your search':'لا توجد أصناف مطابقة لبحثك'}</div></div></td></tr>`;
+    renderPager('inv', 0);
     return;
   }
-  tbody.innerHTML = rows.map(({item:i, idx})=>{
+  const pageRows = pgWindow('inv', rows, [filter, statusF, catF, sv, lang].join('|'));
+  tbody.innerHTML = pageRows.map(({item:i, idx})=>{
     const st = statusFor(i);
     return `<tr class="${selState.inv.has(idx)?'selected-row':''}" data-page-idx="${idx}">
       <td class="sel-check-col" style="display:${selMode.inv?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.inv.has(idx)?'checked':''} onchange="toggleSel('inv',${idx},this)"></td>
@@ -3388,7 +3545,7 @@ function renderPurchasing(){
                     return 0;
                   });
                 }
-                return poIdx.map(idx=>{
+                return pgWindow('po', poIdx, [sv, lang].join('|')).map(idx=>{
                   const po=purchaseOrders[idx];
                   const st = poStatusCfg(po.status);
                   return `<tr class="${selState.po.has(idx)?'selected-row':''}" data-page-idx="${idx}">
@@ -3412,6 +3569,7 @@ function renderPurchasing(){
           }
         </tbody>
       </table>
+      <div class="pg-footer" id="pgFoot-po"></div>
     </div>
     <div class="card">
       <div class="card-head"><div class="card-title">${L.purchasing.supplierPerf}</div></div>
@@ -3467,7 +3625,7 @@ function renderIssues(){
           return 0;
         });
       }
-      return reqIdx.map(idx=>{
+      return pgWindow('req', reqIdx, [sv, lang].join('|')).map(idx=>{
         const r=reqsData[idx];
         return `
       <div class="alert-row" style="${selState.req.has(idx)?'background:var(--blue-soft);border-color:var(--blue);':''}" data-page-idx="${idx}">
@@ -3486,6 +3644,7 @@ function renderIssues(){
       </div>`;
       }).join('');
     })()}
+    ${reqsData.length ? `<div class="pg-footer" id="pgFoot-req"></div>` : ''}
   </div>
 </div>`;
 }
@@ -3533,6 +3692,7 @@ function renderMovements(){
     </tr></thead>
     <tbody id="movTbody"></tbody>
     </table>
+    <div class="pg-footer" id="pgFoot-mov"></div>
   </div>`;
 }
 
@@ -3543,6 +3703,7 @@ function renderMovRows(typeF=''){
   const rows = movementsData.filter(m => !typeF || m.type===typeF);
   if(!rows.length){
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-2);">${lang==='en'?'No movements found':'لا توجد حركات مطابقة'}</td></tr>`;
+    renderPager('mov', 0);
     return;
   }
   const cfg = {
@@ -3550,7 +3711,8 @@ function renderMovRows(typeF=''){
     outbound: {c:'pill-low'},
     transfer: {c:'pill-critical'},
   };
-  tbody.innerHTML = rows.map(m => {
+  const pageRows = pgWindow('mov', rows, [typeF, lang].join('|'));
+  tbody.innerHTML = pageRows.map(m => {
     const lbl = L.movements[m.type];
     return `<tr>
       <td><b>${m.ref}</b></td>
@@ -3685,12 +3847,15 @@ function getInventoryData(from='', to=''){
 
 /* ── Render a generic report table ── */
 function renderReportTable(headers, rows){
+  const key = 'rep_' + currentReport;
   if(!rows || rows.length===0){
     return '<div class="empty-state" style="margin:30px 0;">' + ICONS.box + '<div>' + STR[lang].reports.noData + '</div></div>';
   }
+  const pageRows = pgWindow(key, rows, [currentReport, reportDateFrom, reportDateTo, lang].join('|'));
   return `<div class="table-card"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${
-    rows.map(cells => `<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')
-  }</tbody></table></div>`;
+    pageRows.map(cells => `<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')
+  }</tbody></table>
+  <div class="pg-footer" id="pgFoot-${key}"></div></div>`;
 }
 
 /* ── Print Report ── */
@@ -3950,7 +4115,9 @@ function getRoleLabel(roleKey){
 function renderUsersRows(){
   const tbody = document.getElementById('usersTbody');
   if(!tbody) return;
-  tbody.innerHTML = usersData.map((u, idx)=>{
+  const pageRows = pgWindow('users', usersData, lang);
+  tbody.innerHTML = pageRows.map((u, i)=>{
+    const idx = usersData.indexOf(u);
     const time = lang==='en'?'Just now':'الآن';
     const actions = isRootUser() ? `<div class="row-actions">
         <button title="${lang==='en'?'Edit':'تعديل'}" data-action="edituser" data-idx="${idx}">${ICONS.edit}</button>
@@ -3974,6 +4141,7 @@ function renderUsers(){
   <div class="table-card">
     <table><thead><tr><th>${lang==='en'?'Name':'الاسم'}</th><th>${L.users.role}</th><th>${lang==='en'?'Department':'القسم'}</th><th>${L.users.lastActive}</th><th>${L.table.actions}</th></tr></thead>
     <tbody id="usersTbody"></tbody></table>
+    <div class="pg-footer" id="pgFoot-users"></div>
   </div>`;
 }
 
@@ -4283,6 +4451,9 @@ function pushImportedToBackend(){
    PROJECTS PAGE - RENDER
 =================================================================== */
 let currentProjectTab = 'dashboard';
+/* The projects toolbar re-renders with every keystroke (debounced), so the
+   search text lives here — otherwise the box empties itself on each filter. */
+let projSearchValue = '';
 let currentProjectIdx = -1;
 
 function getPhaseLabel(id){
@@ -4435,9 +4606,9 @@ function renderProjectsDashboard(){
 
 function renderProjectsList(){
   const L = STR[lang].projects;
-  const sv = (document.getElementById('projSearch')?.value||'').toLowerCase();
-  const sf = document.getElementById('projStatusFilter')?.value||'';
-  const pf = document.getElementById('projPriorityFilter')?.value||'';
+  const sv = (projSearchValue || pgField('proj','projSearch') || '').toLowerCase();
+  const sf = pgField('proj','projStatusFilter');
+  const pf = pgField('proj','projPriorityFilter');
   const filtered = projects.filter(p=>{
     const n=(lang==='en'?p.name:p.nameAr).toLowerCase(), c=(lang==='en'?p.client:p.clientAr).toLowerCase();
     if(sv && !n.includes(sv) && !c.includes(sv) && !p.id.toLowerCase().includes(sv)) return false;
@@ -4465,7 +4636,7 @@ function renderProjectsList(){
     <div class="sort-control liquid-sort">
       ${liquidSortHTML('projSort', LSORT.proj, sortState.proj)}
     </div>
-    <div class="table-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="projSearch" placeholder="${L.searchProjects}"></div>
+    <div class="table-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="projSearch" value="${escapeHtml(projSearchValue)}" placeholder="${L.searchProjects}"></div>
   </div>
   <div class="filter-panel" id="projFilterPanel">
     <div class="field"><label>${L.status}</label><select id="projStatusFilter"><option value="">${L.allStatus}</option>${PROJECT_STATUSES.map(s=>`<option value="${s}">${getProjStatusLabel(s)}</option>`).join('')}</select></div>
@@ -4476,7 +4647,8 @@ function renderProjectsList(){
   <div class="bulk-bar" id="bulkBar-proj"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('proj')">${ICONS.checkSquare} ${STR[lang].sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('proj')">${ICONS.trash} ${STR[lang].sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('proj')">${ICONS.close} ${STR[lang].sel.cancelSelect}</button></div>
   <div class="table-card"><table><thead><tr><th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="projCheckAll" onchange="toggleAllSel('proj')"></th><th>${L.projectNumber}</th><th>${L.projectName}</th><th>${L.client}</th><th>${L.type}</th><th>${L.manager}</th><th>${L.contractValue}</th><th>${L.progress}</th><th>${L.status}</th><th>${L.priority}</th><th style="min-width:190px;">${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>
   ${filtered.length ? (()=>{
-    return filtered.map(p=>{
+    const pageRows = pgWindow('proj', filtered, [sv, sf, pf, psv, lang].join('|'));
+    return pageRows.map(p=>{
     const idx=projects.indexOf(p), e=calcEndDate(p.startDate,p.duration), r=calcDaysRemaining(e);
     return `<tr class="${selState.proj.has(idx)?'selected-row':''}" data-page-idx="${idx}">
       <td class="sel-check-col" style="display:${selMode.proj?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.proj.has(idx)?'checked':''} onchange="toggleSel('proj',${idx},this)"></td>
@@ -4488,7 +4660,9 @@ function renderProjectsList(){
       <td><div class="row-actions dw-actions dw-3"><button title="${lang==='en'?'View':'عرض'}" onclick="openProjectDetail(${idx})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="openProjectModal(${idx})">${ICONS.edit}</button>${dwHtml(idx, 'proj')}</div></td>
     </tr>`;
   }).join('');})() : `<tr><td colspan="11"><div class="empty-state">${ICONS.box}<div>${L.noData}</div></div></td></tr>`}
-  </tbody></table></div>`;
+  </tbody></table>
+  ${filtered.length ? `<div class="pg-footer" id="pgFoot-proj"></div>` : ''}
+  </div>`;
 }
 
 /* ── Project Detail ── */
@@ -4698,11 +4872,13 @@ function renderCraneWorksList(p, idx){
     <button class="btn-mini" onclick="showCraneWorkModal(${idx})">+ ${T.newWork}</button>
   </div>`;
   if(!works.length) return bar + `<div class="empty-state">${ICONS.inbox}<div>${T.noWorks}</div></div>`;
+  const listed = works.map((w,i)=>({w, i}));
+  const pageRows = pgWindow('cw', listed, [idx, lang].join('|'));
   return bar + `<div class="table-card"><table><thead><tr>
     <th>${T.no}</th><th>${T.nameCol}</th><th>${T.typeCol}</th><th>${T.locationCol}</th>
     <th>${T.workDateCol}</th><th>${T.items}</th><th>${T.actions}</th></tr></thead><tbody>
-    ${works.map((w,i) => `<tr>
-      <td>${i+1}</td>
+    ${pageRows.map(({w, i}) => `<tr>
+      <td>${i + 1}</td>
       <td>${escapeHtml(w.projectName||'—')}</td>
       <td>${escapeHtml(cwWorkTypeLabel(w.workType)||'—')}</td>
       <td>${escapeHtml(w.location||'—')}</td>
@@ -4713,7 +4889,16 @@ function renderCraneWorksList(p, idx){
         <button title="${T.edit}" onclick="showCraneWorkModal(${idx},${i})">${ICONS.edit}</button>
         ${dwHtml(idx, 'crane', i)}
       </div></td></tr>`).join('')}
-  </tbody></table></div>`;
+  </tbody></table>
+  <div class="pg-footer" id="pgFoot-cw"></div></div>`;
+}
+
+/* Re-renders the open project detail (Documents → works sub-tab) in place. */
+function pgRefreshCraneWorks(){
+  const body = document.getElementById('projDetailBody');
+  if(!body || currentProjectIdx == null) return;
+  const p = projects[currentProjectIdx];
+  if(p) body.innerHTML = renderProjDocsTab(p, currentProjectIdx, STR[lang].projects);
 }
 
 function cwField(id, label, val, type, extra){
@@ -5536,14 +5721,16 @@ function docsUpdateResults(){
   if(!rows.length){
     resEl.innerHTML = `<div class="empty-state">${ICONS.inbox}<div>${T.noWorks}</div>
       ${all.length ? '' : `<button class="btn-mini" style="margin-top:12px;" onclick="docsNewWork()">+ ${T.newWork}</button>`}</div>`;
+    renderPager('docs', 0);
     return;
   }
+  const pageRows = pgWindow('docs', rows, [docsFilter.q, docsFilter.proj, sortState.docs, selMode.docs, lang].join('|'));
   resEl.innerHTML = `<div class="table-card"><table class="docs-table"><thead><tr>
     <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="docsCheckAll" onchange="toggleAllSel('docs')"></th>
     <th>${T.issueDate}</th><th>${T.project}</th><th>${T.workType}</th><th>${T.workDate}</th>
     <th>${T.location}</th><th>${T.supervisor}</th><th>${T.items}</th><th>${T.hours}</th>
     <th style="text-align:left;">${T.actions}</th></tr></thead><tbody>
-    ${rows.map(r=>{
+    ${pageRows.map(r=>{
       const { p, idx, w, wi } = r;
       const hours = docsTotalHours(w);
       return `<tr data-page-idx="${idx}:${wi}">
@@ -5563,7 +5750,8 @@ function docsUpdateResults(){
           ${dwHtml(idx, 'crane', wi)}
         </div></td></tr>`;
     }).join('')}
-  </tbody></table></div>`;
+  </tbody></table>
+  <div class="pg-footer" id="pgFoot-docs"></div></div>`;
   docsApplySelUI();
 }
 
@@ -6921,6 +7109,7 @@ function postRenderHooks(page){
     if(fa) fa.addEventListener('click', ()=> navigate('projects'));
     const fr = document.getElementById('projFilterReset');
     if(fr) fr.addEventListener('click', ()=>{
+      projSearchValue = '';
       const s=document.getElementById('projSearch'); if(s) s.value='';
       const sf=document.getElementById('projStatusFilter'); if(sf) sf.value='';
       const pf=document.getElementById('projPriorityFilter'); if(pf) pf.value='';
@@ -6937,6 +7126,7 @@ function postRenderHooks(page){
     if(ss){
       let searchTimer;
       ss.addEventListener('input', ()=>{
+        projSearchValue = ss.value;
         clearTimeout(searchTimer);
         searchTimer = setTimeout(()=> navigate('projects'), 300);
       });
