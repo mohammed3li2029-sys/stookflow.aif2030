@@ -1596,7 +1596,7 @@ function renderQuoteRows(filter='', statusF=''){
   // a new search / filter / sort / language starts again from page 1
   const sig = [filter, statusF, sv, lang].join('|');
   if(rows.length===0){
-    tbody.innerHTML = '    <tr><td colspan="9"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
+    tbody.innerHTML = '    <tr><td colspan="10"><div class="empty-state">' + ICONS.sales + '<div>' + (lang==='en'?'No quotations match your search':'لا توجد عروض سعر مطابقة لبحثك') + '</div></div></td></tr>';
     renderPager('quote', 0);
     return;
   }
@@ -1609,6 +1609,7 @@ function renderQuoteRows(filter='', statusF=''){
       <td class="sel-check-col" style="display:${selMode.quote?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.quote.has(idx)?'checked':''} onchange="toggleSel('quote',${idx},this)"></td>
       <td><b>${q.id}</b></td>
       <td>${q.customer}</td>
+      <td class="trace-cell">${quoteTraceHtml(q)}</td>
       <td>${q.date}</td>
       <td style="font-weight:700;color:var(--blue);">${lang==='en' ? q.total.toLocaleString('en',{minimumFractionDigits:2})+' '+RYAL : RYAL+' '+q.total.toLocaleString('en',{minimumFractionDigits:2})}</td>
       <td><select class="pill ${getQuoteStatusPill(q.status)} pill-select" onchange="setQuoteStatus(${idx},this.value)" style="cursor:pointer;text-align:center;" title="${lang==='en'?'Change status':'تغيير الحالة'}">${['review','approved','sent'].map(s=>`<option value="${s}"${s===q.status?' selected':''}>${getQuoteStatusText(s)}</option>`).join('')}</select></td>
@@ -1632,7 +1633,7 @@ function renderQuoteRows(filter='', statusF=''){
       </div></td>
     </tr>
     <tr class="expand-row ${open?'':'is-hidden'}" id="qpanel-${q.id}">
-      <td colspan="9">${quoteActivityHtml(q)}</td>
+      <td colspan="10">${quoteActivityHtml(q)}</td>
     </tr>
   `;
   }).join('');
@@ -1712,6 +1713,57 @@ function quoteActivityHtml(q){
   }
 
   return `<div class="expand-inner">${createdHtml}<div class="step-connector"></div>${editHtml}</div>`;
+}
+
+const QA_TRACE_MAX_AVATARS = 6;
+const QA_TRACE_ICONS = {
+  dot: '<svg width="14" height="2" aria-hidden="true"><line x1="0" y1="1" x2="14" y2="1" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2" opacity=".4"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="9" height="9" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>'
+};
+/* The "who created it / who edited it" trail, shared by Sales quotations and
+   the Documents work sheets so both stay identical. One avatar per person
+   (an edit log can repeat the same name), capped, remainder becomes +N. */
+function traceTrailHtml(createdName, createdAt, edits, labels){
+  const ar = lang === 'ar';
+  const L = labels || {};
+  const created = createdName ? {name:String(createdName), at:createdAt} : null;
+  const trail = (Array.isArray(edits) ? edits : []).filter(e => e && e.name);
+  const last = trail.length ? trail[trail.length-1] : null;
+  const seen = new Set(); const people = [];
+  trail.forEach(e => { if(!seen.has(e.name)){ seen.add(e.name); people.push(e); } });
+  const shown = people.slice(0, QA_TRACE_MAX_AVATARS);
+  const extraCount = people.length - shown.length;
+
+  const tipParts = [];
+  if(created){
+    tipParts.push((L.created || (ar?'أنشأ':'Created'))+': '+created.name
+      + (created.at ? ' — '+_qaTimeParts(created.at).dt : ''));
+  }
+  if(last){
+    tipParts.push((L.edited || (ar?'آخر تعديل':'Last edited'))+': '+last.name
+      + (last.at ? ' — '+_qaTimeParts(last.at).dt : ''));
+  }
+  const tip = tipParts.join('\n') || (ar?'سجل الإنشاء والتعديل':'Creation/edit history');
+
+  if(!created && trail.length===0){
+    return `<span class="trace-empty" title="${escapeHtml(tip)}">—</span>`;
+  }
+  let html = `<span class="trace-wrap" title="${escapeHtml(tip)}">`;
+  if(created) html += _qaAvatar(created.name, created.at);
+  if(trail.length){
+    const more = extraCount>0 ? `<span class="tr-more">+${extraCount}</span>` : '';
+    html += `<span class="trace-dot">${QA_TRACE_ICONS.dot}</span>`
+         + `<span class="trace-clock">${QA_TRACE_ICONS.clock}</span>`
+         + `<span class="avatar-stack trace-mods">${shown.map(e=>_qaAvatar(e.name,e.at)).join('')}${more}</span>`;
+  }
+  return html+'</span>';
+}
+function quoteTraceHtml(q){
+  return traceTrailHtml(
+    q && q.createdBy ? q.createdBy.name : '',
+    q && q.createdBy ? q.createdBy.at : '',
+    q && q.edits
+  );
 }
 
 function toggleQuotePanel(btn, qid){
@@ -1855,6 +1907,7 @@ function renderSales(){
         <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="quoteCheckAll" onchange="toggleAllSel('quote')"></th>
         <th>${lang==='en'?'Quote #':'رقم العرض'}</th>
         <th>${lang==='en'?'Customer':'العميل'}</th>
+        <th class="trace-cell"></th>
         <th>${lang==='en'?'Date':'التاريخ'}</th>
         <th>${lang==='en'?'Total Amount':'الإجمالي'}</th>
         <th>${lang==='en'?'Status':'الحالة'}</th>
@@ -4643,7 +4696,7 @@ function renderProjectsList(){
     <button class="btn-mini" id="projFilterReset" style="background:var(--surface-2);color:var(--text);">${lang==='en'?'Reset':'إعادة'}</button>
   </div>
   <div class="bulk-bar" id="bulkBar-proj"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('proj')">${ICONS.checkSquare} ${STR[lang].sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('proj')">${ICONS.trash} ${STR[lang].sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('proj')">${ICONS.close} ${STR[lang].sel.cancelSelect}</button></div>
-  <div class="table-card"><table><thead><tr><th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="projCheckAll" onchange="toggleAllSel('proj')"></th><th>${L.projectNumber}</th><th>${L.projectName}</th><th>${L.client}</th><th>${L.type}</th><th>${L.manager}</th><th>${L.contractValue}</th><th>${L.progress}</th><th>${L.status}</th><th>${L.priority}</th><th style="min-width:190px;">${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>
+  <div class="table-card"><table><thead><tr><th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="projCheckAll" onchange="toggleAllSel('proj')"></th><th>${L.projectNumber}</th><th>${L.projectName}</th><th>${L.client}</th><th>${L.type}</th><th>${L.manager}</th><th>${L.contractValue}</th><th>${L.progress}</th><th>${L.status}</th><th>${L.priority}</th><th class="trace-cell"></th><th style="min-width:190px;">${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>
   ${filtered.length ? (()=>{
     const pageRows = pgWindow('proj', filtered, [sv, sf, pf, psv, lang].join('|'));
     return pageRows.map(p=>{
@@ -4655,9 +4708,10 @@ function renderProjectsList(){
       <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:5px;background:var(--surface-2);border-radius:3px;"><div style="width:${p.progress}%;height:100%;background:${r<0?'var(--red)':p.progress>=80?'var(--green)':'var(--blue)'};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:700;">${p.progress}%</span></div></td>
       <td><span class="pill ${getProjStatusClass(p.status)}" onclick="toggleProjectStatus(${idx})" style="cursor:pointer;">${getProjStatusLabel(p.status)}</span></td>
       <td><span class="pill ${getPriorityClass(p.priority)}">${getPriorityLabel(p.priority)}</span></td>
+      <td class="trace-cell">${projTraceHtml(p)}</td>
       <td><div class="row-actions dw-actions dw-3"><button title="${lang==='en'?'View':'عرض'}" onclick="openProjectDetail(${idx})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="openProjectModal(${idx})">${ICONS.edit}</button>${dwHtml(idx, 'proj')}</div></td>
     </tr>`;
-  }).join('');})() : `<tr><td colspan="11"><div class="empty-state">${ICONS.box}<div>${L.noData}</div></div></td></tr>`}
+  }).join('');})() : `<tr><td colspan="12"><div class="empty-state">${ICONS.box}<div>${L.noData}</div></div></td></tr>`}
   </tbody></table>
   ${filtered.length ? `<div class="pg-footer" id="pgFoot-proj"></div>` : ''}
   </div>`;
@@ -5061,6 +5115,19 @@ function cwActorName(){
   return String((typeof profileData !== 'undefined' && profileData && profileData.name) || '').trim();
 }
 
+/* The created/edited trail for a project row. Old projects predate the stamp,
+   so the first activity-log entry (who created it) is the fallback. */
+function projTraceHtml(p){
+  if(!p) return '';
+  const fallback = (Array.isArray(p.notesLog) && p.notesLog[0] && p.notesLog[0].user) ? p.notesLog[0].user : '';
+  return traceTrailHtml(
+    (p.createdBy && p.createdBy.name) ? p.createdBy.name : fallback,
+    (p.createdBy && p.createdBy.at) ? p.createdBy.at : p.createdAt,
+    p.edits,
+    { created: lang==='en' ? 'Created' : 'أنشأ', edited: lang==='en' ? 'Last edited' : 'آخر تعديل' }
+  );
+}
+
 /* Whoever originally created the sheet: the stored creator when we have one,
    otherwise fall back to the legacy free-text field, then the signed-in user
    so sheets created before this stamp existed still show somebody. */
@@ -5069,6 +5136,16 @@ function cwCreatorOf(w){
   if(w.createdBy && w.createdBy.name) return w.createdBy.name;
   if(w.preparedBy) return w.preparedBy;
   return cwActorName();
+}
+
+/* The same created/edited trail Sales uses, fed by the work-sheet stamp
+   (createdBy + edits) with the legacy preparedBy text as a fallback. */
+function docsTraceHtml(w){
+  const T = craneText();
+  return traceTrailHtml(cwCreatorOf(w), (w && (w.createdAt || (w.createdBy && w.createdBy.at))), w && w.edits, {
+    created: T.preparedBy,
+    edited: T.editedBy
+  });
 }
 
 /* ===================================================================
@@ -5725,7 +5802,7 @@ function docsUpdateResults(){
   const pageRows = pgWindow('docs', rows, [docsFilter.q, docsFilter.proj, sortState.docs, selMode.docs, lang].join('|'));
   resEl.innerHTML = `<div class="table-card"><table class="docs-table"><thead><tr>
     <th class="sel-check-col" style="width:40px;display:none;"><input type="checkbox" class="row-check" id="docsCheckAll" onchange="toggleAllSel('docs')"></th>
-    <th>${T.issueDate}</th><th>${T.project}</th><th>${T.workType}</th><th>${T.workDate}</th>
+    <th>${T.issueDate}</th><th>${T.project}</th><th>${T.workType}</th><th class="trace-cell"></th><th>${T.workDate}</th>
     <th>${T.location}</th><th>${T.supervisor}</th><th>${T.items}</th><th>${T.hours}</th>
     <th style="text-align:left;">${T.actions}</th></tr></thead><tbody>
     ${pageRows.map(r=>{
@@ -5736,7 +5813,8 @@ function docsUpdateResults(){
         <td style="white-space:nowrap;">${escapeHtml(w.issueDate||'—')}</td>
         <td><div style="font-weight:700;">${escapeHtml(w.projectName || (p ? (lang==='en'?p.name:p.nameAr||p.name) : T.noProject) || '—')}</div>
             <div style="font-size:10px;color:var(--text-3);">${escapeHtml(w.projectNo || (p ? p.id : (w.projectName ? T.noProject : '')))}</div></td>
-      <td>${escapeHtml(cwWorkTypeLabel(w.workType)||'—')}</td>
+        <td>${escapeHtml(cwWorkTypeLabel(w.workType)||'—')}</td>
+        <td class="trace-cell">${docsTraceHtml(w)}</td>
         <td style="white-space:nowrap;">${escapeHtml(w.workDate||'—')}</td>
         <td>${escapeHtml(w.location||'—')}</td>
         <td>${escapeHtml(cwSupervisorLabel(w.supervisor)||'—')}</td>
@@ -5946,8 +6024,18 @@ function saveProject(idx){
   const name = get('pmName'), nameAr = get('pmNameAr');
   if(!name && !nameAr) return showToast(lang==='en'?'Project name is required':'اسم المشروع مطلوب');
   const pid = get('pmId');
+  const stampNow = new Date().toISOString();
+  const stampWho = cwActorName();
   if(idx !== null){
     const p = projects[idx];
+    // Pin the original creator and append to the edit trail, so the list can
+    // show who added the project and who last touched it.
+    p.createdBy = (p.createdBy && p.createdBy.name)
+      ? {name:p.createdBy.name, at:p.createdBy.at || p.createdAt || stampNow}
+      : {name: stampWho, at: p.createdAt || stampNow};
+    p.createdAt = p.createdAt || p.createdBy.at;
+    p.edits = Array.isArray(p.edits) ? p.edits : [];
+    if(stampWho) p.edits.push({name: stampWho, at: stampNow});
     if(pid) p.id = pid;
     p.name = name||p.name; p.nameAr = nameAr||p.nameAr;
     p.client = get('pmClient')||p.client; p.clientAr = get('pmClientAr')||p.clientAr;
@@ -5969,6 +6057,7 @@ function saveProject(idx){
       contractNo:get('pmContractNo'), contractFile:'', contractValue:parseFloat(get('pmContractValue'))||0,
       contractDate:get('pmContractDate'), startDate:get('pmStartDate'), duration:parseInt(get('pmDuration'))||30,
       progress:0, status:get('pmStatus')||'active', priority:get('pmPriority')||'medium',
+      createdAt: stampNow, createdBy:{name: stampWho, at: stampNow}, edits:[],
       notes:get('pmNotes'), notesAr:get('pmNotesAr'),
       phases: defaultPhases.map(dp => ({id:dp.id, name:dp.name, nameAr:dp.nameAr, status:'notStarted', start:'', end:'', resp:'', notes:'', notesAr:'', progress:0})),
       materials:[], team:[], docs:[], works:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],

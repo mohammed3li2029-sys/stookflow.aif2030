@@ -2790,6 +2790,46 @@ tr.expand-row:last-child td{border-bottom:0;}
 .avatar-stack{display:flex;align-items:center;margin-bottom:4px;}
 .avatar-stack .p-avatar{border:2px solid var(--surface);}
 .avatar-stack .p-avatar:not(:first-child){margin-inline-start:-7px;}
+.trace-cell{white-space:nowrap;}
+.trace-wrap{
+  --tr-size:28px; --tr-ring:2px; --tr-overlap:calc(var(--tr-size) * -0.26);
+  display:inline-flex;flex-flow:row nowrap;align-items:center;gap:0;
+  vertical-align:middle;cursor:default;
+}
+.trace-empty{color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;min-height:var(--tr-size,28px);}
+.trace-dot{display:inline-flex;align-items:center;justify-content:center;color:var(--text-3);line-height:1;flex:0 0 auto;}
+.trace-dot svg{width:18px;height:2px;}
+.trace-clock{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:var(--tr-size);height:var(--tr-size);border-radius:50%;
+  color:var(--text-3);background:var(--surface-2);
+  border:var(--tr-ring) solid var(--surface);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 14%,transparent);
+  transition:transform .18s cubic-bezier(.34,1.4,.64,1),color .18s ease;
+}
+.trace-clock:hover{transform:scale(1.1);color:var(--blue);z-index:4;}
+.trace-clock svg{width:13px;height:13px;}
+.trace-wrap .p-avatar{
+  width:var(--tr-size);height:var(--tr-size);
+  font-size:10px;font-weight:700;
+  border:var(--tr-ring) solid var(--surface);
+  transition:transform .18s cubic-bezier(.34,1.4,.64,1),box-shadow .18s ease;
+}
+.trace-wrap .p-avatar:hover{transform:scale(1.14);z-index:4;box-shadow:0 4px 12px color-mix(in srgb,var(--text) 22%,transparent);}
+.trace-mods{margin-inline-start:0;margin-bottom:0;}
+.trace-mods .p-avatar:not(:first-child){margin-inline-start:var(--tr-overlap);transition-delay:.06s;}
+.trace-mods .p-avatar:first-child{transition-delay:.03s;}
+.tr-more{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:var(--tr-size);height:var(--tr-size);border-radius:50%;
+  margin-inline-start:var(--tr-overlap);
+  background:var(--surface-2);color:var(--text-2);
+  border:var(--tr-ring) solid var(--surface);
+  font-size:10px;font-weight:700;line-height:1;
+  cursor:default;
+  transition:transform .18s cubic-bezier(.34,1.4,.64,1);
+}
+.tr-more:hover{transform:scale(1.14);z-index:4;}
 .p-avatar{
   position:relative;width:20px;height:20px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
