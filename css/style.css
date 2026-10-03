@@ -3597,6 +3597,12 @@ html[dir="rtl"] #globalSearchWrap .sek-field{
 .docs-toolbar .docs-proj-filter{max-width:220px;min-width:170px;}
 .docs-toolbar .docs-proj-filter .field{margin-bottom:0;}
 .docs-toolbar .docs-proj-filter .sel-trigger{height:38px;}
+/* Automation Plan status filter — same toolbar rhythm as the docs toolbar. */
+.plan-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.plan-toolbar .plan-status-filter{max-width:240px;min-width:190px;}
+.plan-toolbar .plan-status-filter .field{margin-bottom:0;}
+.plan-toolbar .plan-status-filter .sel-trigger{height:38px;}
+.plan-count{font-size:12px;font-weight:600;color:var(--text-3);}
 .docs-toolbar .btn{height:38px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;white-space:nowrap;}
 .docs-toolbar .btn-mini{height:38px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;}
 .docs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}

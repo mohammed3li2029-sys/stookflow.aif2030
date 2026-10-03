@@ -4548,6 +4548,10 @@ let currentProjectTab = 'dashboard';
 /* The projects toolbar re-renders with every keystroke (debounced), so the
    search text lives here — otherwise the box empties itself on each filter. */
 let projSearchValue = '';
+/* Automation Plan status filter: 'all' or one of PROJECT_STATUSES. A view
+   choice rather than data, so it is deliberately NOT persisted — a filter
+   restored on the next visit would silently hide projects. */
+let projPlanStatus = 'all';
 let currentProjectIdx = -1;
 
 function getPhaseLabel(id){
@@ -4613,15 +4617,47 @@ function renderProjects(){
   ].map(t => `<span class="report-tab${currentProjectTab===t.key?' active':''}" data-ptab="${t.key}">${t.label}</span>`).join('')}</div>${page}</div>`;
 }
 
+/* Options for the Automation Plan status dropdown. Built from
+   PROJECT_STATUSES so a new status shows up here automatically, and labelled
+   with getProjStatusLabel — the same wording the cards' status pills use.
+   Built with the shared selField picker (see the SHARED COMPONENT block),
+   never a bare <select>. */
+function planStatusOptions(){
+  return [
+    ['all', lang==='en' ? 'All Projects' : 'جميع المشاريع'],
+    ...PROJECT_STATUSES.map(s => [s, getProjStatusLabel(s)])
+  ];
+}
+function projPlanSetStatus(v){
+  projPlanStatus = v || 'all';
+  navigate('projects');
+}
 function renderProjectsPlan(){
   const L = STR[lang].projects;
   const phaseColors = {notStarted:'var(--surface-2)',inProgress:'var(--blue)',completed:'var(--green)',delayed:'var(--red)'};
   const phaseTextColors = {notStarted:'var(--text-2)',inProgress:'#fff',completed:'#fff',delayed:'#fff'};
-  return `<div id="planGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;">
-    ${projects.map((p, idx) => {
+  /* Filtered, but each card keeps its real index in `projects` so
+     openProjectDetail(idx) and toggleProjectStatus(idx) still target the
+     right project regardless of the active filter. */
+  const cards = projects
+    .map((p, idx) => ({p, idx}))
+    .filter(o => projPlanStatus === 'all' || o.p.status === projPlanStatus);
+  /* Drag-reorder only makes sense unfiltered: the drop handler splices by
+     position in `projects`, and a filtered subset has no one-to-one mapping. */
+  const draggable = projPlanStatus === 'all' ? 'true' : 'false';
+  return `<div class="plan-toolbar">
+      <div class="plan-status-filter">
+        ${selField({id:'projPlanStatusSelect', noLabel:true, value:projPlanStatus, hasClear:false,
+          options:planStatusOptions(), onChange:projPlanSetStatus})}
+      </div>
+      <span class="plan-count">${cards.length} / ${projects.length}</span>
+    </div>
+    ${cards.length ? '' : `<div class="empty-state">${ICONS.box}<div>${L.noData}</div></div>`}
+    <div id="planGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;">
+    ${cards.map(({p, idx}) => {
       const end = calcEndDate(p.startDate, p.duration);
       const remain = calcDaysRemaining(end);
-      return `<div class="card" draggable="true" style="padding:16px;cursor:grab;" onclick="openProjectDetail(${idx})"
+      return `<div class="card" draggable="${draggable}" style="padding:16px;${draggable==='true'?'cursor:grab;':''}" onclick="openProjectDetail(${idx})"
         ondragstart="event.stopPropagation();event.dataTransfer.setData('text/plain',${idx});this.style.opacity='.4'"
         ondragend="this.style.opacity='1'" ondragover="event.preventDefault()">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -7231,6 +7267,8 @@ function postRenderHooks(page){
   }
   
   if(page==='projects'){
+    wireSelFields();
+    bindSelDismiss();
     document.querySelectorAll('[data-ptab]').forEach(tab => {
       tab.addEventListener('click', function(){ currentProjectTab = this.dataset.ptab; navigate('projects'); });
     });
@@ -7265,7 +7303,7 @@ function postRenderHooks(page){
     const nb = document.getElementById('newProjBtn');
     if(nb) nb.addEventListener('click', ()=> openProjectModal(null));
     const planGrid = document.getElementById('planGrid');
-    if(planGrid){
+    if(planGrid && projPlanStatus === 'all'){
       planGrid.ondrop = function(e){
         e.preventDefault();
         const from = parseInt(e.dataTransfer.getData('text/plain'));
