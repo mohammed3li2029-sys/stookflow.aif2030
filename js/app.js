@@ -87,7 +87,7 @@ async function uploadFileOrFallback(file, folder){
 async function loadAllStockFlowData(skipRender){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
-    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users] = await Promise.all([
+    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users, saWorks] = await Promise.all([
       window.StockFlowBackend.loadCollection('inventory'),
       window.StockFlowBackend.loadCollection('warehouses'),
       window.StockFlowBackend.loadCollection('material_requests'),
@@ -96,6 +96,7 @@ async function loadAllStockFlowData(skipRender){
       window.StockFlowBackend.loadCollection('purchase_orders'),
       window.StockFlowBackend.loadCollection('tasks'),
       window.StockFlowBackend.loadCollection('users'),
+      window.StockFlowBackend.loadCollection('standalone_works'),
     ]);
 
     if(inv && inv.length) silentReplace(inventoryData, inv);
@@ -115,6 +116,30 @@ async function loadAllStockFlowData(skipRender){
         return (local && (local.updatedAt||'') > (srv.updatedAt||'')) ? local : srv;
       }).concat(projects.filter(p => !srvIds.has(p.id)));
       silentReplace(projects, merged);
+    }
+
+    /* Same newest-wins merge for the standalone (no-project) work sheets, so
+       a sheet created on one machine reaches the others and a local edit that
+       couldn't be written isn't dropped when the server copy is staler.
+       silentReplace() never writes back, so anything the server is missing is
+       pushed right after — that is what carries sheets created while the table
+       didn't exist (their write was swallowed) up to the server. */
+    if(standaloneWorks.length){
+      const saIds = new Set((saWorks||[]).map(w => w && w.id));
+      const gone = new Set(saTombstones());
+      const saLocalOnly = standaloneWorks.filter(w => w && w.id && !saIds.has(w.id) && !gone.has(w.id));
+      if(saWorks && saWorks.length){
+        const saMerged = saWorks.map(srv => {
+          const local = standaloneWorks.find(w => w && w.id === srv.id);
+          return (local && (local.updatedAt||'') > (srv.updatedAt||'')) ? local : srv;
+        }).concat(saLocalOnly);
+        silentReplace(standaloneWorks, saMerged);
+      }
+      /* The merged array is a superset of the server's, so the prune inside
+         syncCollection only removes rows the server genuinely no longer has. */
+      if(saLocalOnly.length){
+        window.StockFlowBackend.syncCollection('standalone_works', standaloneWorks, 'id');
+      }
     }
 
     if(users && users.length){
@@ -157,6 +182,7 @@ async function loadAllStockFlowData(skipRender){
         [purchaseOrders,'purchasing'],
         [tasksData,'tasks'],
         [projects,'projects'],
+        [standaloneWorks,'projects'],
       ].forEach(([arr, perm])=>{
         if(!currentUserPerms.includes(perm)) silentReplace(arr, []);
       });
@@ -221,6 +247,7 @@ async function setupRealtimeSync(){
     ['quotations', quotations],
     ['purchase_orders', purchaseOrders],
     ['tasks', tasksData],
+    ['standalone_works', standaloneWorks],
   ];
 
   arrayTables.forEach(([table, arr]) => {
@@ -661,7 +688,7 @@ function bulkDeleteItems(page){
   else if(page==='docs'){
     const rows=[...s].map(k=>k.split(':').map(Number));
     const stand = rows.filter(([idx])=>idx===-1).map(([,wi])=>wi).sort((a,b)=>b-a);
-    stand.forEach(wi=>standaloneWorks.splice(wi,1));
+    stand.forEach(wi=>{ if(standaloneWorks[wi]) rememberSaDeleted(standaloneWorks[wi].id); standaloneWorks.splice(wi,1); });
     if(stand.length) syncStandaloneWorks();
     const byProj={};
     rows.filter(([idx])=>idx!==-1).forEach(([idx,wi])=>{(byProj[idx]=byProj[idx]||[]).push(wi);});
@@ -854,6 +881,22 @@ function syncStandaloneWorks(){
   }
 }
 const standaloneWorks = withFirestoreSync(loadStandaloneWorks(), 'standalone_works', 'id');
+
+/* Ids of standalone sheets deleted on THIS device. The load-time merge keeps
+   local-only sheets (so a sheet whose write never reached the server is never
+   lost) — without these, a sheet deleted here would be treated as "local-only"
+   on the next load and pushed straight back to the server, reappearing on every
+   device. Capped so the list can't grow without bound. */
+function saTombstones(){
+  try{ const s = localStorage.getItem('stockflow_sa_deleted'); if(s){ const a = JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
+  return [];
+}
+function rememberSaDeleted(id){
+  if(!id) return;
+  const list = saTombstones();
+  if(list.indexOf(id) === -1) list.push(id);
+  try{ localStorage.setItem('stockflow_sa_deleted', JSON.stringify(list.slice(-500))); }catch(e){}
+}
 
 /* Returns the work list of a project, or the standalone list for idx === -1. */
 function craneWorksOf(idx){
@@ -5481,6 +5524,7 @@ function deleteCraneWorkDirect(idx, wi){
   if(!standalone && !p) return;
   const works = standalone ? standaloneWorks : getCraneWorks(p);
   if(!works[wi]) return;
+  if(standalone) rememberSaDeleted(works[wi].id);
   works.splice(wi, 1);
   if(standalone) syncStandaloneWorks(); else syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
