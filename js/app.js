@@ -453,7 +453,9 @@ en:{
   },
   kpi:{totalItems:'Total Items',invValue:'Inventory Value',lowStock:'Low Stock Items',activeOrders:'Active Orders'},
   dist:{title:'Stock Distribution',raw:'Raw Materials',wip:'WIP',finished:'Finished Goods'},
-  weekly:{title:'Weekly Movement',inbound:'Inbound',outbound:'Outbound'},
+  weekly:{title:'Weekly Movement',thisWeek:'This Week',lastWeek:'Last Week',change:'Change',
+    days:['Mon','Tue','Wed','Thu','Fri','Sat'],
+    tBar:'Columns',tLine:'Line',tArea:'Area',tHBar:'Horizontal bars'},
   lowAlerts:{title:'Low Stock Alerts',orderNow:'Order Now',critical:'CRITICAL',low:'LOW'},
   activity:{title:'Recent Warehouse Activity',received:'Received',shipped:'Shipped',moved:'Moved',ago:'ago'},
   toolbar:{addItem:'Add New Item',filter:'Filter',export:'Export',search:'Search items by name, SKU, category...',filterStatus:'Status',filterCat:'Category',filterAll:'All',applyFilter:'Apply',resetFilter:'Reset',sort:'Sort'},
@@ -524,7 +526,9 @@ ar:{
   },
   kpi:{totalItems:'إجمالي الأصناف',invValue:'قيمة المخزون',lowStock:'أصناف منخفضة المخزون',activeOrders:'الطلبات النشطة'},
   dist:{title:'توزيع المخزون',raw:'مواد خام',wip:'تحت التصنيع',finished:'منتجات تامة'},
-  weekly:{title:'الحركة الأسبوعية',inbound:'وارد',outbound:'صادر'},
+  weekly:{title:'الحركة الأسبوعية',thisWeek:'هذا الأسبوع',lastWeek:'الأسبوع الماضي',change:'التغير',
+    days:['الاثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'],
+    tBar:'أعمدة',tLine:'خط',tArea:'منطقة',tHBar:'أعمدة أفقية'},
   lowAlerts:{title:'تنبيهات انخفاض المخزون',orderNow:'اطلب الآن',critical:'حرج',low:'منخفض'},
   activity:{title:'أحدث أنشطة المستودع',received:'تم الاستلام',shipped:'تم الشحن',moved:'تم النقل',ago:'مضت'},
   toolbar:{addItem:'إضافة صنف جديد',filter:'تصفية',export:'تصدير',search:'ابحث بالاسم أو الرمز أو الفئة...',filterStatus:'الحالة',filterCat:'الفئة',filterAll:'الكل',applyFilter:'تطبيق',resetFilter:'إعادة',sort:'ترتيب'},
@@ -972,8 +976,27 @@ function renderDashSection(key, cc){
     case 'chart-cal':
       return `<div class="row-2 dash-sect" data-sk="chart-cal">${arrows}
         <div class="card">
-          <div class="card-head"><div class="card-title">${L.weekly.title}</div></div>
-          <canvas id="weeklyChart" height="150"></canvas>
+          <div class="card-head">
+            <div class="wc-switch" id="weeklyTypeSwitch" role="group" aria-label="${L.weekly.title}">
+              ${[['bar','tBar','M7 20V10M12 20V4M17 20v-7'],
+                 ['line','tLine','M3 17l5-5 4 4 8-9'],
+                 ['area','tArea','M3 17l5-5 4 4 8-9v12H3z'],
+                 ['hbar','tHBar','M4 6h12M4 12h16M4 18h8']].map(([k,tip,d]) => `
+                <button type="button" class="wc-switch-btn${weeklyChartType===k?' is-active':''}" data-wc-type="${k}"
+                  title="${L.weekly[tip]}" aria-pressed="${weeklyChartType===k?'true':'false'}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>
+                </button>`).join('')}
+            </div>
+            <div class="card-title">${L.weekly.title}</div>
+          </div>
+          <div class="wc-legend">
+            <span class="wc-legend-item"><span class="wc-legend-dot is-now"></span>${L.weekly.thisWeek}</span>
+            <span class="wc-legend-item"><span class="wc-legend-dot is-prev"></span>${L.weekly.lastWeek}</span>
+          </div>
+          <div class="wc-wrap">
+            <svg id="weeklySvg" role="img" aria-label="${L.weekly.title}"></svg>
+            <div class="wc-tip" id="weeklyTip" hidden></div>
+          </div>
         </div>
         <div class="card">
           <div class="card-head">
@@ -1156,27 +1179,305 @@ function statCard(icon,color,bg,label,value,trend,up){
   </div>`;
 }
 
-function mountDashboardCharts(){
-  const isDark = theme==='dark';
-  const gridColor = isDark?'#2B2E34':'#E4E7EC';
-  const textColor = isDark?'#9A9DA6':'#62666F';
-  const wctx = document.getElementById('weeklyChart');
-  if(wctx){
-    if(wctx.chart) wctx.chart.destroy();
-    if(typeof Chart!=='undefined'){
-      wctx.chart = new Chart(wctx,{type:'bar',data:{
-        labels: lang==='en'?['Mon','Tue','Wed','Thu','Fri','Sat']:['اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'],
-        datasets:[
-          {label:STR[lang].weekly.inbound, data:[24,30,38,20,33,26], backgroundColor:'#0A66FF', borderRadius:6, barPercentage:.55},
-          {label:STR[lang].weekly.outbound, data:[18,22,28,16,24,19], backgroundColor:isDark?'#444':'#C9D2DE', borderRadius:6, barPercentage:.55},
-        ]},
-        options:{responsive:true, plugins:{legend:{display:false}}, scales:{
-          x:{grid:{display:false}, ticks:{color:textColor,font:{size:11}}},
-          y:{grid:{color:gridColor}, ticks:{color:textColor,font:{size:11}}}
-        }}
-      });
+/* Weekly Movement card. Hand-built SVG rather than Chart.js, so one renderer
+   covers all four shapes (columns / line / area / horizontal) off the same
+   geometry. Lives in its own namespace (wc*) and never touches global state
+   beyond the remembered chart type. */
+let weeklyChartType = 'bar';
+let weeklyResizeBound = false;
+
+/* Sample series, matching the numbers the old Chart.js card used. */
+const WC_NOW = [24,30,38,20,33,26];
+const WC_PREV = [18,22,28,16,24,19];
+const WC_MAX_Y = 40;
+const WC_Y_STEPS = [0,5,10,15,20,25,30,35,40];
+
+/* A comfortable top of scale that still sits above the tallest bar, so adding
+   a bigger value grows the chart instead of clipping it. */
+function wcScaleMax(){
+  const hi = Math.max(...WC_NOW, ...WC_PREV);
+  return Math.ceil((hi + (WC_MAX_Y - hi) * 0.15) / 5) * 5 || WC_MAX_Y;
+}
+
+function wcSvgEl(tag, attrs){
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+/* Catmull-Rom-style smoothing between points: horizontal control handles at
+   the midpoint give the flat-then-turn curve of the reference without the
+   overshoot a spline can produce. */
+function wcSmoothPath(pts){
+  if(pts.length < 2) return '';
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for(let i=0;i<pts.length-1;i++){
+    const mx = (pts[i][0] + pts[i+1][0]) / 2;
+    d += ` C ${mx} ${pts[i][1]}, ${mx} ${pts[i+1][1]}, ${pts[i+1][0]} ${pts[i+1][1]}`;
+  }
+  return d;
+}
+
+/* ---- hover readout -------------------------------------------------------
+   A transparent hit strip per day (per row when horizontal) sits on top of the
+   drawing, so one set of handlers serves every shape: you do not have to land
+   on a 2.5px line or a 12px bar to read the numbers. */
+let weeklyHoverDay = -1;
+/* Geometry of the drawing currently on screen, so the hover handlers can place
+   the tooltip without rebuilding anything. Replaced on every render. */
+let wcGeo = null;
+
+function wcTipEl(){ return document.getElementById('weeklyTip'); }
+
+function wcHideTip(){
+  weeklyHoverDay = -1;
+  const svg = document.getElementById('weeklySvg');
+  const g = svg && svg.querySelector('.wc-group');
+  if(g){
+    g.classList.remove('is-hovering');
+    g.querySelectorAll('.is-hot').forEach(e => e.classList.remove('is-hot'));
+    const guide = g.querySelector('.wc-guide');
+    if(guide) guide.setAttribute('opacity','0');
+  }
+  const tip = wcTipEl();
+  if(tip) tip.hidden = true;
+}
+
+function wcShowTip(i){
+  const tip = wcTipEl(), svg = document.getElementById('weeklySvg');
+  if(!tip || !svg || !wcGeo) return;
+  const L = STR[lang].weekly;
+  const now = WC_NOW[i], prev = WC_PREV[i];
+  const diff = now - prev;
+  const pct = prev ? Math.round(Math.abs(diff) / prev * 100) : 0;
+  const cls = diff > 0 ? 'is-up' : diff < 0 ? 'is-down' : 'is-flat';
+  const arrow = diff > 0 ? '\u25B2' : diff < 0 ? '\u25BC' : '\u2013';
+  tip.innerHTML =
+    `<div class="wc-tip-d">${L.days[i]}</div>` +
+    `<div class="wc-tip-r"><span class="wc-tip-k"><span class="wc-legend-dot is-now"></span>${L.thisWeek}</span><span class="wc-tip-v">${now}</span></div>` +
+    `<div class="wc-tip-r"><span class="wc-tip-k"><span class="wc-legend-dot is-prev"></span>${L.lastWeek}</span><span class="wc-tip-v">${prev}</span></div>` +
+    `<div class="wc-tip-r wc-tip-x"><span class="wc-tip-k">${L.change}</span>` +
+    `<span class="wc-tip-c ${cls}">${arrow} ${diff>0?'+':''}${diff} (${pct}%)</span></div>`;
+
+  const g = svg.querySelector('.wc-group');
+  if(g){
+    g.classList.add('is-hovering');
+    g.querySelectorAll('.is-hot').forEach(e => e.classList.remove('is-hot'));
+    g.querySelectorAll('[data-wc-day="'+i+'"]').forEach(e => {
+      if (e.classList.contains('wc-hit')) return;
+      e.classList.add('is-hot');
+    });
+    const guide = g.querySelector('.wc-guide');
+    if(guide){
+      if(wcGeo.hbar){
+        guide.setAttribute('x1',wcGeo.scaleL); guide.setAttribute('x2',wcGeo.scaleR);
+        guide.setAttribute('y1',wcGeo.rows[i]); guide.setAttribute('y2',wcGeo.rows[i]);
+      } else {
+        guide.setAttribute('x1',wcGeo.centers[i]); guide.setAttribute('x2',wcGeo.centers[i]);
+        guide.setAttribute('y1',wcGeo.top); guide.setAttribute('y2',wcGeo.baseY);
+      }
+      guide.setAttribute('opacity','1');
     }
   }
+
+  tip.hidden = false;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  const cx = wcGeo.hbar ? (wcGeo.scaleL + wcGeo.scaleR) / 2 : wcGeo.centers[i];
+  const hi = wcGeo.yFor(Math.max(now, prev)), lo = wcGeo.yFor(Math.min(now, prev));
+  /* Sits above the day's marks; drops below when there is no room, and is
+     clamped so it can never hang outside the chart. */
+  let top = wcGeo.hbar ? wcGeo.rows[i] - th - 10 : lo - th - 10;
+  if(top < 2) top = wcGeo.hbar ? wcGeo.rows[i] + 12 : hi + 12;
+  top = Math.max(2, Math.min(top, wcGeo.H - th - 2));
+  const left = Math.max(4, Math.min(cx - tw/2, wcGeo.W - tw - 4));
+  tip.style.left = Math.round(left)+'px';
+  tip.style.top = Math.round(top)+'px';
+  weeklyHoverDay = i;
+}
+
+function mountWeeklyChart(){
+  const svg = document.getElementById('weeklySvg');
+  if(!svg) return;
+  wcHideTip();
+  const L = STR[lang].weekly;
+  const rtl = document.documentElement.dir === 'rtl';
+  const wrap = svg.parentElement;
+  /* Measured, not a fixed viewBox: the card lives in a responsive grid, and
+     preserveAspectRatio="none" would stretch the labels and stroke widths. */
+  const W = Math.max(280, Math.round(wrap.clientWidth || svg.clientWidth || 0));
+  const H = 300;
+  const PAD = rtl
+    ? { top:14, right:36, bottom:30, left:14 }
+    : { top:14, right:14, bottom:30, left:36 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+  const maxY = wcScaleMax();
+  const yFor = v => PAD.top + plotH * (1 - v / maxY);
+  const days = L.days || [];
+  const n = days.length;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.innerHTML = '';
+
+  const group = wcSvgEl('g', { class:'wc-group' });
+  svg.appendChild(group);
+
+  /* Horizontal mode has no value axis in the design — the day names and the bar
+     lengths carry it — so the gridlines and tick labels are skipped there. */
+  const withAxis = weeklyChartType !== 'hbar';
+  if(withAxis) WC_Y_STEPS.forEach(v => {
+    if(v > maxY) return;
+    const y = yFor(v);
+    group.appendChild(wcSvgEl('line', { class:'wc-grid', x1:PAD.left, x2:W-PAD.right, y1:y, y2:y }));
+    const t = wcSvgEl('text', {
+      class:'wc-ylab', x: rtl ? W-PAD.right+8 : PAD.left-8, y:y+4,
+      'text-anchor': rtl ? 'start' : 'end'
+    });
+    t.textContent = v;
+    group.appendChild(t);
+  });
+
+  const centers = [];
+  for(let i=0;i<n;i++) centers.push(PAD.left + plotW/n * (i + .5));
+
+  const xLabels = () => days.forEach((d,i) => {
+    const t = wcSvgEl('text', { class:'wc-xlab', x:centers[i], y:H-8, 'text-anchor':'middle' });
+    t.textContent = d;
+    group.appendChild(t);
+  });
+
+  /* Bars grow from the baseline on the next frame, so switching chart type
+     animates instead of snapping. */
+  const growV = rect => requestAnimationFrame(() => {
+    if(rect.dataset.axis === 'x') rect.setAttribute('width', rect.dataset.to);
+    else { rect.setAttribute('y', rect.dataset.to); rect.setAttribute('height', rect.dataset.h); }
+  });
+
+  /* Horizontal mode swaps the axes: rows instead of day columns. */
+  const hbar = weeklyChartType === 'hbar';
+  let scaleL = PAD.left, scaleR = W - PAD.right;
+  let rowH = plotH / n;
+
+  if(weeklyChartType === 'bar'){
+    const slot = plotW / n, barW = slot * 0.26, gap = slot * 0.06, baseY = yFor(0);
+    centers.forEach((c,i) => {
+      [[c-gap/2-barW, WC_NOW[i], 'is-now'], [c+gap/2, WC_PREV[i], 'is-prev']].forEach(([x,v,cls]) => {
+        const h = baseY - yFor(v);
+        const r = wcSvgEl('rect', { class:'wc-bar '+cls, x, width:barW, rx:barW/2.1, y:baseY, height:0 });
+        r.dataset.axis = 'y'; r.dataset.to = yFor(v); r.dataset.h = h; r.dataset.wcDay = i;
+        group.appendChild(r); growV(r);
+      });
+    });
+    xLabels();
+  }
+  else if(weeklyChartType === 'hbar'){
+    /* Day names ride the value-axis side so they read first in both directions. */
+    rowH = plotH / n;
+    const barH = rowH * 0.3, gap = rowH * 0.08;
+    scaleL = rtl ? PAD.left : PAD.left + 46;
+    scaleR = rtl ? W - PAD.right - 46 : W - PAD.right;
+    const scaleW = scaleR - scaleL;
+    days.forEach((d,i) => {
+      const centerY = PAD.top + rowH * (i + .5);
+      const t = wcSvgEl('text', {
+        class:'wc-xlab', y:centerY+4,
+        x: rtl ? scaleR + 8 : scaleL - 8, 'text-anchor': rtl ? 'start' : 'end'
+      });
+      t.textContent = d;
+      group.appendChild(t);
+      [[centerY-gap/2-barH, WC_NOW[i], 'is-now'], [centerY+gap/2, WC_PREV[i], 'is-prev']].forEach(([y,v,cls]) => {
+        const r = wcSvgEl('rect', { class:'wc-bar '+cls, x:scaleL, y, height:barH, rx:barH/2.1, width:0 });
+        r.dataset.axis = 'x'; r.dataset.to = scaleW * (v / maxY); r.dataset.wcDay = i;
+        group.appendChild(r); growV(r);
+      });
+    });
+  }
+  else {
+    /* line + area share the same geometry; area just fills under the line. */
+    const draw = (series, areaCls, lineCls, dotCls) => {
+      const pts = series.map((v,i) => [centers[i], yFor(v)]);
+      const line = wcSmoothPath(pts);
+      if(areaCls){
+        const baseY = yFor(0);
+        group.appendChild(wcSvgEl('path', {
+          class:'wc-area '+areaCls,
+          d:`${line} L ${pts[pts.length-1][0]} ${baseY} L ${pts[0][0]} ${baseY} Z`
+        }));
+      }
+      group.appendChild(wcSvgEl('path', { class:'wc-line '+lineCls, d:line }));
+      pts.forEach(([x,y],i) => {
+        const dot = wcSvgEl('circle', { class:'wc-dot '+dotCls, cx:x, cy:y, r:3.5 });
+        dot.dataset.wcDay = i;
+        group.appendChild(dot);
+      });
+    };
+    /* Previous week first so the current week sits on top where they overlap. */
+    if(weeklyChartType === 'area'){
+      draw(WC_PREV, 'is-prev', 'is-prev', 'is-prev');
+      draw(WC_NOW, 'is-now', 'is-now', 'is-now');
+    } else {
+      draw(WC_PREV, '', 'is-prev', 'is-prev');
+      draw(WC_NOW, '', 'is-now', 'is-now');
+    }
+    xLabels();
+  }
+
+  /* Guide rail + hit strips. Both sit above every mark so nothing steals the
+     pointer, and both are inert until a hover turns them on. */
+  wcGeo = { W, H, hbar, centers, rows: centers.map((_,i) => PAD.top + rowH*(i+.5)),
+            top: PAD.top, baseY: yFor(0), scaleL, scaleR, yFor };
+  group.appendChild(wcSvgEl('line', { class:'wc-guide', x1:0, y1:0, x2:0, y2:0, opacity:0 }));
+  const slotW = plotW / n;
+  for(let i=0;i<n;i++){
+    const hit = wcSvgEl('rect', {
+      class:'wc-hit', 'data-wc-day':i,
+      x: hbar ? PAD.left : centers[i] - slotW/2,
+      y: hbar ? PAD.top + rowH*i : PAD.top,
+      width: hbar ? plotW : slotW,
+      height: hbar ? rowH : plotH
+    });
+    hit.addEventListener('mouseenter', () => wcShowTip(i));
+    hit.addEventListener('mouseleave', wcHideTip);
+    group.appendChild(hit);
+  }
+
+  /* Re-render on container resize; the geometry is measured in pixels, so a
+     narrower card has to be laid out again rather than scaled. */
+  if(!weeklyResizeBound && window.ResizeObserver && wrap){
+    weeklyResizeBound = true;
+    let last = W;
+    new ResizeObserver(() => {
+      const w = Math.round(wrap.clientWidth);
+      if(!w || Math.abs(w - last) < 8) return;
+      last = w;
+      if(document.body.contains(svg)) mountWeeklyChart();
+    }).observe(wrap);
+  }
+}
+
+function weeklySetChartType(t){
+  if(t === weeklyChartType) return;
+  weeklyChartType = t;
+  wcHideTip();
+  const svg = document.getElementById('weeklySvg');
+  const group = svg && svg.querySelector('.wc-group');
+  document.querySelectorAll('#weeklyTypeSwitch .wc-switch-btn').forEach(b => {
+    const on = b.dataset.wcType === t;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  /* Fade the old shape out, swap in the new one. */
+  if(group){
+    group.classList.add('is-leaving');
+    wcHideTip();
+    setTimeout(() => mountWeeklyChart(), 80);
+  } else { wcHideTip(); mountWeeklyChart(); }
+}
+
+function mountDashboardCharts(){
+  mountWeeklyChart();
   const dctx = document.getElementById('distChart');
   if(dctx){
     if(dctx.chart) dctx.chart.destroy();
@@ -7236,7 +7537,13 @@ function postRenderHooks(page){
       renderQuoteRows(document.getElementById('quoteSearch').value, document.getElementById('quoteFilterStatus').value);
     });
   }
-  if(page==='dashboard') mountDashboardCharts();
+  if(page==='dashboard'){
+    mountDashboardCharts();
+    document.getElementById('weeklyTypeSwitch')?.addEventListener('click', e => {
+      const btn = e.target.closest('.wc-switch-btn');
+      if(btn) weeklySetChartType(btn.dataset.wcType);
+    });
+  }
   if(page==='reports'){
     // report tab switching
     document.querySelectorAll('.report-tab').forEach(tab => {

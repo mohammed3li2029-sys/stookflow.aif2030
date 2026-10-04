@@ -3610,3 +3610,66 @@ html[dir="rtl"] #globalSearchWrap .sek-field{
 .docs-stat-n{font-size:24px;font-weight:800;color:var(--blue);line-height:1.1;}
 .docs-stat-l{font-size:12px;font-weight:600;color:var(--text-2);margin-top:3px;}
 .docs-table td{vertical-align:middle;}
+
+/* ---- Weekly Movement card (dashboard) ----------------------------------
+   Replaces the old Chart.js canvas with a hand-built SVG so one layout
+   covers columns / line / area / horizontal bars. Colours come from the app
+   theme variables rather than the reference's fixed hex, so dark mode is a
+   variable swap and not a second stylesheet. */
+.wc-switch{display:flex;align-items:center;gap:3px;background:var(--surface-2);border-radius:var(--radius-md);padding:3px;}
+.wc-switch-btn{width:30px;height:28px;display:flex;align-items:center;justify-content:center;border:none;border-radius:var(--radius-sm);background:none;color:var(--text-3);cursor:pointer;transition:background .15s ease,color .15s ease;}
+.wc-switch-btn:hover{color:var(--text-2);background:rgba(127,127,127,.10);}
+.wc-switch-btn.is-active{background:var(--surface);color:var(--blue);box-shadow:0 1px 3px rgba(15,23,42,.12);}
+.wc-switch-btn svg{width:15px;height:15px;}
+.wc-legend{display:flex;align-items:center;gap:16px;margin:4px 2px 8px;flex-wrap:wrap;}
+.wc-legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-2);}
+.wc-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.wc-legend-dot.is-now{background:var(--blue);}
+.wc-legend-dot.is-prev{background:#D4D8E0;}
+[data-theme="dark"] .wc-legend-dot.is-prev{background:#3A3E46;}
+.wc-wrap{position:relative;width:100%;height:300px;}
+.wc-wrap svg{display:block;width:100%;height:100%;}
+.wc-group{transition:opacity .22s ease;}
+.wc-group.is-leaving{opacity:0;}
+.wc-grid{stroke:var(--border);stroke-width:1;}
+.wc-ylab{font-size:11px;fill:var(--text-3);}
+.wc-xlab{font-size:11.5px;fill:var(--text-2);}
+.wc-bar{transition:height .5s cubic-bezier(.22,1,.36,1),y .5s cubic-bezier(.22,1,.36,1),width .5s cubic-bezier(.22,1,.36,1);}
+.wc-bar.is-now{fill:var(--blue);}
+.wc-bar.is-prev{fill:#D4D8E0;}
+[data-theme="dark"] .wc-bar.is-prev{fill:#3A3E46;}
+.wc-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.wc-line.is-now{stroke:var(--blue);}
+.wc-line.is-prev{stroke:#A7AFBD;}
+[data-theme="dark"] .wc-line.is-prev{stroke:#4E545E;}
+.wc-area.is-now{fill:var(--blue);fill-opacity:.14;}
+.wc-area.is-prev{fill:#A7AFBD;fill-opacity:.16;}
+[data-theme="dark"] .wc-area.is-prev{fill:#4E545E;fill-opacity:.20;}
+.wc-dot.is-now{fill:var(--blue);}
+.wc-dot.is-prev{fill:#A7AFBD;}
+[data-theme="dark"] .wc-dot.is-prev{fill:#5A616C;}
+
+/* Hover readout. The hit strips are transparent but hit-testable, and the rail
+   is a full-height (or full-width) guide that only appears on hover. */
+.wc-hit{fill:transparent;pointer-events:all;}
+.wc-guide{stroke:var(--blue);stroke-width:1;stroke-dasharray:3 4;opacity:0;transition:opacity .15s ease;pointer-events:none;}
+.wc-group.is-hovering .wc-bar{opacity:.32;transition:opacity .15s ease;}
+.wc-group.is-hovering .wc-bar.is-hot{opacity:1;}
+.wc-group.is-hovering .wc-dot{opacity:.32;transition:opacity .15s ease;}
+.wc-group.is-hovering .wc-dot.is-hot{opacity:1;stroke:var(--surface);stroke-width:2.5;}
+.wc-group.is-hovering .wc-line,.wc-group.is-hovering .wc-area{opacity:.32;transition:opacity .15s ease;}
+.wc-tip{position:absolute;z-index:4;pointer-events:none;min-width:132px;padding:8px 10px 9px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+  box-shadow:0 6px 20px rgba(15,23,42,.16);font-size:12px;line-height:1.5;color:var(--text);}
+[data-theme="dark"] .wc-tip{box-shadow:0 6px 20px rgba(0,0,0,.45);}
+.wc-tip[hidden]{display:none;}
+.wc-tip-d{font-weight:700;font-size:12.5px;margin-bottom:5px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.wc-tip-r{display:flex;align-items:center;gap:10px;justify-content:space-between;}
+.wc-tip-r + .wc-tip-r{margin-top:2px;}
+.wc-tip-k{display:flex;align-items:center;gap:6px;color:var(--text-2);white-space:nowrap;}
+.wc-tip-v{font-weight:700;font-variant-numeric:tabular-nums;}
+.wc-tip-x{margin-top:5px;padding-top:5px;border-top:1px solid var(--border);}
+.wc-tip-c{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.wc-tip-c.is-up{color:var(--green);}
+.wc-tip-c.is-down{color:var(--red);}
+.wc-tip-c.is-flat{color:var(--text-3);}
