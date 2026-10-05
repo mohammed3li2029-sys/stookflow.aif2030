@@ -2310,19 +2310,20 @@ html[dir="rtl"] .scroll-top-btn{right:auto;left:28px;}
   /* ---- bottom bar ---- */
   .mob-bottombar{
       display:flex !important;
-      position:fixed;bottom:8px;left:10px;right:10px;
+      position:fixed;bottom:6px;left:8px;right:8px;
       z-index:200;
-      border-radius:14px;
-      padding:4px 6px;
-      padding-bottom:max(4px,env(safe-area-inset-bottom));
-      justify-content:space-evenly;align-items:center;
-      min-height:44px;
+      border-radius:12px;
+      padding:2px 4px;
+      padding-bottom:max(2px,env(safe-area-inset-bottom));
+      justify-content:center;align-items:center;
+      gap:4px;
+      min-height:40px;
     }
-  .mob-bottombar .mob-glass-btn{flex:1;border:none;background:transparent;box-shadow:none;}
+  .mob-bottombar .mob-glass-btn{flex:0 0 auto;width:36px;height:32px;border:none;background:transparent;box-shadow:none;}
   .mob-bottombar .mob-glass-btn:active{background:rgba(255,255,255,.15);}
 
   /* content spacing */
-    .content{padding-bottom:60px !important;}
+    .content{padding-bottom:52px !important;}
 
   /* dropdowns position — appear above bottom bar */
   .notif-dropdown{
