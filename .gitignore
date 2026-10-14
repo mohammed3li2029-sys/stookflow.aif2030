@@ -1,4 +1,4 @@
-# OS files
+﻿# OS files
 .DS_Store
 Thumbs.db
 
@@ -29,3 +29,6 @@ build/
 # Cache
 .cache/
 *.cache
+
+
+.env.local
