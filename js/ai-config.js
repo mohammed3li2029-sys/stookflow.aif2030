@@ -1,9 +1,9 @@
-/* ===================================================================
+﻿/* ===================================================================
    AI CHAT CONFIG
    =================================================================== */
 (function(){
   var key = window.STOCKFLOW_AI_KEY || localStorage.getItem('stockflow_ai_key') || '';
-  if(!key && window.prompt) {
+  if(!key && false && window.prompt) {
     var entered = prompt(
       'Enter your Groq API key to enable AI Chat:\n\n' +
       'Get a free key at: https://console.groq.com/keys\n\n' +
