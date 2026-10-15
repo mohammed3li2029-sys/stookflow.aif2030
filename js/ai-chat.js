@@ -1,5 +1,5 @@
 /* ===================================================================
-   AI CHAT — Groq-powered assistant for StockFlow
+   AI CHAT — Google Gemini-powered assistant for StockFlow
    =================================================================== */
 (function(){
   'use strict';
@@ -11,7 +11,7 @@
   let chatHistory = [];
   let isTyping = false;
 
-  /* ── Tool definitions for Groq function calling ── */
+  /* ── Tool definitions for Gemini function calling ── */
   const TOOL_DEFS = [
     { type:'function', function:{ name:'getInventorySummary', description:'Get full inventory summary: total items, total stock, low-stock alerts, categories. Use when user asks about inventory, stock levels, items count.', parameters:{ type:'object', properties:{}, required:[] }}},
     { type:'function', function:{ name:'searchInventory', description:'Search inventory by name, SKU, or category. Use when user asks about a specific product or item.', parameters:{ type:'object', properties:{ query:{ type:'string', description:'Search query (item name, SKU, or category)' }}, required:['query'] }}},
@@ -31,6 +31,33 @@
     { type:'function', function:{ name:'getMaterialRequestSummary', description:'Get material requests summary. Use when user asks about material requests or requisitions.', parameters:{ type:'object', properties:{}, required:[] }}},
     { type:'function', function:{ name:'getOverviewStats', description:'Get full app overview: inventory, tasks, POs, projects, sales in one call. Use for general overview questions.', parameters:{ type:'object', properties:{}, required:[] }}},
   ];
+
+  /* ── Convert OpenAI-style JSON schema to Gemini schema (UPPER types) ── */
+  function toGeminiSchema(schema){
+    if(!schema || typeof schema !== 'object') return schema;
+    const out = {};
+    for(const k in schema){
+      if(k === 'type' && typeof schema[k] === 'string'){
+        out.type = schema[k].toUpperCase();
+      } else if(k === 'properties' && schema.properties){
+        out.properties = {};
+        for(const p in schema.properties) out.properties[p] = toGeminiSchema(schema.properties[p]);
+      } else if(k === 'items'){
+        out.items = toGeminiSchema(schema.items);
+      } else {
+        out[k] = schema[k];
+      }
+    }
+    return out;
+  }
+
+  /* Gemini uses functionDeclarations instead of OpenAI tools */
+  const FUNCTION_DECLS = TOOL_DEFS.map(t => ({
+    name: t.function.name,
+    description: t.function.description,
+    parameters: toGeminiSchema(t.function.parameters),
+  }));
+  const TOOLS_PAYLOAD = [{ functionDeclarations: FUNCTION_DECLS }];
 
   /* ── System prompt ─────────────────────────────── */
   function buildSystemPrompt(){
@@ -56,109 +83,115 @@ When presenting data, format it nicely with bullet points or short tables. Alway
     try { return await fn(args || {}); } catch(e) { return { error: e.message }; }
   }
 
-  /* ── Send message to Groq API ──────────────────── */
-  async function sendToAI(userMessage) {
-    chatHistory.push({ role:'user', content: userMessage });
+  /* ensure a tool result is a plain object Gemini can accept */
+  function ensureObject(v){
+    if(v && typeof v === 'object' && !Array.isArray(v)) return v;
+    return { result: v };
+  }
 
+  /* ── Build Gemini "contents" from internal history ── */
+  function buildContents(){
+    let h = chatHistory;
+    const MAX = 30;
+    if(h.length > MAX){
+      let start = h.length - MAX;
+      /* never start mid tool-exchange: begin on a plain user text turn */
+      while(start < h.length && !(h[start].role === 'user' && h[start].parts[0] && h[start].parts[0].text)) start++;
+      h = h.slice(start);
+    }
+    return h;
+  }
+
+  /* ── Single Gemini generateContent request ─────── */
+  async function geminiRequest(){
+    const body = JSON.stringify({
+      contents: buildContents(),
+      systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+      tools: TOOLS_PAYLOAD,
+      toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
+      generationConfig: { maxOutputTokens: CFG.maxTokens, temperature: CFG.temperature },
+    });
+
+    /* Local: call Gemini directly with the key from js/.env.js.
+       Deployed: call the server-side proxy so the key stays secret. */
+    const url = CFG.apiKey
+      ? CFG.apiBase + CFG.model + ':generateContent?key=' + encodeURIComponent(CFG.apiKey)
+      : CFG.proxyUrl + '?model=' + encodeURIComponent(CFG.model);
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    /* Supabase Edge Function proxy expects the (public) key on "apikey". */
     if(!CFG.apiKey) {
+      const sb = window.STOCKFLOW_SUPABASE_CONFIG || {};
+      if(sb.anonKey) headers['apikey'] = sb.anonKey;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: body,
+    });
+
+    if(!response.ok) {
+      const err = await response.text();
+      throw new Error('API error ' + response.status + ': ' + err);
+    }
+
+    const data = await response.json();
+    const candidate = data.candidates && data.candidates[0];
+    if(!candidate) throw new Error('No response from AI');
+    return (candidate.content && candidate.content.parts) ? candidate.content.parts : [];
+  }
+
+  /* ── Send message to Gemini API ────────────────── */
+  async function sendToAI(userMessage) {
+    chatHistory.push({ role:'user', parts:[{ text: userMessage }] });
+
+    if(!CFG.apiKey && !CFG.proxyUrl) {
       const msg = lang === 'ar'
         ? 'الـ API Key غير موجود. تأكد من ملف js/.env.js'
         : 'API Key not found. Make sure js/.env.js exists.';
       addMessage(msg, 'assistant');
-      chatHistory.push({ role:'assistant', content: msg });
+      chatHistory.push({ role:'model', parts:[{ text: msg }] });
       return msg;
     }
 
-    const messages = [
-      { role:'system', content: buildSystemPrompt() },
-      ...chatHistory.slice(-20),
-    ];
-
     try {
-      const response = await fetch(CFG.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + CFG.apiKey,
-        },
-        body: JSON.stringify({
-          model: CFG.model,
-          messages: messages,
-          tools: TOOL_DEFS,
-          tool_choice: 'auto',
-          max_tokens: CFG.maxTokens,
-          temperature: CFG.temperature,
-        }),
-      });
-
-      if(!response.ok) {
-        const err = await response.text();
-        throw new Error('API error ' + response.status + ': ' + err);
-      }
-
-      const data = await response.json();
-      const choice = data.choices && data.choices[0];
-      if(!choice) throw new Error('No response from AI');
-
-      const msg = choice.message;
+      let parts = await geminiRequest();
 
       /* If the AI wants to call tools, execute them and re-send */
-      if(msg.tool_calls && msg.tool_calls.length > 0) {
-        chatHistory.push({ role:'assistant', content: msg.content || null, tool_calls: msg.tool_calls });
+      const calls = parts.filter(p => p.functionCall);
+      if(calls.length > 0) {
+        /* echo the model turn back (keeps thoughtSignature intact) */
+        chatHistory.push({ role:'model', parts: parts });
 
-        for(const tc of msg.tool_calls) {
-          const fnName = tc.function.name;
-          let fnArgs = {};
-          try { fnArgs = JSON.parse(tc.function.arguments || '{}'); } catch(e){}
-          const result = await executeTool(fnName, fnArgs);
-          chatHistory.push({
-            role: 'tool',
-            tool_call_id: tc.id,
-            content: JSON.stringify(result),
-          });
+        const responseParts = [];
+        for(const p of calls) {
+          const fnName = p.functionCall.name;
+          const result = await executeTool(fnName, p.functionCall.args || {});
+          responseParts.push({ functionResponse: { name: fnName, response: ensureObject(result) } });
         }
+        chatHistory.push({ role:'user', parts: responseParts });
 
         /* Send again to get the final natural-language response */
-        const response2 = await fetch(CFG.apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + CFG.apiKey,
-          },
-          body: JSON.stringify({
-            model: CFG.model,
-            messages: [
-              { role:'system', content: buildSystemPrompt() },
-              ...chatHistory.slice(-20),
-            ],
-            max_tokens: CFG.maxTokens,
-            temperature: CFG.temperature,
-          }),
-        });
-
-        const data2 = await response2.json();
-        const choice2 = data2.choices && data2.choices[0];
-        const finalContent = choice2?.message?.content || 'No response.';
-        chatHistory.push({ role:'assistant', content: finalContent });
-        return finalContent;
+        parts = await geminiRequest();
       }
 
-      /* No tools needed — direct response */
-      const content = msg.content || 'No response.';
-      chatHistory.push({ role:'assistant', content: content });
-      return content;
+      const text = parts.filter(p => typeof p.text === 'string').map(p => p.text).join('\n').trim() || 'No response.';
+      chatHistory.push({ role:'model', parts:[{ text: text }] });
+      return text;
 
     } catch(err) {
       console.error('[AI]', err);
       let detail = err.message || String(err);
-      if(!CFG.apiKey) {
+      if(!CFG.apiKey && !CFG.proxyUrl) {
         detail = 'API Key is missing. Make sure js/.env.js exists and contains STOCKFLOW_AI_KEY.';
       }
-      const isArabic = /\u0600-\u06FF/.test(detail) || lang === 'ar';
+      const isArabic = /[\u0600-\u06FF]/.test(detail) || lang === 'ar';
       const errMsg = isArabic
         ? 'عذراً، حدث خطأ: ' + detail
         : 'Error: ' + detail;
-      chatHistory.push({ role:'assistant', content: errMsg });
+      chatHistory.push({ role:'model', parts:[{ text: errMsg }] });
       return errMsg;
     }
   }

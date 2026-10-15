@@ -1,23 +1,19 @@
 ﻿/* ===================================================================
-   AI CHAT CONFIG
+   AI CHAT CONFIG — Google Gemini
+   - Local/dev:  js/.env.js provides window.STOCKFLOW_AI_KEY -> direct API
+   - Deployed:   no client key; calls the Cloudflare Pages Function
+                 /api/ai which holds the key server-side (see functions/api/ai.js)
    =================================================================== */
 (function(){
   var key = window.STOCKFLOW_AI_KEY || localStorage.getItem('stockflow_ai_key') || '';
-  if(!key && false && window.prompt) {
-    var entered = prompt(
-      'Enter your Groq API key to enable AI Chat:\n\n' +
-      'Get a free key at: https://console.groq.com/keys\n\n' +
-      '(This key is stored locally and never sent to any server except Groq.)'
-    );
-    if(entered && entered.trim()) {
-      key = entered.trim();
-      localStorage.setItem('stockflow_ai_key', key);
-    }
-  }
+  var sb  = window.STOCKFLOW_SUPABASE_CONFIG || {};
   window.AI_CONFIG = {
     apiKey: key,
-    apiUrl: 'https://api.groq.com/openai/v1/chat/completions',
-    model: 'llama-3.3-70b-versatile',
+    provider: 'gemini',
+    apiBase: 'https://generativelanguage.googleapis.com/v1beta/models/',
+    /* Supabase Edge Function holds the key server-side (see supabase/functions/ai). */
+    proxyUrl: sb.url ? sb.url.replace(/\/$/, '') + '/functions/v1/ai' : '/api/ai',
+    model: 'gemini-3.5-flash-lite',
     maxTokens: 1024,
     temperature: 0.7,
   };
