@@ -8554,10 +8554,57 @@ async function deleteIssue(idx){
   showToast(lang==='en'?'Request deleted!':'تم حذف الطلب!');
 }
 
+/* Find the inventory row a material request refers to. Requests created from
+   the form carry the exact SKU; the older/demo requests only carry the item
+   name, so fall back to a name match (EN or AR). Returns the index or -1. */
+function findReqInventoryIndex(req){
+  if(!req) return -1;
+  if(req.sku){
+    const bySku = inventoryData.findIndex(it => it.sku === req.sku);
+    if(bySku !== -1) return bySku;
+  }
+  const en = req.item, ar = req.itemAr;
+  return inventoryData.findIndex(it =>
+    (en && (it.name === en || it.nameAr === en)) ||
+    (ar && (it.name === ar || it.nameAr === ar))
+  );
+}
+
+/* Approving a request deducts the requested quantity from stock; reverting it
+   to pending puts the quantity back. Re-assigns the array element (instead of
+   mutating in place) so the sync proxy writes the new stock to the database.
+   Returns true when an inventory row was actually adjusted. */
+function applyReqStockChange(req, deduct){
+  const idx = findReqInventoryIndex(req);
+  if(idx === -1) return false;
+  const qty = Math.abs(parseInt(req.qty) || 0);
+  if(!qty) return false;
+  const it = inventoryData[idx];
+  const cur = parseInt(it.stock) || 0;
+  const next = Math.max(0, cur + (deduct ? -qty : qty));
+  inventoryData[idx] = { ...it, stock: next };
+  return true;
+}
+
 function toggleReqStatus(idx){
   const r = reqsData[idx];
   if(!r) return;
-  r.status = r.status === 'approved' ? 'pending' : 'approved';
+  const approving = r.status !== 'approved';
+  /* Re-assign the element rather than mutating r.status: nested property
+     writes are not trapped by the sync proxy, which is why the status used to
+     silently revert to "pending" after a refresh. Re-assigning fires the proxy
+     and persists the new status to Supabase. */
+  reqsData[idx] = { ...r, status: approving ? 'approved' : 'pending' };
+  const touched = applyReqStockChange(reqsData[idx], approving);
+  if(approving){
+    showToast(touched
+      ? (lang==='en'?`Approved — ${r.qty} deducted from stock`:`تمت الموافقة — تم خصم ${r.qty} من المخزون`)
+      : (lang==='en'?'Approved — item not found in inventory':'تمت الموافقة — الصنف غير موجود في المخزون'));
+  } else {
+    showToast(touched
+      ? (lang==='en'?`Returned to pending — ${r.qty} restored to stock`:`أُعيد إلى قيد الانتظار — أُرجعت ${r.qty} إلى المخزون`)
+      : (lang==='en'?'Returned to pending':'أُعيد إلى قيد الانتظار'));
+  }
   navigate('issues');
 }
 
