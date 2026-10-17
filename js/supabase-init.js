@@ -63,14 +63,18 @@ function safeKey(raw) {
   return String(raw).trim();
 }
 
-/** Load every row from a table as a plain array of the original item objects. */
+/** Load every row from a table as a plain array of the original item objects.
+ *  Returns an array (possibly empty) whenever the table was read successfully —
+ *  an empty table is a valid, authoritative result (the user deleted
+ *  everything), so callers should clear their local data. It only returns
+ *  `null` when the backend is unavailable or the read failed, which tells the
+ *  caller to keep whatever demo/local data it already has. */
 async function loadCollection(table) {
-  if (!supabase) return null; // null = "not available", caller should keep demo data
+  if (!supabase) return null; // backend off -> null = "keep demo data"
   try {
     const { data, error } = await supabase.from(table).select("data");
     if (error) throw error;
-    if (!data || !data.length) return null;
-    return data.map(row => row.data);
+    return (data || []).map(row => row.data);
   } catch (err) {
     console.error(`[StockFlow] Failed to load Supabase table "${table}":`, err);
     return null;

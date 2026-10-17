@@ -99,11 +99,17 @@ async function loadAllStockFlowData(skipRender){
       window.StockFlowBackend.loadCollection('standalone_works'),
     ]);
 
-    if(inv && inv.length) silentReplace(inventoryData, inv);
-    if(wh && wh.length) silentReplace(warehouseData, wh);
-    if(reqs && reqs.length) silentReplace(reqsData, reqs);
-    if(quotes && quotes.length) silentReplace(quotations, quotes);
-    if(pos && pos.length) silentReplace(purchaseOrders, pos);
+    // An array result (even empty) is authoritative: replace the local copy,
+    // so deleting every row in Supabase clears the on-screen data instead of
+    // resurrecting the built-in demo/sample rows. `null` means the table was
+    // unavailable or the read errored -> keep whatever is already loaded.
+    if(Array.isArray(inv)) silentReplace(inventoryData, inv);
+    if(Array.isArray(wh)) silentReplace(warehouseData, wh);
+    if(Array.isArray(reqs)) silentReplace(reqsData, reqs);
+    if(Array.isArray(quotes)) silentReplace(quotations, quotes);
+    if(Array.isArray(pos)) silentReplace(purchaseOrders, pos);
+    // tasks keep a localStorage safety net, so only overwrite when the server
+    // actually has rows (an empty table must not wipe local unsynced edits).
     if(tasksArr && tasksArr.length) silentReplace(tasksData, tasksArr);
     if(projs && projs.length){
       /* Smart merge: keep whichever copy of each project is newest. If a
