@@ -111,17 +111,18 @@ async function loadAllStockFlowData(skipRender){
     // tasks keep a localStorage safety net, so only overwrite when the server
     // actually has rows (an empty table must not wipe local unsynced edits).
     if(tasksArr && tasksArr.length) silentReplace(tasksData, tasksArr);
-    if(projs && projs.length){
-      /* Smart merge: keep whichever copy of each project is newest. If a
-         local edit couldn't be written to Supabase (timeout, etc.) the
-         local copy carries a newer updatedAt and wins, so the edit isn't
-         silently lost. Projects that only exist locally are preserved too. */
-      const srvIds = new Set(projs.map(s => s.id));
+    if(Array.isArray(projs)){
+      /* The server decides which projects exist: a project deleted on the
+         server stays deleted, and an empty table clears the list (instead of
+         resurrecting the built-in demo projects). For projects present on both
+         sides we keep whichever copy is newest, so a local edit whose write
+         failed isn't silently overwritten by a staler server copy. */
       const merged = projs.map(srv => {
         const local = projects.find(p => p.id === srv.id);
         return (local && (local.updatedAt||'') > (srv.updatedAt||'')) ? local : srv;
-      }).concat(projects.filter(p => !srvIds.has(p.id)));
+      });
       silentReplace(projects, merged);
+      saveProjectsToStorage();
     }
 
     /* Same newest-wins merge for the standalone (no-project) work sheets, so
