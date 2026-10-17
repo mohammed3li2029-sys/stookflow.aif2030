@@ -8611,6 +8611,11 @@ function toggleReqStatus(idx){
 /* ===================================================================
    ISSUE REQUEST MODAL
 =================================================================== */
+/* Departments offered in the material-request form. The form is a free-text
+   combo box (input + datalist), so a user can also type a department that is
+   not in this list — those custom names are stored as-is in both languages. */
+const ISSUE_DEPTS_EN=['Production Line 1','Production Line 2','Assembly Line 1','Assembly Line 2','Maintenance','Quality Control'];
+const ISSUE_DEPTS_AR=['خط الإنتاج 1','خط الإنتاج 2','خط التجميع 1','خط التجميع 2','الصيانة','مراقبة الجودة'];
 let editingReqIdx = null;
 function openIssueModal(idx){
   editingReqIdx = idx;
@@ -8629,12 +8634,11 @@ function openIssueModal(idx){
   const pri=document.getElementById('issuePriority');
   if(lang==='ar'){pri.options[0].text='عادي';pri.options[1].text='عاجل';pri.options[2].text='حرج';}
   else{pri.options[0].text='Normal';pri.options[1].text='Urgent';pri.options[2].text='Critical';}
-  const depts_en=['Production Line 1','Production Line 2','Assembly Line 1','Assembly Line 2','Maintenance','Quality Control'];
-  const depts_ar=['خط الإنتاج 1','خط الإنتاج 2','خط التجميع 1','خط التجميع 2','الصيانة','مراقبة الجودة'];
+  const dl=document.getElementById('issueDeptList');
+  dl.innerHTML=(lang==='ar'?ISSUE_DEPTS_AR:ISSUE_DEPTS_EN).map(d=>`<option value="${d}"></option>`).join('');
   const ds=document.getElementById('issueDept');
-  const depts=lang==='ar'?depts_ar:depts_en;
-  ds.innerHTML=depts.map(d=>`<option>${d}</option>`).join('');
-  if(isEdit && r) ds.value = r.dept;
+  ds.placeholder=lang==='en'?'Select or type a department...':'اختر أو اكتب القسم...';
+  ds.value = isEdit && r ? (lang==='ar' ? (r.deptAr||r.dept||'') : (r.dept||r.deptAr||'')) : '';
   const sel=document.getElementById('issueItem');
   sel.innerHTML=inventoryData.map(i=>`<option value="${i.sku}">${lang==='en'?i.name:i.nameAr}</option>`).join('');
   if(isEdit && r) sel.value = r.sku;
@@ -8650,8 +8654,13 @@ document.getElementById('issueModalOverlay').addEventListener('click',e=>{if(e.t
 document.getElementById('issueSave').addEventListener('click',()=>{
   const L=STR[lang];
   if(!(parseInt(document.getElementById('issueQty').value)||0)){document.getElementById('issueQty').focus();return;}
-  const dept = document.getElementById('issueDept').value;
-  const deptAr = {1:'خط الإنتاج 1',2:'خط الإنتاج 2',3:'خط التجميع 1',4:'خط التجميع 2',5:'الصيانة',6:'مراقبة الجودة'}[document.getElementById('issueDept').selectedIndex+1] || dept;
+  const deptRaw = document.getElementById('issueDept').value.trim();
+  if(!deptRaw){ document.getElementById('issueDept').focus(); return; }
+  /* Known department -> store canonical EN + AR. Any other (custom) text is
+     kept verbatim in both language fields. */
+  let dept = deptRaw, deptAr = deptRaw;
+  const deptIdx = ISSUE_DEPTS_EN.findIndex((d,i)=> d.toLowerCase()===deptRaw.toLowerCase() || ISSUE_DEPTS_AR[i]===deptRaw);
+  if(deptIdx !== -1){ dept = ISSUE_DEPTS_EN[deptIdx]; deptAr = ISSUE_DEPTS_AR[deptIdx]; }
   const sku = document.getElementById('issueItem').value;
   const itemSel = document.getElementById('issueItem');
   const item = itemSel.options[itemSel.selectedIndex]?.text || '';
@@ -8660,14 +8669,11 @@ document.getElementById('issueSave').addEventListener('click',()=>{
   const date = document.getElementById('issueDate').value;
   const reason = document.getElementById('issueReason').value.trim();
   const priority = document.getElementById('issuePriority').value;
-  const depts_en=['Production Line 1','Production Line 2','Assembly Line 1','Assembly Line 2','Maintenance','Quality Control'];
-  const depts_ar=['خط الإنتاج 1','خط الإنتاج 2','خط التجميع 1','خط التجميع 2','الصيانة','مراقبة الجودة'];
-  const deptIdx = document.getElementById('issueDept').selectedIndex;
   if(editingReqIdx !== null && editingReqIdx !== undefined){
-    reqsData[editingReqIdx] = { ...reqsData[editingReqIdx], dept:depts_en[deptIdx]||dept, deptAr:depts_ar[deptIdx]||deptAr, sku, item, itemAr, qty, date, reason, priority };
+    reqsData[editingReqIdx] = { ...reqsData[editingReqIdx], dept, deptAr, sku, item, itemAr, qty, date, reason, priority };
   } else {
     const maxId = reqsData.reduce((m,r)=>Math.max(m, parseInt(r.id.replace('REQ-',''))||0), 0);
-    reqsData.push({ id:'REQ-'+(maxId+1), dept:depts_en[deptIdx]||dept, deptAr:depts_ar[deptIdx]||deptAr, sku, item, itemAr, qty, date, reason, priority, status:'pending' });
+    reqsData.push({ id:'REQ-'+(maxId+1), dept, deptAr, sku, item, itemAr, qty, date, reason, priority, status:'pending' });
   }
   closeIssueModal();
   const _reqMsg = editingReqIdx!==null?(lang==='en'?'Request updated!':'تم تحديث الطلب!'):L.issues.requestAdded||(lang==='en'?'Material request submitted!':'تم إرسال طلب الصرف بنجاح!');

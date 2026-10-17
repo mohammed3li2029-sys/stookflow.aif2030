@@ -490,14 +490,8 @@
     <h3 id="issueModalTitle">New Material Request</h3>
     <div class="field-row">
       <div class="field"><label id="issueLblDept">Department</label>
-        <select id="issueDept">
-          <option>Production Line 1</option>
-          <option>Production Line 2</option>
-          <option>Assembly Line 1</option>
-          <option>Assembly Line 2</option>
-          <option>Maintenance</option>
-          <option>Quality Control</option>
-        </select>
+        <input id="issueDept" list="issueDeptList" autocomplete="off" placeholder="Select or type a department...">
+        <datalist id="issueDeptList"></datalist>
       </div>
       <div class="field"><label id="issueLblPriority">Priority</label>
         <select id="issuePriority">
@@ -726,7 +720,7 @@
 
 <script src="js/supabase-config.js?v=29" onerror="console.error('[StockFlow] js/supabase-config.js failed to load â€” check that the file exists at that exact path in your deployed site (not in the repo root). The app will run in demo mode until this is fixed.')"></script>
 <script type="module" src="js/supabase-init.js?v=30"></script>
-<script src="js/app.js?v=49"></script>
+<script src="js/app.js?v=50"></script>
 <script src="js/.env.js?v=29"></script>
 <script src="js/ai-config.js?v=30"></script>
 <script src="js/ai-tools.js?v=29"></script>
