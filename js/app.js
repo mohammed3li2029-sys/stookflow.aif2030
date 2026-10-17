@@ -4035,7 +4035,7 @@ function renderIssues(){
         <div class="alert-icon" style="background:var(--blue-soft);color:var(--blue)">${ICONS.issue}</div>
         <div class="alert-mid">
           <div class="alert-name">${r.id} — ${lang==='en'?r.item:r.itemAr} × ${r.qty}</div>
-          <div class="alert-sku">${lang==='en'?r.dept:r.deptAr}</div>
+          <div class="alert-sku">${lang==='en'?r.dept:r.deptAr}${r.project && reportProjectName(r.project) ? ' • ' + reportProjectName(r.project) : ''}</div>
         </div>
         <span class="pill ${r.status==='approved'?'pill-ok':'pill-low'}" onclick="toggleReqStatus(${idx})" style="cursor:pointer;">${r.status==='approved'?(lang==='en'?'Approved':'تمت الموافقة'):(lang==='en'?'Pending':'قيد الانتظار')}</span>
         <div class="row-actions dw-actions dw-3 dw-req">
@@ -4134,6 +4134,16 @@ const REPORT_TYPES = ['slow','fast','purchases','disbursement','suppliers','inve
 let currentReport = 'slow';
 let reportDateFrom = '';
 let reportDateTo = '';
+let reportProjFilter = '';
+let reportDeptFilter = '';
+
+/* Localized project name for a project id (used by the disbursement report). */
+function reportProjectName(id){
+  if(!id) return '';
+  const p = projects.find(x => x.id === id);
+  if(!p) return '';
+  return lang==='en' ? (p.name||p.nameAr||id) : (p.nameAr||p.name||id);
+}
 
 function getReportDateRange(){
   return {from: reportDateFrom, to: reportDateTo};
@@ -4202,11 +4212,14 @@ function getPurchasesData(from='', to=''){
   return data;
 }
 
-/* ── 4. Disbursement by Project ── */
+/* ── 4. Disbursement by Project / Department ── */
 function getDisbursementData(from='', to=''){
   let data = reqsData.map(r => ({
     id: r.id,
+    projectId: r.project || '',
+    project: reportProjectName(r.project),
     department: lang==='en' ? r.dept : r.deptAr,
+    deptKey: r.dept || '',
     item: lang==='en' ? r.item : r.itemAr,
     qty: r.qty,
     date: r.date,
@@ -4214,6 +4227,8 @@ function getDisbursementData(from='', to=''){
     status: r.status
   }));
   data = reportFilteredDate(data, 'date', from, to);
+  if(reportProjFilter) data = data.filter(d => d.projectId === reportProjFilter);
+  if(reportDeptFilter) data = data.filter(d => d.deptKey === reportDeptFilter);
   return data;
 }
 
@@ -4320,8 +4335,8 @@ function getReportRows(type){
     }
     case 'disbursement': {
       const d = getDisbursementData(from,to);
-      headers = [L.colDepartment, L.colItem, L.colQty, L.colDate, L.colPriority, L.colStatus];
-      rows = d.map(x => [x.department, x.item, x.qty, x.date, x.priority, x.status]);
+      headers = [lang==='en'?'Project':'المشروع', L.colDepartment, L.colItem, L.colQty, L.colDate, L.colPriority, L.colStatus];
+      rows = d.map(x => [x.project||'—', x.department, x.item, x.qty, x.date, x.priority, x.status]);
       break;
     }
     case 'suppliers': {
@@ -4397,13 +4412,15 @@ function renderReports(){
     case 'disbursement': {
       const data = getDisbursementData(from, to);
       title = L.disbursement;
+      const totalQty = data.reduce((s,d)=>s + (parseInt(d.qty)||0), 0);
       kpis = `<div class="report-kpis">
         <div class="report-kpi"><span class="report-kpi-label">${lang==='en'?'Total Requests':'إجمالي الطلبات'}</span><span class="report-kpi-value">${data.length}</span></div>
+        <div class="report-kpi"><span class="report-kpi-label">${lang==='en'?'Total Quantity':'إجمالي الكمية'}</span><span class="report-kpi-value" style="color:var(--blue);">${totalQty}</span></div>
         <div class="report-kpi"><span class="report-kpi-label">${lang==='en'?'Departments':'الأقسام'}</span><span class="report-kpi-value">${new Set(data.map(d=>d.department)).size}</span></div>
       </div>`;
       table = renderReportTable(
-        [L.colDepartment, L.colItem, L.colQty, L.colDate, L.colPriority, L.colStatus],
-        data.map(d => [d.department, d.item, d.qty, d.date, `<span class="pill ${d.priority==='urgent'||d.priority==='critical'?'pill-ok':'pill-low'}">${d.priority}</span>`, `<span class="pill ${d.status==='approved'?'pill-ok':'pill-low'}">${d.status}</span>`])
+        [lang==='en'?'Project':'المشروع', L.colDepartment, L.colItem, L.colQty, L.colDate, L.colPriority, L.colStatus],
+        data.map(d => [d.project||'—', d.department, d.item, d.qty, d.date, `<span class="pill ${d.priority==='urgent'||d.priority==='critical'?'pill-ok':'pill-low'}">${d.priority}</span>`, `<span class="pill ${d.status==='approved'?'pill-ok':'pill-low'}">${d.status}</span>`])
       );
       break;
     }
@@ -4445,6 +4462,25 @@ function renderReports(){
     }
   }
 
+  /* Project + department filters, shown on the disbursement report. */
+  let disbFilter = '';
+  if(currentReport==='disbursement'){
+    const projOpts = `<option value="">${lang==='en'?'All projects':'كل المشاريع'}</option>` + projects.map(p =>
+      `<option value="${p.id}" ${reportProjFilter===p.id?'selected':''}>${lang==='en'?(p.name||p.nameAr||p.id):(p.nameAr||p.name||p.id)}</option>`
+    ).join('');
+    const deptKeys = [...new Set(reqsData.map(r=>r.dept).filter(Boolean))];
+    const deptOpts = `<option value="">${lang==='en'?'All departments':'كل الأقسام'}</option>` + deptKeys.map(d => {
+      const rec = reqsData.find(x=>x.dept===d);
+      return `<option value="${d}" ${reportDeptFilter===d?'selected':''}>${lang==='en'?d:(rec&&rec.deptAr?rec.deptAr:d)}</option>`;
+    }).join('');
+    disbFilter = `<div class="report-filter" style="margin-top:8px;">
+      <label>${lang==='en'?'Project':'المشروع'}</label>
+      <select id="repProjFilter">${projOpts}</select>
+      <label>${lang==='en'?'Department':'القسم'}</label>
+      <select id="repDeptFilter">${deptOpts}</select>
+    </div>`;
+  }
+
   return `
   <div class="report-tabs">${tabs}</div>
   <div class="report-filter">
@@ -4455,6 +4491,7 @@ function renderReports(){
     <button class="btn-mini" id="repFilterApply">${L.applyFilter}</button>
     <button class="btn-mini" id="repFilterReset" style="background:var(--surface-2);color:var(--text);">${L.resetFilter}</button>
   </div>
+  ${disbFilter}
   <div class="report-actions">
     <div class="report-title">${title}</div>
     <button class="btn-mini" id="repPrintBtn">${L.print}</button>
@@ -7570,8 +7607,15 @@ function postRenderHooks(page){
     if(resetBtn) resetBtn.addEventListener('click', ()=>{
       reportDateFrom = '';
       reportDateTo = '';
+      reportProjFilter = '';
+      reportDeptFilter = '';
       navigate('reports');
     });
+    // project / department filters (disbursement report)
+    const projF = document.getElementById('repProjFilter');
+    if(projF) projF.addEventListener('change', ()=>{ reportProjFilter = projF.value; navigate('reports'); });
+    const deptF = document.getElementById('repDeptFilter');
+    if(deptF) deptF.addEventListener('change', ()=>{ reportDeptFilter = deptF.value; navigate('reports'); });
     // print
     const printBtn = document.getElementById('repPrintBtn');
     if(printBtn) printBtn.addEventListener('click', printReport);
@@ -8508,6 +8552,10 @@ function viewIssue(idx){
             <div style="font-weight:700;">${isAr?r.deptAr:r.dept}</div>
           </div>
           <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
+            <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'المشروع':'Project'}</div>
+            <div style="font-weight:700;">${(r.project && reportProjectName(r.project)) || (isAr?'—':'—')}</div>
+          </div>
+          <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
             <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'تاريخ الطلب':'Date'}</div>
             <div style="font-weight:700;">${r.date}</div>
           </div>
@@ -8642,6 +8690,12 @@ function openIssueModal(idx){
   const sel=document.getElementById('issueItem');
   sel.innerHTML=inventoryData.map(i=>`<option value="${i.sku}">${lang==='en'?i.name:i.nameAr}</option>`).join('');
   if(isEdit && r) sel.value = r.sku;
+  document.getElementById('issueLblProject').textContent = lang==='en'?'Project':'المشروع';
+  const pSel=document.getElementById('issueProject');
+  pSel.innerHTML = `<option value="">${lang==='en'?'— No project —':'— بدون مشروع —'}</option>` + projects.map(p =>
+    `<option value="${p.id}">${lang==='en'?(p.name||p.nameAr||p.id):(p.nameAr||p.name||p.id)}</option>`
+  ).join('');
+  pSel.value = isEdit && r ? (r.project||'') : '';
   document.getElementById('issueQty').value = isEdit && r ? r.qty : '';
   document.getElementById('issueDate').value = isEdit && r ? r.date : new Date().toISOString().split('T')[0];
   document.getElementById('issueReason').value = isEdit && r ? r.reason : '';
@@ -8669,11 +8723,12 @@ document.getElementById('issueSave').addEventListener('click',()=>{
   const date = document.getElementById('issueDate').value;
   const reason = document.getElementById('issueReason').value.trim();
   const priority = document.getElementById('issuePriority').value;
+  const project = document.getElementById('issueProject').value || '';
   if(editingReqIdx !== null && editingReqIdx !== undefined){
-    reqsData[editingReqIdx] = { ...reqsData[editingReqIdx], dept, deptAr, sku, item, itemAr, qty, date, reason, priority };
+    reqsData[editingReqIdx] = { ...reqsData[editingReqIdx], dept, deptAr, project, sku, item, itemAr, qty, date, reason, priority };
   } else {
     const maxId = reqsData.reduce((m,r)=>Math.max(m, parseInt(r.id.replace('REQ-',''))||0), 0);
-    reqsData.push({ id:'REQ-'+(maxId+1), dept, deptAr, sku, item, itemAr, qty, date, reason, priority, status:'pending' });
+    reqsData.push({ id:'REQ-'+(maxId+1), dept, deptAr, project, sku, item, itemAr, qty, date, reason, priority, status:'pending' });
   }
   closeIssueModal();
   const _reqMsg = editingReqIdx!==null?(lang==='en'?'Request updated!':'تم تحديث الطلب!'):L.issues.requestAdded||(lang==='en'?'Material request submitted!':'تم إرسال طلب الصرف بنجاح!');
