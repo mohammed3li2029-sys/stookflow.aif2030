@@ -6914,7 +6914,7 @@ function filterTasks(tab){
 function bindTaskBoardEvents(container){
   container.querySelectorAll('.t-acc-head').forEach(btn=>{
     btn.addEventListener('click',(e)=>{
-      if(e.target.closest('.task-check-wrap')) return;
+      if(e.target.closest('.task-check-wrap') || e.target.closest('.task-del-btn')) return;
       const card=btn.closest('.t-acc');
       const isOpen=card.dataset.open==='true';
       card.dataset.open=isOpen?'false':'true';
@@ -7074,6 +7074,7 @@ function renderTaskBoard(){
           </span>
         </span>
         <span class="task-title">${t.type==='personal'?'🔒 ':''}${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</span>
+        <span class="task-del-btn" role="button" tabindex="0" title="${escapeHtml(L.deleteConfirm)}" data-tidx="${idx}" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;color:var(--text-3);cursor:pointer;flex-shrink:0;margin-inline-start:4px;">${ICONS.trash}</span>
         <span class="t-acc-chevron">
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
         </span>
@@ -7093,7 +7094,6 @@ function renderTaskBoard(){
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;">
           ${statusBtns.join('')}
           <button class="btn t-acc-view-detail" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;margin-inline-start:auto;">${lang==='en'?'Details':'التفاصيل'} →</button>
-          <button class="task-del-btn" data-tidx="${idx}" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:4px;" title="${L.deleteConfirm}">${ICONS.trash}</button>
         </div>
       </div></div>
     </div>`;
@@ -7187,7 +7187,10 @@ function renderTaskDetail(idx){
             ${t.type==='personal'?'<span style="font-size:11px;color:var(--text-3);">'+L.personal+'</span>':''}
           </div>
         </div>
-        <button class="btn" id="taskDetailClose" style="padding:6px 10px;">${ICONS.x}</button>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+          <button class="btn task-detail-del" title="${escapeHtml(L.deleteConfirm)}" style="padding:6px 12px;color:var(--red);border-color:var(--red);display:flex;align-items:center;gap:6px;">${ICONS.trash}<span>${lang==='en'?'Delete':'حذف'}</span></button>
+          <button class="btn" id="taskDetailClose" style="padding:6px 10px;">${ICONS.x}</button>
+        </div>
       </div>
       <p style="margin:0 0 16px;font-size:13px;color:var(--text-2);line-height:1.6;">${escapeHtml(lang==='en'?(t.desc||''):(t.descAr||t.desc||''))}</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
@@ -7794,6 +7797,7 @@ function postRenderHooks(page){
       const closeBtn=document.getElementById('taskDetailClose');
       if(closeBtn) closeBtn.addEventListener('click',()=>{ taskDetailIdx=null; navigate('tasks'); });
       document.querySelectorAll('.task-action-btn').forEach(b=>b.addEventListener('click',()=>taskAction(taskDetailIdx,b.dataset.action)));
+      document.querySelectorAll('.task-detail-del').forEach(b=>b.addEventListener('click',()=>deleteTask(taskDetailIdx)));
       const ci=document.getElementById('taskCommentInput');
       if(ci) ci.addEventListener('keydown',e=>{ if(e.key==='Enter') addTaskComment(taskDetailIdx); });
       const ca=document.getElementById('taskCommentAdd');
