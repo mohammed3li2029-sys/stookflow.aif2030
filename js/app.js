@@ -7925,10 +7925,17 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
     inventoryData.unshift({name, nameAr:name, sku, cat, catAr:cat, stock:qty, min, loc, image:currentImageData});
   } else {
     const item = inventoryData[editingIndex];
-    if(lang==='en'){ item.name = name; } else { item.nameAr = name; }
-    item.cat = cat; item.catAr = cat;
-    item.sku = sku; item.stock = qty; item.min = min; item.loc = loc;
-    item.image = currentImageData;
+    /* Re-assign the whole element so the sync proxy writes the change to the
+       database. Mutating nested properties in place (item.stock = qty) bypasses
+       the proxy, so the edit used to be lost on the next page load. */
+    inventoryData[editingIndex] = {
+      ...item,
+      name: lang==='en' ? name : item.name,
+      nameAr: lang==='en' ? (item.nameAr || name) : name,
+      cat, catAr: cat,
+      sku, stock: qty, min, loc,
+      image: currentImageData
+    };
   }
   const _isEdit = editingIndex !== null;
   closeModal();
@@ -9754,8 +9761,9 @@ document.getElementById('transferSubmit').addEventListener('click', ()=>{
     return;
   }
 
-  // Execute transfer: deduct from item stock (simple prototype logic)
-  inventoryData[itemIdx].stock -= qty;
+  // Execute transfer: deduct from item stock (re-assign so the sync proxy
+  // persists the new quantity to the database).
+  inventoryData[itemIdx] = { ...item, stock: item.stock - qty };
 
   // Log the movement
   const fromName = lang==='en'?warehouseData[fromIdx].name:warehouseData[fromIdx].nameAr;
