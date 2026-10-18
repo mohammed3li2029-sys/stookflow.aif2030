@@ -2448,6 +2448,12 @@ html[dir="rtl"] .scroll-top-btn{right:auto;left:28px;}
 .t-acc-card .t-acc-head .task-chevron { flex-shrink:0;width:14px;height:14px; }
 .t-acc-card .t-acc-panel { border-top:1px solid var(--border); }
 .t-acc-card .t-acc-panel-inner { padding:10px 12px; }
+.t-acc-top { display:flex; align-items:center; }
+.t-acc-top .t-acc-head { flex:1; width:auto; min-width:0; }
+.task-del-wrap { position:relative; display:inline-flex; align-items:center; flex:0 0 auto; }
+.t-acc-card .task-del-wrap { padding:0 10px; }
+.task-del-wrap--detail { padding:0; }
+.task-del-wrap .delete-widget { position:relative; top:auto; left:auto; right:auto; transform:none; }
 .t-acc-card-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
 .t-acc-detail-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px; }
 .t-acc-detail-cell { padding:6px 8px;background:var(--surface-2);border-radius:8px; }

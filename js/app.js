@@ -3241,6 +3241,14 @@ function dwConfirm(btn){
         navigate('issues', {quiet:true});
         showToast(lang==='en'?'Request deleted!':'تم حذف الطلب!');
       }
+    } else if(wpage==='tasks'){
+      if(tasksData[idx]){
+        tasksData.splice(idx, 1);
+        saveTasksToStorage();
+        showToast(STR[lang].tasks.taskDeleted);
+        taskDetailIdx=null;
+        navigate('tasks', {quiet:true});
+      }
     } else if(wpage==='crane'){
       // the widget itself is the confirmation, so skip the modal
       deleteCraneWorkDirect(idx, parseInt(w.dataset.wsub, 10));
@@ -7065,6 +7073,7 @@ function renderTaskBoard(){
     if(t.status==='inProgress'||t.status==='new') statusBtns.push(`<button class="btn t-acc-action" data-action="stop" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;color:var(--amber);">${L.stopTask}</button>`);
     if(t.status==='stopped') statusBtns.push(`<button class="btn btn-primary t-acc-action" data-action="start" data-tidx="${idx}" style="padding:5px 10px;font-size:11px;">${L.startTask}</button>`);
     return `<div class="t-acc t-acc-card${t.status==='completed'?' completed':''}" data-open="false">
+      <div class="t-acc-top">
       <button class="t-acc-head" aria-expanded="false">
         <span class="task-check-wrap${t.status==='completed'?' checked':''}" data-tidx="${idx}" title="${t.status==='completed'?(lang==='en'?'Mark incomplete':'تأشير كغير مكتملة'):(lang==='en'?'Complete task':'تأشير كمكتملة')}">
           <input type="checkbox" class="task-checkbox"${t.status==='completed'?' checked':''}>
@@ -7074,11 +7083,12 @@ function renderTaskBoard(){
           </span>
         </span>
         <span class="task-title">${t.type==='personal'?'🔒 ':''}${escapeHtml(lang==='en'?t.title:t.titleAr||t.title)}</span>
-        <span class="task-del-btn" role="button" tabindex="0" title="${escapeHtml(L.deleteConfirm)}" data-tidx="${idx}" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;color:var(--text-3);cursor:pointer;flex-shrink:0;margin-inline-start:4px;">${ICONS.trash}</span>
         <span class="t-acc-chevron">
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
         </span>
       </button>
+      <div class="task-del-wrap">${dwHtml(idx, 'tasks')}</div>
+      </div>
       <div class="t-acc-panel"><div class="t-acc-panel-inner">
         <div class="t-acc-card-tags">
           <span class="pill ${taskStatusClass(t.status)}" style="font-size:10px;">${taskStatusLabel(t.status)}</span>
@@ -7188,7 +7198,7 @@ function renderTaskDetail(idx){
           </div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-          <button class="btn task-detail-del" title="${escapeHtml(L.deleteConfirm)}" style="padding:6px 12px;color:var(--red);border-color:var(--red);display:flex;align-items:center;gap:6px;">${ICONS.trash}<span>${lang==='en'?'Delete':'حذف'}</span></button>
+          <div class="task-del-wrap task-del-wrap--detail">${dwHtml(idx, 'tasks')}</div>
           <button class="btn" id="taskDetailClose" style="padding:6px 10px;">${ICONS.x}</button>
         </div>
       </div>
@@ -7797,7 +7807,6 @@ function postRenderHooks(page){
       const closeBtn=document.getElementById('taskDetailClose');
       if(closeBtn) closeBtn.addEventListener('click',()=>{ taskDetailIdx=null; navigate('tasks'); });
       document.querySelectorAll('.task-action-btn').forEach(b=>b.addEventListener('click',()=>taskAction(taskDetailIdx,b.dataset.action)));
-      document.querySelectorAll('.task-detail-del').forEach(b=>b.addEventListener('click',()=>deleteTask(taskDetailIdx)));
       const ci=document.getElementById('taskCommentInput');
       if(ci) ci.addEventListener('keydown',e=>{ if(e.key==='Enter') addTaskComment(taskDetailIdx); });
       const ca=document.getElementById('taskCommentAdd');
