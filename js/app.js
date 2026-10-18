@@ -470,7 +470,7 @@ en:{
   sel:{selected:'selected',selectAll:'Select All',deselectAll:'Deselect All',bulkDelete:'Delete',items:'items',selectMode:'Select',cancelSelect:'Cancel'},
   table:{item:'Item',sku:'SKU / ID',category:'Category',stock:'Stock',location:'Location',status:'Status',actions:'Actions',inStock:'In Stock',lowStock:'Low Stock',critical:'Critical'},
   wh:{occupancy:'Occupancy',items:'Items',sections:'Sections',transfer:'Transfer Stock',addWarehouse:'Add Warehouse',editWarehouse:'Edit Warehouse',whNameEn:'Warehouse Name (EN)',whNameAr:'Warehouse Name (AR)',capacity:'Capacity (items)',current:'Current Items',whSaved:'Warehouse saved successfully',deleteWh:'Delete Warehouse',deleteWhTitle:'Delete this warehouse?',deleteWhBody:'This will permanently remove "{name}" from the system.',transferTitle:'Transfer Stock Between Warehouses',transferFrom:'From Warehouse',transferTo:'To Warehouse',transferItem:'Item',transferQty:'Quantity',transferNote:'Notes (optional)',transferSubmit:'Execute Transfer',transferDone:'Stock transfer completed successfully',transferErr:'Please fill all required fields'},
-  modal:{addItem:'Add New Item',editItem:'Edit Item',viewItem:'Item Details',itemName:'Item Name',sku:'SKU',category:'Category',unit:'Unit',qty:'Stock Qty',minLevel:'Min Stock Level',location:'Warehouse / Location',cancel:'Cancel',save:'Save Item',saveChanges:'Save Changes',close:'Close',delete:'Delete',deleteTitle:'Delete this item?',deleteBody:'This will permanently remove "{name}" from inventory. This can\'t be undone.',deletedToast:'Item deleted',uploadImage:'Upload Image',removeImage:'Remove Image',image:'Item Image'},
+  modal:{addItem:'Add New Item',editItem:'Edit Item',viewItem:'Item Details',itemName:'Item Name',sku:'SKU',category:'Category',unit:'Unit',qty:'Stock Qty',minLevel:'Min Stock Level',location:'Warehouse / Location',cancel:'Cancel',save:'Save Item',saveChanges:'Save Changes',close:'Close',delete:'Delete',deleteTitle:'Delete this item?',deleteBody:'This will permanently remove "{name}" from inventory. This can\'t be undone.',deletedToast:'Item deleted',uploadImage:'Upload Image',removeImage:'Remove Image',image:'Item Image',unitPrice:'Unit Price (SAR)'},
   purchasing:{newPO:'New Purchase Order',suppliers:'Active Suppliers',openPOs:'Open Purchase Orders',avgDelivery:'Avg. Delivery Time',supplierPerf:'Supplier Performance',poList:'Recent Purchase Orders',supplier:'Supplier',deliveryDate:'Expected Delivery Date',item:'Item',qty:'Quantity',unitPrice:'Unit Price (SAR)',notes:'Notes',total:'Total Amount',submitOrder:'Submit Order',orderAdded:'Purchase order submitted successfully'},
   issues:{newRequest:'New Material Request',pending:'Pending Approval',approvedToday:'Approved Today',departments:'Departments Served',list:'Recent Issue Requests',department:'Department',priority:'Priority',priorityNormal:'Normal',priorityUrgent:'Urgent',priorityCritical:'Critical',requiredQty:'Required Quantity',requiredDate:'Required Date',reason:'Reason / Purpose',submitRequest:'Submit Request',requestAdded:'Material request submitted successfully'},
   movements:{title:'Movement Log',inbound:'Inbound',outbound:'Outbound',transfer:'Transfer'},
@@ -543,7 +543,7 @@ ar:{
   sel:{selected:'محدد',selectAll:'تحديد الكل',deselectAll:'إلغاء التحديد',bulkDelete:'حذف',items:'عناصر',selectMode:'تحديد',cancelSelect:'إلغاء'},
   table:{item:'الصنف',sku:'الرمز',category:'الفئة',stock:'الكمية',location:'الموقع',status:'الحالة',actions:'إجراءات',inStock:'متوفر',lowStock:'منخفض',critical:'حرج'},
   wh:{occupancy:'الإشغال',items:'الأصناف',sections:'الأقسام',transfer:'تحويل المخزون',addWarehouse:'إضافة مستودع',editWarehouse:'تعديل المستودع',whNameEn:'اسم المستودع (EN)',whNameAr:'اسم المستودع (AR)',capacity:'السعة (أصناف)',current:'الأصناف الحالية',whSaved:'تم حفظ المستودع بنجاح',deleteWh:'حذف المستودع',deleteWhTitle:'هل تريد حذف هذا المستودع؟',deleteWhBody:'سيتم حذف "{name}" نهائياً من النظام.',transferTitle:'تحويل المخزون بين المستودعات',transferFrom:'من المستودع',transferTo:'إلى المستودع',transferItem:'الصنف',transferQty:'الكمية',transferNote:'ملاحظات (اختياري)',transferSubmit:'تنفيذ التحويل',transferDone:'تم تنفيذ التحويل بنجاح',transferErr:'يرجى تعبئة جميع الحقول المطلوبة'},
-  modal:{addItem:'إضافة صنف جديد',editItem:'تعديل الصنف',viewItem:'تفاصيل الصنف',itemName:'اسم الصنف',sku:'رمز الصنف',category:'الفئة',unit:'الوحدة',qty:'الكمية',minLevel:'الحد الأدنى للمخزون',location:'المستودع / الموقع',cancel:'إلغاء',save:'حفظ الصنف',saveChanges:'حفظ التعديلات',close:'إغلاق',delete:'حذف',deleteTitle:'هل تريد حذف هذا الصنف؟',deleteBody:'سيتم حذف "{name}" نهائيًا من المخزون. لا يمكن التراجع عن هذا الإجراء.',deletedToast:'تم حذف الصنف',uploadImage:'تحميل صورة',removeImage:'إزالة الصورة',image:'صورة الصنف'},
+  modal:{addItem:'إضافة صنف جديد',editItem:'تعديل الصنف',viewItem:'تفاصيل الصنف',itemName:'اسم الصنف',sku:'رمز الصنف',category:'الفئة',unit:'الوحدة',qty:'الكمية',minLevel:'الحد الأدنى للمخزون',location:'المستودع / الموقع',cancel:'إلغاء',save:'حفظ الصنف',saveChanges:'حفظ التعديلات',close:'إغلاق',delete:'حذف',deleteTitle:'هل تريد حذف هذا الصنف؟',deleteBody:'سيتم حذف "{name}" نهائيًا من المخزون. لا يمكن التراجع عن هذا الإجراء.',deletedToast:'تم حذف الصنف',uploadImage:'تحميل صورة',removeImage:'إزالة الصورة',image:'صورة الصنف',unitPrice:'سعر الوحدة (ر.س)'},
   purchasing:{newPO:'طلب شراء جديد',suppliers:'الموردون النشطون',openPOs:'طلبات الشراء المفتوحة',avgDelivery:'متوسط مدة التسليم',supplierPerf:'أداء الموردين',poList:'أحدث طلبات الشراء',supplier:'المورد',deliveryDate:'تاريخ التسليم المتوقع',item:'الصنف',qty:'الكمية',unitPrice:'سعر الوحدة (ر.س)',notes:'ملاحظات',total:'الإجمالي',submitOrder:'إرسال الطلب',orderAdded:'تم إرسال طلب الشراء بنجاح'},
   issues:{newRequest:'طلب صرف مواد جديد',pending:'بانتظار الموافقة',approvedToday:'تمت الموافقة اليوم',departments:'الأقسام المخدومة',list:'أحدث طلبات الصرف',department:'القسم',priority:'الأولوية',priorityNormal:'عادي',priorityUrgent:'عاجل',priorityCritical:'حرج',requiredQty:'الكمية المطلوبة',requiredDate:'تاريخ الحاجة',reason:'السبب / الغرض',submitRequest:'إرسال الطلب',requestAdded:'تم إرسال طلب الصرف بنجاح'},
   movements:{title:'سجل الحركة',inbound:'وارد',outbound:'صادر',transfer:'تحويل'},
@@ -953,6 +953,17 @@ const activity = [
 =================================================================== */
 const DASH_SECTION_KEYS = ['stats','chart-cal','alerts-act','proj-plan','dist-actions'];
 
+/* Per-unit price used for dashboard and report valuations. Prefers the price
+   stored on the item itself; falls back to a known default per SKU so the demo
+   catalogue still totals sensibly when no price has been entered. */
+const INV_PRICE_BY_SKU = {'SKU-880012':2500,'SKU-654001':3200,'SKU-123456':450,'SKU-230911':180,'SKU-S4109':920,'SKU-M2033':1800,'SKU-R1102':650};
+function inventoryUnitPrice(item){
+  if(!item) return 0;
+  const p = Number(item.price);
+  if(p > 0) return p;
+  return INV_PRICE_BY_SKU[item.sku] || 0;
+}
+
 function getDashSections(){
   let saved;
   try{ saved = JSON.parse(localStorage.getItem('stockflow_dash_order')); }catch(e){}
@@ -973,13 +984,17 @@ function renderDashSection(key, cc){
     ? `<span class="dash-arrows"><span class="dash-arrow up" data-sk="${key}">${ICONS.chevronUp||'▲'}</span><span class="dash-arrow down" data-sk="${key}">${ICONS.chevronDown||'▼'}</span></span>`
     : '';
   switch(key){
-    case 'stats':
+    case 'stats': {
+      const invValue = inventoryData.reduce((s,i)=> s + (parseInt(i.stock)||0) * inventoryUnitPrice(i), 0);
+      const lowCount = inventoryData.filter(i => (parseInt(i.stock)||0) < (parseInt(i.min)||0)).length;
+      const activeOrders = purchaseOrders.filter(po => !['received','cancelled','completed','delivered'].includes((po.status||'').toLowerCase())).length;
       return `<div class="grid-stats dash-sect" data-sk="stats">${arrows}
-        ${statCard(ICONS.box,'var(--blue)','var(--blue-soft)', L.kpi.totalItems, '64,120', '+4.5%', true)}
-        ${statCard(ICONS.dollar,'var(--green)','var(--green-soft)', L.kpi.invValue, RYAL+'&nbsp;1.25M', '+3.1%', true)}
-        ${statCard(ICONS.flag,'var(--red)','var(--red-soft)', L.kpi.lowStock, '48', '+12', false)}
-        ${statCard(ICONS.purchase,'var(--amber)','var(--amber-soft)', L.kpi.activeOrders, '35', '+6', true)}
+        ${statCard(ICONS.box,'var(--blue)','var(--blue-soft)', L.kpi.totalItems, String(inventoryData.length), '', true)}
+        ${statCard(ICONS.dollar,'var(--green)','var(--green-soft)', L.kpi.invValue, RYAL+'&nbsp;'+invValue.toLocaleString('en',{maximumFractionDigits:0}), '', true)}
+        ${statCard(ICONS.flag,'var(--red)','var(--red-soft)', L.kpi.lowStock, String(lowCount), '', true)}
+        ${statCard(ICONS.purchase,'var(--amber)','var(--amber-soft)', L.kpi.activeOrders, String(activeOrders), '', true)}
       </div>`;
+    }
     case 'chart-cal':
       return `<div class="row-2 dash-sect" data-sk="chart-cal">${arrows}
         <div class="card">
@@ -1182,7 +1197,7 @@ function statCard(icon,color,bg,label,value,trend,up){
       <div class="stat-icon" style="background:${bg};color:${color}">${icon}</div>
     </div>
     <div class="stat-value">${value}</div>
-    <span class="stat-trend ${up?'trend-up':'trend-down'}">${up?'▲':'▼'} ${trend}</span>
+    ${trend ? `<span class="stat-trend ${up?'trend-up':'trend-down'}">${up?'▲':'▼'} ${trend}</span>` : ''}
   </div>`;
 }
 
@@ -4349,7 +4364,7 @@ function getReportRows(type){
       const d = getInventoryData(from,to);
       headers = [L.colItem, L.colSku, L.colStock, L.colMin, L.colLocation, L.colValue, L.colStatus];
       const invStatusMap = {in:lang==='en'?'In Stock':'متوفر', low:lang==='en'?'Low':'منخفض', critical:lang==='en'?'Critical':'حرج'};
-      rows = d.map(x => [x.name, x.sku, x.stock, x.min, x.location, 'SAR '+(x.stock * (x.sku==='SKU-880012'?2500 : x.sku==='SKU-654001'?3200 : x.sku==='SKU-123456'?450 : x.sku==='SKU-230911'?180 : x.sku==='SKU-S4109'?920 : x.sku==='SKU-M2033'?1800 : x.sku==='SKU-R1102'?650 : 350)).toLocaleString('en',{minimumFractionDigits:0}), invStatusMap[x.status]||x.status]);
+      rows = d.map(x => [x.name, x.sku, x.stock, x.min, x.location, 'SAR '+(x.stock * inventoryUnitPrice(x)).toLocaleString('en',{minimumFractionDigits:0}), invStatusMap[x.status]||x.status]);
       break;
     }
     default: headers=[]; rows=[];
@@ -4441,7 +4456,7 @@ function renderReports(){
     case 'inventory': {
       const data = getInventoryData(from, to);
       title = L.inventory;
-      const totalValue = data.reduce((s,d)=>s + d.stock * (d.sku==='SKU-880012'?2500 : d.sku==='SKU-654001'?3200 : d.sku==='SKU-123456'?450 : d.sku==='SKU-230911'?180 : d.sku==='SKU-S4109'?920 : d.sku==='SKU-M2033'?1800 : d.sku==='SKU-R1102'?650 : 350), 0);
+      const totalValue = data.reduce((s,d)=>s + d.stock * inventoryUnitPrice(d), 0);
       kpis = `<div class="report-kpis">
         <div class="report-kpi"><span class="report-kpi-label">${lang==='en'?'Total Items':'إجمالي الأصناف'}</span><span class="report-kpi-value">${data.length}</span></div>
         <div class="report-kpi"><span class="report-kpi-label">${lang==='en'?'Total Stock':'إجمالي الرصيد'}</span><span class="report-kpi-value">${data.reduce((s,d)=>s+d.stock,0)}</span></div>
@@ -4454,7 +4469,7 @@ function renderReports(){
         data.map(d => [d.name, d.sku,
           `<span style="font-weight:700;color:${d.stock<=0?'var(--red)':d.stock<d.min?'var(--amber)':'var(--text)'};">${d.stock}</span>`,
           d.min, d.location,
-          `SAR ${(d.stock * (d.sku==='SKU-880012'?2500 : d.sku==='SKU-654001'?3200 : d.sku==='SKU-123456'?450 : d.sku==='SKU-230911'?180 : d.sku==='SKU-S4109'?920 : d.sku==='SKU-M2033'?1800 : d.sku==='SKU-R1102'?650 : 350)).toLocaleString('en',{minimumFractionDigits:0})}`,
+          `SAR ${(d.stock * inventoryUnitPrice(d)).toLocaleString('en',{minimumFractionDigits:0})}`,
           `<span class="pill ${statusClass[d.status]}">${statusMap[d.status]}</span>`
         ])
       );
@@ -7871,7 +7886,7 @@ function openModal(idx=null){
   if(idx===null){
     titleEl.textContent = L.modal.addItem;
     saveBtn.textContent = L.modal.save;
-    ['mItemName','mSku','mQty','mMin'].forEach(id=>document.getElementById(id).value='');
+    ['mItemName','mSku','mQty','mMin','mPrice'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('mLoc').selectedIndex = 0;
     document.getElementById('mCategory').selectedIndex = 0;
     document.getElementById('mUnit').selectedIndex = 0;
@@ -7886,6 +7901,7 @@ function openModal(idx=null){
     document.getElementById('mQty').value = item.stock;
     document.getElementById('mMin').value = item.min;
     document.getElementById('mLoc').value = item.loc;
+    document.getElementById('mPrice').value = (item.price!=null ? item.price : '');
     const catSel = document.getElementById('mCategory');
     const catVal = lang==='en' ? item.cat : item.catAr;
     let matched = false;
@@ -7920,9 +7936,10 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
   const min = parseInt(document.getElementById('mMin').value)||0;
   const loc = document.getElementById('mLoc').value.trim() || 'WH-A';
   const cat = document.getElementById('mCategory').value;
+  const price = parseFloat(document.getElementById('mPrice').value)||0;
   if(!name){ document.getElementById('mItemName').focus(); return; }
   if(editingIndex===null){
-    inventoryData.unshift({name, nameAr:name, sku, cat, catAr:cat, stock:qty, min, loc, image:currentImageData});
+    inventoryData.unshift({name, nameAr:name, sku, cat, catAr:cat, stock:qty, min, loc, price, image:currentImageData});
   } else {
     const item = inventoryData[editingIndex];
     /* Re-assign the whole element so the sync proxy writes the change to the
@@ -7933,7 +7950,7 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
       name: lang==='en' ? name : item.name,
       nameAr: lang==='en' ? (item.nameAr || name) : name,
       cat, catAr: cat,
-      sku, stock: qty, min, loc,
+      sku, stock: qty, min, loc, price,
       image: currentImageData
     };
   }
@@ -7973,6 +7990,7 @@ function openViewModal(idx){
       <div class="field"><label>${L.modal.minLevel}</label><div>${i.min}</div></div>
     </div>
     <div class="field"><label>${L.modal.location}</label><div>${i.loc}</div></div>
+    <div class="field"><label>${L.modal.unitPrice}</label><div>${(i.price>0) ? i.price.toLocaleString('en',{minimumFractionDigits:2})+' '+RYAL : '—'}</div></div>
     <div class="field"><label>${L.table.status}</label><div><span class="pill ${st.cls}">${st.label}</span></div></div>
   `;
   document.getElementById('viewModalOverlay').classList.add('show');
@@ -8125,7 +8143,7 @@ function exportReportCSV2(type){
       const data = getInventoryData(from, to);
       headers = [L.colItem, L.colSku, L.colStock, L.colMin, L.colLocation, L.colValue, L.colStatus];
       const invStatMap = {in:lang==='en'?'In Stock':'متوفر', low:lang==='en'?'Low':'منخفض', critical:lang==='en'?'Critical':'حرج'};
-      rows = data.map(d => [d.name, d.sku, d.stock, d.min, d.location, 'SAR '+(d.stock * (d.sku==='SKU-880012'?2500 : d.sku==='SKU-654001'?3200 : d.sku==='SKU-123456'?450 : d.sku==='SKU-230911'?180 : d.sku==='SKU-S4109'?920 : d.sku==='SKU-M2033'?1800 : d.sku==='SKU-R1102'?650 : 350)).toLocaleString('en',{minimumFractionDigits:0}), invStatMap[d.status]||d.status]);
+      rows = data.map(d => [d.name, d.sku, d.stock, d.min, d.location, 'SAR '+(d.stock * inventoryUnitPrice(d)).toLocaleString('en',{minimumFractionDigits:0}), invStatMap[d.status]||d.status]);
       break;
     }
     default: return;
