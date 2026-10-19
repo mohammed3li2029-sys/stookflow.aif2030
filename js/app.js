@@ -10115,13 +10115,13 @@ function applyStaticI18n(){
     const val = t(el.dataset.i18nPh);
     if(val!==null) el.placeholder = val;
   });
+  const topbarLangLabel = document.getElementById('topbarLangLabel');
+  if(topbarLangLabel) topbarLangLabel.textContent = lang==='ar' ? 'English' : 'العربية';
 }
 
 function applyLang(){
   document.documentElement.lang = lang;
   document.documentElement.dir = lang==='ar' ? 'rtl' : 'ltr';
-  const topbarLangLabel = document.getElementById('topbarLangLabel');
-  if(topbarLangLabel) topbarLangLabel.textContent = lang==='ar' ? 'English' : 'العربية';
   applyStaticI18n();
   navigate(currentPage);
   renderTopbarAvatars();
