@@ -163,15 +163,20 @@ async function _doSyncOne(table, row) {
 }
 function syncRow(table, item, idField) {
   if (!supabase) return; // demo mode: nothing to sync
-  clearTimeout(_timers[table]);
   const id = safeKey(item && item[idField] !== undefined ? item[idField] : '');
   if (!id) return; // nothing identifiable to write
+  // Row writes get their own timer slot ("table#row"). Sharing the slot with
+  // syncCollection() meant a queued single-row write and a queued full-array
+  // write cancelled each other, so the last one scheduled silently dropped
+  // the other's change — a deleted record could survive on the server that way.
+  const key = table + '#row';
+  clearTimeout(_timers[key]);
   const row = { id, data: item };
-  _pendingSyncs[table] = () => _doSyncOne(table, row);
-  _timers[table] = setTimeout(() => {
-    delete _timers[table];
-    const run = _pendingSyncs[table];
-    delete _pendingSyncs[table];
+  _pendingSyncs[key] = () => _doSyncOne(table, row);
+  _timers[key] = setTimeout(() => {
+    delete _timers[key];
+    const run = _pendingSyncs[key];
+    delete _pendingSyncs[key];
     if (run) run();
   }, 500);
 }

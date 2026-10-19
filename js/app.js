@@ -123,30 +123,17 @@ async function loadAllStockFlowData(skipRender){
       });
       silentReplace(projects, merged);
       saveProjectsToStorage();
+      healDeletedWorks(projs);
     }
 
-    /* Same newest-wins merge for the standalone (no-project) work sheets, so
-       a sheet created on one machine reaches the others and a local edit that
-       couldn't be written isn't dropped when the server copy is staler.
-       silentReplace() never writes back, so anything the server is missing is
-       pushed right after — that is what carries sheets created while the table
-       didn't exist (their write was swallowed) up to the server. */
-    if(standaloneWorks.length){
-      const saIds = new Set((saWorks||[]).map(w => w && w.id));
-      const gone = new Set(saTombstones());
-      const saLocalOnly = standaloneWorks.filter(w => w && w.id && !saIds.has(w.id) && !gone.has(w.id));
-      if(saWorks && saWorks.length){
-        const saMerged = saWorks.map(srv => {
-          const local = standaloneWorks.find(w => w && w.id === srv.id);
-          return (local && (local.updatedAt||'') > (srv.updatedAt||'')) ? local : srv;
-        }).concat(saLocalOnly);
-        silentReplace(standaloneWorks, saMerged);
-      }
-      /* The merged array is a superset of the server's, so the prune inside
-         syncCollection only removes rows the server genuinely no longer has. */
-      if(saLocalOnly.length){
-        window.StockFlowBackend.syncCollection('standalone_works', standaloneWorks, 'id');
-      }
+    /* Standalone (no-project) work sheets: every read of the table goes through
+       applyServerStandaloneWorks() so the merge rules are identical for the
+       startup load and for realtime refreshes. The read-failure branch keeps
+       whatever we already have — pushing it would prune server rows we simply
+       failed to read, i.e. delete other people's sheets. */
+    if(Array.isArray(saWorks) || standaloneWorks.length){
+      applyServerStandaloneWorks(saWorks);
+      /* null (read failed): keep what we have and do not push. */
     }
 
     if(users && users.length){
@@ -261,11 +248,16 @@ async function setupRealtimeSync(){
     const unsub = window.StockFlowBackend.subscribeToTable(table, () => {
       _debouncedReload(table, async () => {
         const items = await window.StockFlowBackend.loadCollection(table);
-        if(items){
-          silentReplace(arr, items);
-          if(typeof navigate === 'function' && typeof currentPage !== 'undefined'){
-            _realtimeNavigate(currentPage);
-          }
+        if(!items) return;
+        /* Deletion state has to be re-applied on every read, not only on the
+           startup load: otherwise a realtime echo (triggered by someone else's
+           edit) would drop the tombstone filter and bring a sheet this device
+           had just deleted straight back onto the screen. */
+        if(table === 'standalone_works') applyServerStandaloneWorks(items);
+        else if(table === 'projects'){ silentReplace(projects, items); healDeletedWorks(items); }
+        else silentReplace(arr, items);
+        if(typeof navigate === 'function' && typeof currentPage !== 'undefined'){
+          _realtimeNavigate(currentPage);
         }
       });
     });
@@ -704,7 +696,12 @@ function bulkDeleteItems(page){
     const byProj={};
     rows.filter(([idx])=>idx!==-1).forEach(([idx,wi])=>{(byProj[idx]=byProj[idx]||[]).push(wi);});
     Object.keys(byProj).forEach(pi=>{
-      byProj[pi].sort((a,b)=>b-a).forEach(wi=>getCraneWorks(projects[+pi]).splice(wi,1));
+      const p = projects[+pi];
+      const arr = getCraneWorks(p);
+      byProj[pi].sort((a,b)=>b-a).forEach(wi=>{
+        if(arr[wi]) rememberCwDeleted(p, arr[wi].id);
+        arr.splice(wi, 1);
+      });
       syncCurrentProject(+pi);
     });
   }
@@ -907,6 +904,125 @@ function rememberSaDeleted(id){
   const list = saTombstones();
   if(list.indexOf(id) === -1) list.push(id);
   try{ localStorage.setItem('stockflow_sa_deleted', JSON.stringify(list.slice(-500))); }catch(e){}
+}
+
+/* Ids of standalone sheets this device has actually seen come back FROM the
+   server. Without this the load-time merge cannot tell "created here but the
+   write never landed" (keep and push) from "was synced and is now gone" (it
+   was deleted elsewhere — never push it back). Capped like the tombstones. */
+function saSeenIds(){
+  try{ const s = localStorage.getItem('stockflow_sa_seen'); if(s){ const a = JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
+  return [];
+}
+function saRememberSeen(ids){
+  if(!ids || !ids.length) return;
+  const set = new Set(saSeenIds());
+  let added = false;
+  ids.forEach(id => { if(id && !set.has(id)){ set.add(id); added = true; } });
+  if(!added) return;
+  try{ localStorage.setItem('stockflow_sa_seen', JSON.stringify(Array.from(set).slice(-2000))); }catch(e){}
+}
+
+/* Merges a freshly-read `standalone_works` row set into the local array.
+   Shared by the startup load and by the realtime refreshes so both apply the
+   exact same rules.
+
+   Two cases have to be told apart when the server no longer holds a sheet that
+   we still do:
+
+     - never seen on the server  -> the write was swallowed, keep it here and
+       push it back up (this is what stops a sheet created while the table was
+       missing from being lost);
+     - seen on the server before -> someone deleted it on another device, so it
+       is dropped instead. Pushing it back is exactly what used to resurrect a
+       sheet another user had just deleted.
+
+   Only ids the server actually returned count as "seen": a sheet that is merely
+   queued for push must not be marked seen, otherwise a write that fails would
+   look like a remote deletion on the next load. Returns true only when the read
+   itself was usable. */
+function applyServerStandaloneWorks(saWorks){
+  if(!Array.isArray(saWorks)) return false;
+  const serverIds = new Set(saWorks.map(w => w && w.id).filter(Boolean));
+  const seen = new Set(saSeenIds());
+  const gone = new Set(saTombstones());
+  const saLocalOnly = standaloneWorks.filter(w =>
+    w && w.id && !serverIds.has(w.id) && !seen.has(w.id) && !gone.has(w.id));
+  const saMerged = saWorks
+    .filter(srv => srv && !gone.has(srv.id))
+    .map(srv => {
+      const local = standaloneWorks.find(w => w && w.id === srv.id);
+      return (local && (local.updatedAt||'') > (srv.updatedAt||'')) ? local : srv;
+    })
+    .concat(saLocalOnly);
+  silentReplace(standaloneWorks, saMerged);
+  saveStandaloneWorks();
+  saRememberSeen([...serverIds]);
+  /* A row the server still holds but that we have tombstoned locally means our
+     own delete never landed — pushing the cleaned array prunes it and heals the
+     server, otherwise the sheet keeps coming back on every device. */
+  const healing = saWorks.some(srv => srv && gone.has(srv.id));
+  if((saLocalOnly.length || healing) && window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('standalone_works', standaloneWorks, 'id');
+  }
+  return true;
+}
+
+/* Work sheets deleted inside a project on THIS device, keyed "<projectId>|<workId>".
+   Project sheets live inside the `projects` rows, so a copy that is staler than
+   ours (or a Supabase write that silently failed) would otherwise carry the sheet
+   straight back on the next load. Capped so the list can't grow without bound. */
+function cwTombstones(){
+  try{ const s = localStorage.getItem('stockflow_cw_deleted'); if(s){ const a = JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
+  return [];
+}
+function rememberCwDeleted(p, wid){
+  if(!p || !p.id || !wid) return;
+  const key = p.id + '|' + wid;
+  const list = cwTombstones();
+  if(list.indexOf(key) === -1) list.push(key);
+  try{ localStorage.setItem('stockflow_cw_deleted', JSON.stringify(list.slice(-400))); }catch(e){}
+}
+/* Strips locally-deleted sheets from every project in memory and returns the
+   indexes that have to be written back. `serverProjs` (the raw rows we just
+   fetched) is checked too: when our newer local copy wins the merge, the
+   in-memory array is already clean and nothing here would be flagged, yet the
+   SERVER still carries the sheet — pushing the cleaned row is what heals it. */
+function stripCwTombstones(serverProjs){
+  const set = new Set(cwTombstones());
+  if(!set.size || !projects.length) return [];
+  const dirty = [];
+  projects.forEach((p, i) => {
+    const works = p && Array.isArray(p.works) ? p.works : null;
+    if(!works || !works.length) return;
+    const kept = works.filter(w => !(w && w.id && set.has(p.id + '|' + w.id)));
+    if(kept.length !== works.length){ p.works = kept; dirty.push(i); }
+  });
+  if(Array.isArray(serverProjs)){
+    serverProjs.forEach(srv => {
+      if(!srv || !srv.id || !Array.isArray(srv.works)) return;
+      if(!srv.works.some(w => w && w.id && set.has(srv.id + '|' + w.id))) return;
+      const i = projects.findIndex(p => p.id === srv.id);
+      if(i !== -1 && dirty.indexOf(i) === -1) dirty.push(i);
+    });
+  }
+  return dirty;
+}
+/* Runs stripCwTombstones() and writes back whichever rows still needed it, so a
+   sheet deleted here stays deleted for everyone even when our own write never
+   landed. Safe to call after every read (startup load and realtime). */
+function healDeletedWorks(serverProjs){
+  if(!projects.length) return;
+  const dirty = stripCwTombstones(serverProjs);
+  if(!dirty.length) return;
+  saveProjectsToStorage();
+  if(!(window.StockFlowBackend && window.StockFlowBackend.enabled)) return;
+  if(dirty.length === 1){
+    const cleaned = projects[dirty[0]];
+    if(cleaned && cleaned.id) window.StockFlowBackend.syncRow('projects', cleaned, 'id');
+  } else {
+    window.StockFlowBackend.syncCollection('projects', projects, 'id');
+  }
 }
 
 /* Returns the work list of a project, or the standalone list for idx === -1. */
@@ -5929,6 +6045,7 @@ function deleteCraneWorkDirect(idx, wi){
   const works = standalone ? standaloneWorks : getCraneWorks(p);
   if(!works[wi]) return;
   if(standalone) rememberSaDeleted(works[wi].id);
+  else rememberCwDeleted(p, works[wi].id);
   works.splice(wi, 1);
   if(standalone) syncStandaloneWorks(); else syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
