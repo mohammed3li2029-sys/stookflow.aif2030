@@ -3861,6 +3861,7 @@ function renderInventory(){
         <option>Tools</option>
         <option>Bearings</option>
         <option>Raw Materials</option>
+        <option>Store</option>
       </select>
     </div>
     <button class="btn-mini" id="invFilterApply">${L.toolbar.applyFilter}</button>
