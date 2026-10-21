@@ -3930,7 +3930,7 @@ function renderInvRows(filter='', statusF='', catF=''){
       <td><div class="item-cell"><div class="item-thumb">${i.image?`<img src="${i.image}" alt="">`:ICONS.box}</div><div><div class="item-name">${lang==='en'?i.name:i.nameAr}</div><div class="item-sku">${i.sku}</div></div></div></td>
       <td>${i.sku}</td>
       <td><span class="cat-tag">${lang==='en'?i.cat:i.catAr}</span></td>
-      <td>${i.stock}</td>
+      <td>${i.stock}${i.unit?` <span style="color:var(--text-3);font-size:11px;">${i.unit}</span>`:''}</td>
       <td>${i.loc}</td>
       <td><span class="status-dot" style="background:${st.dot}"></span><span class="pill ${st.cls}">${st.label}</span></td>
       <td><div class="row-actions dw-actions dw-3">
@@ -8038,6 +8038,9 @@ function openModal(idx=null){
     let matched = false;
     [...catSel.options].forEach(o=>{ if(o.value===item.cat || o.textContent===catVal){ o.selected = true; matched = true; } });
     if(!matched) catSel.selectedIndex = 0;
+    const unitSel = document.getElementById('mUnit');
+    unitSel.value = item.unit || 'pcs';
+    if(unitSel.selectedIndex < 0) unitSel.selectedIndex = 0;
     currentImageData = item.image || null;
     setImgPreview(currentImageData);
   }
@@ -8067,10 +8070,11 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
   const min = parseInt(document.getElementById('mMin').value)||0;
   const loc = document.getElementById('mLoc').value.trim() || 'WH-A';
   const cat = document.getElementById('mCategory').value;
+  const unit = document.getElementById('mUnit').value;
   const price = parseFloat(document.getElementById('mPrice').value)||0;
   if(!name){ document.getElementById('mItemName').focus(); return; }
   if(editingIndex===null){
-    inventoryData.unshift({name, nameAr:name, sku, cat, catAr:cat, stock:qty, min, loc, price, image:currentImageData});
+    inventoryData.unshift({name, nameAr:name, sku, cat, catAr:cat, unit, stock:qty, min, loc, price, image:currentImageData});
   } else {
     const item = inventoryData[editingIndex];
     /* Re-assign the whole element so the sync proxy writes the change to the
@@ -8080,7 +8084,7 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
       ...item,
       name: lang==='en' ? name : item.name,
       nameAr: lang==='en' ? (item.nameAr || name) : name,
-      cat, catAr: cat,
+      cat, catAr: cat, unit,
       sku, stock: qty, min, loc, price,
       image: currentImageData
     };
@@ -8119,6 +8123,7 @@ function openViewModal(idx){
     <div class="field-row">
       <div class="field"><label>${L.modal.qty}</label><div>${i.stock}</div></div>
       <div class="field"><label>${L.modal.minLevel}</label><div>${i.min}</div></div>
+      <div class="field"><label>${L.modal.unit}</label><div>${i.unit||'-'}</div></div>
     </div>
     <div class="field"><label>${L.modal.location}</label><div>${i.loc}</div></div>
     <div class="field"><label>${L.modal.unitPrice}</label><div>${(i.price>0) ? i.price.toLocaleString('en',{minimumFractionDigits:2})+' '+RYAL : '—'}</div></div>
@@ -8221,8 +8226,8 @@ function showConfirm(msg){
 function exportCSV(data, name){
   let headers, rows;
   if(name==='inventory'){
-    headers=['Name','SKU','Category','Stock','Min Level','Location','Status'];
-    rows=data.map(i=>[lang==='en'?i.name:i.nameAr, i.sku, lang==='en'?i.cat:i.catAr, i.stock, i.min, i.loc, statusFor(i).label]);
+    headers=['Name','SKU','Category','Unit','Stock','Min Level','Location','Status'];
+    rows=data.map(i=>[lang==='en'?i.name:i.nameAr, i.sku, lang==='en'?i.cat:i.catAr, i.unit||'', i.stock, i.min, i.loc, statusFor(i).label]);
   } else {
     headers=['Ref','Type','Item','Qty','Warehouse','Time'];
     rows=data.map(m=>[m.ref, m.type, lang==='en'?m.item:m.itemAr, m.qty, m.wh, m.time]);
