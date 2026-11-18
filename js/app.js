@@ -3632,10 +3632,7 @@ function openQuoteView(idx, version=null){
             <div style="display:flex; margin-bottom:4px; align-items:center;">
               <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'رقم العرض:':'Quote #:'}</span>
               <span style="font-weight:800; font-size:14px;">${q.id}</span>
-            </div>
-            <div style="display:flex; margin-bottom:4px; align-items:center;">
-              <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'رقم الإصدار:':'Version:'}</span>
-              <span style="font-weight:800; font-size:12px;">${quoteVersionLabel(q.version)}</span>
+              <span style="margin-inline-start:9px;padding:2px 7px;border-radius:999px;background:#e8eefc;color:#1a237e;font-size:11px;font-weight:800;">${isAr?'الإصدار':'Version'} ${quoteVersionLabel(q.version)}</span>
             </div>
             <div style="display:flex; margin-bottom:4px; align-items:center;">
               <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'تاريخ العرض:':'Date:'}</span>
