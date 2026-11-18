@@ -2723,7 +2723,7 @@ function openQuoteModal(idx=null, version=null){
       </div>
       <div class="field" style="margin-top:10px;">
         <label>${lang==='en'?'Notes':'ملاحظات'}</label>
-        <textarea id="qNotes" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg,var(--surface));color:var(--text);font-family:inherit;font-size:13px;resize:vertical;">${isEdit && q.notes ? q.notes : ''}</textarea>
+        ${quoteRichToolbarHTML('qNotes', lang==='en'?'Type notes...':'اكتب الملاحظات...', lang)}
       </div>
       <div class="modal-actions" style="gap:10px;flex-wrap:wrap;align-items:center;">
         ${isEdit ? `<div style="display:flex;align-items:center;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;margin-inline-end:auto;">
@@ -2741,6 +2741,8 @@ function openQuoteModal(idx=null, version=null){
   if(_qTermsEl) qSetRich(_qTermsEl, isEdit ? (q.terms||'') : Q_DEFAULT_TERMS_HTML);
   const _qPayEl=document.getElementById('qPayments');
   if(_qPayEl) qSetRich(_qPayEl, isEdit ? (q.payments||'') : '');
+  const _qNotesEl=document.getElementById('qNotes');
+  if(_qNotesEl) qSetRich(_qNotesEl, isEdit ? (q.notes||'') : '');
   quoteLines = isEdit ? JSON.parse(JSON.stringify(q.items)) : [];
   if(quoteLines.length === 0) addQuoteLine();
   renderQuoteLines();
@@ -2748,6 +2750,7 @@ function openQuoteModal(idx=null, version=null){
   wireQuoteDatePicker();
   wireQuoteRichEditor('qTerms');
   wireQuoteRichEditor('qPayments');
+  wireQuoteRichEditor('qNotes');
 }
 
 function closeQuoteModal(){
@@ -3204,7 +3207,7 @@ function saveQuotation(){
   const date = (document.getElementById('qDateTrig') ? document.getElementById('qDateTrig').dataset.value : '') || new Date().toISOString().split('T')[0];
   const terms = document.getElementById('qTerms').innerHTML.trim();
   const payments = document.getElementById('qPayments') ? document.getElementById('qPayments').innerHTML.trim() : '';
-  const notes = document.getElementById('qNotes') ? document.getElementById('qNotes').value.trim() : '';
+  const notes = document.getElementById('qNotes') ? document.getElementById('qNotes').innerHTML.trim() : '';
   const phone = document.getElementById('qPhone') ? document.getElementById('qPhone').value.trim() : '';
   const email = document.getElementById('qEmail') ? document.getElementById('qEmail').value.trim() : '';
   const address = document.getElementById('qAddress') ? document.getElementById('qAddress').value.trim() : '';
@@ -3542,7 +3545,7 @@ function duplicateQuotation(idx){
       if(document.getElementById('qDiscount') && src.discount) document.getElementById('qDiscount').value = src.discount;
       if(document.getElementById('qTerms')) qSetRich(document.getElementById('qTerms'), src.terms || '');
       if(document.getElementById('qPayments')) qSetRich(document.getElementById('qPayments'), src.payments || '');
-      if(document.getElementById('qNotes')) document.getElementById('qNotes').value = src.notes || '';
+      if(document.getElementById('qNotes')) qSetRich(document.getElementById('qNotes'), src.notes || '');
       quoteLines = JSON.parse(JSON.stringify(src.items || []));
       renderQuoteLines();
       updateQuoteTotals();
@@ -3735,7 +3738,7 @@ function openQuoteView(idx, version=null){
         <!-- Notes -->
         <div style="background:#f8f9fa; border:1px solid #f0e68c; border-radius:8px; padding:10px 12px; margin-bottom:15px;">
           <div style="font-weight:900; color:#f9a825; border-bottom:2px solid #f9a825; display:inline-block; margin-bottom:6px; padding-bottom:2px; font-size:13px;">${isAr?'ملاحظات :':'Notes:'}</div>
-          <div style="font-size:11px; color:#444; line-height:1.5; white-space:pre-wrap;">${q.notes}</div>
+          <div style="font-size:11px; color:#444; line-height:1.5;">${/<[a-z\/][^>]*>/i.test(String(q.notes)) ? q.notes : qEscapeHtml(q.notes).replace(/\n/g,'<br>')}</div>
         </div>
         ` : ''}
 

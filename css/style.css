@@ -2799,6 +2799,27 @@ tr.expand-row:last-child td{border-bottom:0;}
   border:1px solid #DCE7FB;border-radius:var(--radius-sm);
 }
 [data-theme="dark"] .expand-inner{border-color:#22314F;}
+/* The activity drawer is mounted only while open, so this animation runs once
+   per deliberate expansion without affecting table filtering or pagination. */
+tr.expand-row:not(.is-hidden) .expand-inner{
+  transform-origin:top center;
+  animation:quote-panel-reveal .28s cubic-bezier(.22,.9,.28,1) both;
+}
+tr.expand-row:not(.is-hidden) .expand-inner .step{
+  animation:quote-panel-content .3s .06s ease-out both;
+}
+@keyframes quote-panel-reveal{
+  from{opacity:0;transform:translateY(-8px) scaleY(.94);filter:blur(2px);}
+  to{opacity:1;transform:translateY(0) scaleY(1);filter:blur(0);}
+}
+@keyframes quote-panel-content{
+  from{opacity:0;transform:translateY(-4px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@media (prefers-reduced-motion:reduce){
+  tr.expand-row:not(.is-hidden) .expand-inner,
+  tr.expand-row:not(.is-hidden) .expand-inner .step{animation:none;}
+}
 .step{display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;}
 .step.created{flex:0 0 auto;max-width:180px;}
 .step-icon{
