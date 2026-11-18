@@ -2093,7 +2093,7 @@ function renderQuoteRows(filter='', statusF=''){
     <tr class="data-quote-row ${selState.quote.has(idx)?'selected-row':''} ${open?'is-open':''}" data-qid="${q.id}" data-page-idx="${idx}">
       <td class="expand-col"><button type="button" class="expand-btn" onclick="toggleQuotePanel(this,'${q.id}')" aria-label="${lang==='en'?'Activity':'النشاط'}" title="${lang==='en'?'Who created/edited this quote':'من أنشأ وعدّل هذا العرض'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M6 9l6 6 6-6"/></svg></button></td>
       <td class="sel-check-col" style="display:${selMode.quote?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.quote.has(idx)?'checked':''} onchange="toggleSel('quote',${idx},this)"></td>
-      <td><b>${q.id}</b></td>
+      <td><b>${q.id}</b><div style="font-size:10px;color:var(--text-2);margin-top:2px;">${lang==='en'?'Latest':'آخر إصدار'}: ${quoteVersionLabel(q.version)}</div></td>
       <td>${q.customer}</td>
       <td class="trace-cell">${quoteTraceHtml(q)}</td>
       <td>${q.date}</td>
@@ -2151,6 +2151,7 @@ function _qaAvatar(name, at){
 
 function quoteActivityHtml(q){
   const ar = lang === 'ar';
+  const quoteIdx = quotations.indexOf(q);
   const created = q && q.createdBy ? {name:q.createdBy.name, at:q.createdBy.at} : null;
   const edits = (q && Array.isArray(q.edits)) ? q.edits.filter(e => e && e.name) : [];
   const createdIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><path d="M12 5v14M5 12h14"/></svg>';
@@ -2198,7 +2199,26 @@ function quoteActivityHtml(q){
       </div>`;
   }
 
-  return `<div class="expand-inner">${createdHtml}<div class="step-connector"></div>${editHtml}</div>`;
+  const versions = quoteVersionsOf(q);
+  const viewIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>';
+  const versionEditIcon = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  const versionsHtml = `<div class="step" style="margin-top:14px;align-items:flex-start;">
+      <span class="step-icon">#</span>
+      <div style="width:100%;">
+        <div class="step-label">${ar?'الإصدارات المحفوظة':'Saved versions'} (${versions.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;">
+          ${versions.map(v=>`<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 9px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);">
+            <strong style="font-size:12px;letter-spacing:.4px;">${quoteVersionLabel(v.version)}</strong>
+            ${_qaAvatar((v.createdBy&&v.createdBy.name)||'', (v.createdBy&&v.createdBy.at)||v.createdAt)}
+            <span style="font-size:10px;max-width:135px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);" title="${escapeHtml((v.createdBy&&v.createdBy.name)||(ar?'غير معروف':'Unknown'))}">${escapeHtml((v.createdBy&&v.createdBy.name)||(ar?'غير معروف':'Unknown'))}</span>
+            <button type="button" onclick="openQuoteView(${quoteIdx},'${quoteVersionLabel(v.version)}')" title="${ar?'عرض الإصدار':'View version'}" style="width:25px;height:25px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">${viewIcon}</button>
+            <button type="button" onclick="openQuoteModal(${quoteIdx},'${quoteVersionLabel(v.version)}')" title="${ar?'تعديل الإصدار':'Edit version'}" style="width:25px;height:25px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">${versionEditIcon}</button>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  return `<div class="expand-inner">${createdHtml}<div class="step-connector"></div>${editHtml}${versionsHtml}</div>`;
 }
 
 const QA_TRACE_MAX_AVATARS = 6;
@@ -2409,6 +2429,25 @@ function renderSales(){
 
 let quoteLines = [];
 let editingQuoteIdx = null;
+let editingQuoteVersion = null;
+
+function quoteVersionLabel(version){ return String(parseInt(version, 10) || 1).padStart(3, '0'); }
+function quoteFileName(customer, quoteId, version){
+  const client = String(customer || (lang==='ar'?'عميل':'Customer')).trim();
+  const quoteNo = String(quoteId || '').trim();
+  return `QUOTE-R.F.Q-${quoteNo}-Rev.${quoteVersionLabel(version)}-${client}`;
+}
+function quoteVersionsOf(q){
+  if(q && Array.isArray(q.versions) && q.versions.length) return q.versions.slice().sort((a,b)=>Number(a.version)-Number(b.version));
+  if(!q) return [];
+  const legacy = JSON.parse(JSON.stringify(q));
+  delete legacy.versions;
+  return [{...legacy, version:'001', fileName:legacy.fileName || quoteFileName(legacy.customer, legacy.id, '001')}];
+}
+function quoteVersionOf(q, version){
+  const versions = quoteVersionsOf(q);
+  return versions.find(v=>quoteVersionLabel(v.version)===quoteVersionLabel(version)) || versions[versions.length-1] || q;
+}
 
 const Q_DEFAULT_TERMS='الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.';
 
@@ -2541,10 +2580,13 @@ function wireQuoteRichEditor(fieldId){
   });
 }
 
-function openQuoteModal(idx=null){
+function openQuoteModal(idx=null, version=null){
   editingQuoteIdx = idx;
+  editingQuoteVersion = version;
   const isEdit = idx !== null;
-  const q = isEdit ? quotations[idx] : null;
+  const parentQuote = isEdit ? quotations[idx] : null;
+  const q = isEdit ? quoteVersionOf(parentQuote, version) : null;
+  if(isEdit && q) editingQuoteVersion = quoteVersionLabel(q.version);
 
   const savedValidity = isEdit ? parseInt(q && q.validity, 10) : null;
   const activeValidity = isEdit && savedValidity ? savedValidity : 15;
@@ -2559,7 +2601,7 @@ function openQuoteModal(idx=null){
       <h3 style="margin-bottom:15px;">${isEdit ? (lang==='en'?'Edit Quotation':'تعديل عرض سعر') : (lang==='en'?'New Quotation':'عرض سعر جديد')}</h3>
       <div class="field-row">
         <div class="field">
-          <label>${lang==='en'?'Quote Number (AIF-F...)':'رقم العرض (AIF-F...)'}</label>
+          <label style="display:flex;align-items:center;gap:7px;">${lang==='en'?'Quote Number (AIF-F...)':'رقم العرض (AIF-F...)'} <span style="padding:2px 7px;border-radius:999px;background:var(--blue-soft);color:var(--blue);font-size:10px;font-weight:800;letter-spacing:.3px;">${lang==='en'?'Version':'الإصدار'} ${isEdit ? quoteVersionLabel(q.version) : '001'}</span></label>
           <div style="display:flex;align-items:center;gap:5px;">
             <span style="font-weight:700;color:var(--text-2);">AIF-F</span>
             <input id="qIdSuffix" style="flex:1;" placeholder="25-19" value="${isEdit ? q.id.replace('AIF-F','') : ''}">
@@ -2683,7 +2725,11 @@ function openQuoteModal(idx=null){
         <label>${lang==='en'?'Notes':'ملاحظات'}</label>
         <textarea id="qNotes" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg,var(--surface));color:var(--text);font-family:inherit;font-size:13px;resize:vertical;">${isEdit && q.notes ? q.notes : ''}</textarea>
       </div>
-      <div class="modal-actions">
+      <div class="modal-actions" style="gap:10px;flex-wrap:wrap;align-items:center;">
+        ${isEdit ? `<div style="display:flex;align-items:center;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;margin-inline-end:auto;">
+          <label style="margin:0;padding:6px 9px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.06);"><input type="radio" name="qSaveMode" value="same" checked style="accent-color:var(--blue);vertical-align:middle;margin-inline-end:4px;">${lang==='en' ? `Update ${editingQuoteVersion}` : `تعديل ${editingQuoteVersion}`}</label>
+          <label style="margin:0;padding:6px 9px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-2);white-space:nowrap;"><input type="radio" name="qSaveMode" value="new" style="accent-color:var(--blue);vertical-align:middle;margin-inline-end:4px;">${lang==='en' ? 'New version' : 'إصدار جديد'}</label>
+        </div>` : ''}
         <button class="btn" onclick="closeQuoteModal()">${STR[lang].modal.cancel}</button>
         <button class="btn btn-primary" onclick="saveQuotation()">${STR[lang].modal.save}</button>
       </div>
@@ -3234,10 +3280,20 @@ function saveQuotation(){
   const status = getQPickValue('qStatus') || 'review';
 
   const now = new Date().toISOString();
-  const prev = editingQuoteIdx !== null && quotations[editingQuoteIdx] ? quotations[editingQuoteIdx] : null;
+  const parent = editingQuoteIdx !== null && quotations[editingQuoteIdx] ? quotations[editingQuoteIdx] : null;
+  const prev = parent ? quoteVersionOf(parent, editingQuoteVersion) : null;
+  const saveAsNewVersion = !!(parent && document.querySelector('input[name="qSaveMode"]:checked')?.value === 'new');
+  const existingVersions = parent ? quoteVersionsOf(parent) : [];
+  const version = parent
+    ? (saveAsNewVersion
+        ? quoteVersionLabel(existingVersions.reduce((max, v)=>Math.max(max, parseInt(v.version, 10)||0), 0) + 1)
+        : quoteVersionLabel(editingQuoteVersion))
+    : '001';
 
   const q = {
     id: 'AIF-F' + suffix,
+    version,
+    fileName: quoteFileName(customer, 'AIF-F' + suffix, version),
     customer,
     date,
     phone,
@@ -3262,14 +3318,26 @@ function saveQuotation(){
     edits: prev && Array.isArray(prev.edits) ? prev.edits.map(e => ({name:e.name, at:e.at})) : []
   };
 
-  if(prev){
+  if(prev && !saveAsNewVersion){
     q.edits.push({name: profileData.name, at: now});
   }
   
-  if(editingQuoteIdx !== null){
-    quotations[editingQuoteIdx] = q;
+  if(parent){
+    let versions = existingVersions.map(v=>JSON.parse(JSON.stringify(v)));
+    if(saveAsNewVersion){
+      /* A new revision starts with its own creator record, while the source
+         revision remains fully editable and unchanged. */
+      q.createdBy = {name:profileData.name, at:now};
+      q.createdAt = now;
+      q.edits = [];
+      versions.push(q);
+    } else {
+      const at = versions.findIndex(v=>quoteVersionLabel(v.version)===version);
+      if(at === -1) versions.push(q); else versions[at] = q;
+    }
+    quotations[editingQuoteIdx] = {...q, versions};
   } else {
-    quotations.unshift(q);
+    quotations.unshift({...q, versions:[q]});
     pgReset('quote', '', '');   // a new quotation is prepended, show page 1
   }
   
@@ -3481,8 +3549,10 @@ function duplicateQuotation(idx){
     }, 50);
   }, 280);
 }
-function openQuoteView(idx){
-  const q = quotations[idx];
+function openQuoteView(idx, version=null){
+  const parentQuote = quotations[idx];
+  const q = version ? quoteVersionOf(parentQuote, version) : parentQuote;
+  if(!q) return;
   const isAr = lang === 'ar';
   const L = STR[lang];
   const dir = isAr ? 'rtl' : 'ltr';
@@ -3497,7 +3567,7 @@ function openQuoteView(idx){
       <button class="btn" onclick="closeQuoteView()" style="background:#fff;">✕ ${L.notif.viewAll||(isAr?'إغلاق':'Close')}</button>
       <button class="btn" onclick="duplicateQuotation(${idx})" style="background:#fff;">📋 ${isAr?'نسخ العرض':'Duplicate'}</button>
       ${q.attachments && q.attachments.length ? `<button class="btn" onclick="downloadAllQuoteAttachments(${idx})" style="background:#fff;">📎 ${isAr?'تحميل المرفقات':'Download Attachments'} (${q.attachments.length})</button>` : ''}
-      <button class="btn btn-primary" onclick="printQuotation(${idx})">🖨 ${isAr?'حفظ PDF / طباعة':'Save PDF / Print'}</button>
+      <button class="btn btn-primary" onclick="printQuotation(${idx},'${quoteVersionLabel(q.version)}')">🖨 ${isAr?'حفظ PDF / طباعة':'Save PDF / Print'}</button>
     </div>
     <div class="modal modal-xl" style="padding:0; overflow:auto; background:#fff; color:#1a1a1a; border-radius:0; width:95%; max-width:210mm; min-height:auto; height:auto; margin:10px auto; position:relative; box-shadow:0 0 50px rgba(0,0,0,0.5); transform-origin:top center;">
       
@@ -3562,6 +3632,10 @@ function openQuoteView(idx){
             <div style="display:flex; margin-bottom:4px; align-items:center;">
               <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'رقم العرض:':'Quote #:'}</span>
               <span style="font-weight:800; font-size:14px;">${q.id}</span>
+            </div>
+            <div style="display:flex; margin-bottom:4px; align-items:center;">
+              <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'رقم الإصدار:':'Version:'}</span>
+              <span style="font-weight:800; font-size:12px;">${quoteVersionLabel(q.version)}</span>
             </div>
             <div style="display:flex; margin-bottom:4px; align-items:center;">
               <span style="width:95px; font-weight:700; color:#1a237e; font-size:12px;">${isAr?'تاريخ العرض:':'Date:'}</span>
@@ -3815,11 +3889,12 @@ function openQuoteView(idx){
   },150);
 }
 
-function printQuotation(idx){
-  const q = quotations[idx];
+function printQuotation(idx, version=null){
+  const parentQuote = quotations[idx];
+  const q = version ? quoteVersionOf(parentQuote, version) : parentQuote;
   if(!q) return;
   const originalTitle = document.title;
-  const fileName = `QUOTE-R.F.Q-${q.id}-Rev.001-${q.customer}`;
+  const fileName = quoteFileName(q.customer, q.id, q.version || '001');
   document.title = fileName;
   setTimeout(() => {
     window.print();
