@@ -77,6 +77,13 @@ create table if not exists standalone_works (
   updated_at timestamptz not null default now()
 );
 
+-- Persistent audit log for real inbound, outbound and transfer events.
+create table if not exists stock_movements (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Keep updated_at current on every write, for every table above.
 create or replace function set_updated_at()
 returns trigger as $$
@@ -90,7 +97,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works','stock_movements']
   loop
     execute format('drop trigger if exists trg_%I_updated_at on %I;', t, t);
     execute format('create trigger trg_%I_updated_at before update on %I for each row execute function set_updated_at();', t, t);
@@ -208,7 +215,8 @@ begin
     ('quotations'::text, 'sales'::text),
     ('purchase_orders'::text, 'purchasing'::text),
     ('tasks'::text, 'tasks'::text),
-    ('standalone_works'::text, 'projects'::text)
+    ('standalone_works'::text, 'projects'::text),
+    ('stock_movements'::text, 'movements'::text)
   ) as m(tbl, section)
   loop
     execute format('alter table %I enable row level security;', r.tbl);
@@ -256,7 +264,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works','stock_movements']
   loop
     if not exists (
       select 1 from pg_publication_tables

@@ -87,7 +87,7 @@ async function uploadFileOrFallback(file, folder){
 async function loadAllStockFlowData(skipRender){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
-    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users, saWorks] = await Promise.all([
+    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users, saWorks, movements] = await Promise.all([
       window.StockFlowBackend.loadCollection('inventory'),
       window.StockFlowBackend.loadCollection('warehouses'),
       window.StockFlowBackend.loadCollection('material_requests'),
@@ -97,6 +97,7 @@ async function loadAllStockFlowData(skipRender){
       window.StockFlowBackend.loadCollection('tasks'),
       window.StockFlowBackend.loadCollection('users'),
       window.StockFlowBackend.loadCollection('standalone_works'),
+      window.StockFlowBackend.loadCollection('stock_movements'),
     ]);
 
     // An array result (even empty) is authoritative: replace the local copy,
@@ -108,6 +109,7 @@ async function loadAllStockFlowData(skipRender){
     if(Array.isArray(reqs)) silentReplace(reqsData, reqs);
     if(Array.isArray(quotes)) silentReplace(quotations, quotes);
     if(Array.isArray(pos)) silentReplace(purchaseOrders, pos);
+    if(Array.isArray(movements)) silentReplace(movementsData, movements);
     // tasks keep a localStorage safety net, so only overwrite when the server
     // actually has rows (an empty table must not wipe local unsynced edits).
     if(tasksArr && tasksArr.length) silentReplace(tasksData, tasksArr);
@@ -177,6 +179,7 @@ async function loadAllStockFlowData(skipRender){
         [tasksData,'tasks'],
         [projects,'projects'],
         [standaloneWorks,'projects'],
+        [movementsData,'movements'],
       ].forEach(([arr, perm])=>{
         if(!currentUserPerms.includes(perm)) silentReplace(arr, []);
       });
@@ -242,6 +245,7 @@ async function setupRealtimeSync(){
     ['purchase_orders', purchaseOrders],
     ['tasks', tasksData],
     ['standalone_works', standaloneWorks],
+    ['stock_movements', movementsData],
   ];
 
   arrayTables.forEach(([table, arr]) => {
@@ -4194,14 +4198,33 @@ function renderIssues(){
 /* ===================================================================
    PAGE RENDER: MOVEMENTS
 =================================================================== */
-const movementsData = [
-  {type:'inbound',  ref:'GRN-1042', item:'Steel Coil — Grade A',        itemAr:'لفافة صلب — درجة أ',          qty:'+500 kg',  wh:'WH-A',       time:'09:42 AM'},
-  {type:'outbound', ref:'SHP-3381', item:'Heavy-Duty Hydraulic Pump',    itemAr:'مضخة هيدروليكية ثقيلة',      qty:'-12 pcs',  wh:'WH-A',       time:'10:15 AM'},
-  {type:'transfer', ref:'TRF-220',  item:'Bearing Kit (BK-900)',         itemAr:'طقم محامل (BK-900)',          qty:'80 pcs',   wh:'WH-B → WH-C',time:'11:33 AM'},
-  {type:'inbound',  ref:'GRN-1043', item:'Raw Polymer Pellets',          itemAr:'حبيبات بوليمر خام',           qty:'+1.2 t',   wh:'WH-A',       time:'01:08 PM'},
-  {type:'outbound', ref:'SHP-3382', item:'Pneumatic Drill (PD-75)',      itemAr:'مثقاب هوائي (PD-75)',         qty:'-5 pcs',   wh:'WH-B',       time:'02:20 PM'},
-  {type:'transfer', ref:'TRF-221',  item:'Gear Assembly Unit',           itemAr:'وحدة تجميع التروس',           qty:'10 pcs',   wh:'WH-C → WH-A',time:'03:45 PM'},
-];
+/* Stock movements are transaction records, not sample display data. Each
+   mutation below writes a complete, persistent audit entry. */
+const movementsData = withFirestoreSync([], 'stock_movements', 'id');
+
+function addStockMovement({type, item, qty, warehouse, before, after, ref, note=''}){
+  const now = new Date();
+  const delta = Math.abs(Number(qty) || 0);
+  const prefix = type === 'transfer' ? 'TRF' : type === 'inbound' ? 'REC' : 'ISS';
+  const currentUser = typeof profileData !== 'undefined' ? profileData.name : '';
+  movementsData.unshift({
+    id: `${prefix}-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,
+    type, ref: ref || `${prefix}-${String(now.getTime()).slice(-6)}`,
+    item: item.name || '', itemAr: item.nameAr || item.name || '', sku: item.sku || '',
+    qty: `${type === 'outbound' ? '-' : type === 'inbound' ? '+' : ''}${delta} ${item.unit || 'pcs'}`,
+    wh: warehouse || item.loc || '—', before, after,
+    note, user: currentUser || (lang==='ar' ? 'مستخدم النظام' : 'System user'),
+    createdAt: now.toISOString(),
+    time: now.toLocaleTimeString('en', {hour:'2-digit', minute:'2-digit'})
+  });
+}
+
+function movementWhen(m){
+  if(!m.createdAt) return m.time || '—';
+  return new Date(m.createdAt).toLocaleString(lang==='ar' ? 'ar-SA' : 'en-GB', {
+    year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'
+  });
+}
 
 function renderMovements(){
   const L = STR[lang];
@@ -4230,7 +4253,9 @@ function renderMovements(){
       <th>${L.table.item}</th>
       <th>${lang==='en'?'Qty':'الكمية'}</th>
       <th>${lang==='en'?'Warehouse':'المستودع'}</th>
-      <th>${lang==='en'?'Time':'الوقت'}</th>
+      <th>${lang==='en'?'Date & time':'التاريخ والوقت'}</th>
+      <th>${lang==='en'?'Balance':'الرصيد بعد الحركة'}</th>
+      <th>${lang==='en'?'Details':'التفاصيل'}</th>
     </tr></thead>
     <tbody id="movTbody"></tbody>
     </table>
@@ -4244,7 +4269,7 @@ function renderMovRows(typeF=''){
   if(!tbody) return;
   const rows = movementsData.filter(m => !typeF || m.type===typeF);
   if(!rows.length){
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-2);">${lang==='en'?'No movements found':'لا توجد حركات مطابقة'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-2);">${lang==='en'?'No real stock movements have been recorded yet':'لا توجد حركات مخزون فعلية مسجلة حتى الآن'}</td></tr>`;
     renderPager('mov', 0);
     return;
   }
@@ -4262,7 +4287,9 @@ function renderMovRows(typeF=''){
       <td>${lang==='en'?m.item:m.itemAr}</td>
       <td>${m.qty}</td>
       <td>${m.wh}</td>
-      <td>${m.time}</td>
+      <td>${movementWhen(m)}</td>
+      <td>${m.after ?? '—'}</td>
+      <td>${m.note || m.user || '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -4927,6 +4954,7 @@ function collectAllData(){
       projects: JSON.parse(JSON.stringify(projects)),
       quotations: JSON.parse(JSON.stringify(quotations)),
       purchaseOrders: JSON.parse(JSON.stringify(purchaseOrders)),
+      stockMovements: JSON.parse(JSON.stringify(movementsData)),
       tasks: JSON.parse(JSON.stringify(tasksData)),
       users: JSON.parse(JSON.stringify(usersData.map(({password, ...rest}) => rest))),
       calendarEvents: JSON.parse(JSON.stringify(CAL_EVENTS)),
@@ -4990,6 +5018,7 @@ function applyImportedData(data){
   if(Array.isArray(c.projects)){ silentReplace(projects, c.projects); saveProjectsToStorage(); }
   if(Array.isArray(c.quotations)) silentReplace(quotations, c.quotations);
   if(Array.isArray(c.purchaseOrders)) silentReplace(purchaseOrders, c.purchaseOrders);
+  if(Array.isArray(c.stockMovements)) silentReplace(movementsData, c.stockMovements);
   if(Array.isArray(c.tasks)){ silentReplace(tasksData, c.tasks); saveTasksToStorage(); }
   if(Array.isArray(c.users)){
     silentReplace(usersData, c.users.map(u => ({...u, password: u.password || encodePW('')})));
@@ -5014,6 +5043,7 @@ function pushImportedToBackend(){
     ['projects', projects, 'id'],
     ['quotations', quotations, 'id'],
     ['purchase_orders', purchaseOrders, 'id'],
+    ['stock_movements', movementsData, 'id'],
     ['tasks', tasksData, 'id'],
     ['profile', [profileData], 'id'],
   ];
@@ -8074,7 +8104,9 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
   const price = parseFloat(document.getElementById('mPrice').value)||0;
   if(!name){ document.getElementById('mItemName').focus(); return; }
   if(editingIndex===null){
-    inventoryData.unshift({name, nameAr:name, sku, cat, catAr:cat, unit, stock:qty, min, loc, price, image:currentImageData});
+    const newItem = {name, nameAr:name, sku, cat, catAr:cat, unit, stock:qty, min, loc, price, image:currentImageData};
+    inventoryData.unshift(newItem);
+    if(qty) addStockMovement({type:'inbound', item:newItem, qty, warehouse:loc, before:0, after:qty, note:lang==='en'?'Opening balance when item was added':'رصيد افتتاحي عند إضافة الصنف'});
   } else {
     const item = inventoryData[editingIndex];
     /* Re-assign the whole element so the sync proxy writes the change to the
@@ -8088,6 +8120,14 @@ document.getElementById('modalSave').addEventListener('click', ()=>{
       sku, stock: qty, min, loc, price,
       image: currentImageData
     };
+    if(qty !== Number(item.stock || 0)){
+      addStockMovement({
+        type: qty > Number(item.stock || 0) ? 'inbound' : 'outbound',
+        item: inventoryData[editingIndex], qty: Math.abs(qty - Number(item.stock || 0)), warehouse:loc,
+        before:Number(item.stock || 0), after:qty,
+        note:lang==='en'?'Stock balance adjusted from item edit':'تم تعديل رصيد المخزون من بطاقة الصنف'
+      });
+    }
   }
   const _isEdit = editingIndex !== null;
   closeModal();
@@ -8792,6 +8832,15 @@ function applyReqStockChange(req, deduct){
   const cur = parseInt(it.stock) || 0;
   const next = Math.max(0, cur + (deduct ? -qty : qty));
   inventoryData[idx] = { ...it, stock: next };
+  if(next !== cur){
+    addStockMovement({
+      type: deduct ? 'outbound' : 'inbound', item: inventoryData[idx], qty: Math.abs(next-cur),
+      warehouse: it.loc, before:cur, after:next, ref:req.id,
+      note: deduct
+        ? (lang==='en' ? `Material request approved: ${req.id}` : `اعتماد طلب صرف المواد: ${req.id}`)
+        : (lang==='en' ? `Material request returned to pending: ${req.id}` : `إرجاع طلب المواد إلى قيد الانتظار: ${req.id}`)
+    });
+  }
   return true;
 }
 
@@ -9919,21 +9968,13 @@ document.getElementById('transferSubmit').addEventListener('click', ()=>{
   // persists the new quantity to the database).
   inventoryData[itemIdx] = { ...item, stock: item.stock - qty };
 
-  // Log the movement
+  // Log the movement with the actual balance, location and optional note.
   const fromName = lang==='en'?warehouseData[fromIdx].name:warehouseData[fromIdx].nameAr;
   const toName   = lang==='en'?warehouseData[toIdx].name:warehouseData[toIdx].nameAr;
-  const ref = 'TRF-'+(300+movementsData.length);
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
-  movementsData.unshift({
-    type:'transfer',
-    ref,
-    item: item.name,
-    itemAr: item.nameAr,
-    qty: qty+' pcs',
-    wh: `${fromName} → ${toName}`,
-    time: timeStr,
-    note
+  addStockMovement({
+    type:'transfer', item, qty, warehouse:`${fromName} → ${toName}`,
+    before:item.stock, after:item.stock-qty,
+    note:note || (lang==='en'?'Warehouse transfer':'تحويل بين المستودعات')
   });
 
   closeTransferModal();
