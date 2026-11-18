@@ -2472,6 +2472,25 @@ function quoteRichToolbarHTML(fieldId, ph, lang){
   const ulSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/><path d="M9 6h11M9 12h11M9 18h11"/></svg>';
   const olSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1v3M4 6l-.5 1M4 15.5h1a1 1 0 010 2h-1M4 14.5h1a1 1 0 010 2"/></svg>';
   const alSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>';
+  const colorSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17h6M10 3h4l5 12H5L10 3Z"/><path d="M5 21h14"/></svg>';
+  const colorControl = `
+        <button type="button" class="q-tb-style" data-role="color" title="${_t('Text color','لون النص')}">${colorSvg}${chev}</button>
+        <div class="q-tb-menu" id="${fieldId}Color">
+          <button type="button" data-color="#1f2937"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1f2937;margin-inline-end:7px;"></span>${_t('Black','أسود')}</button>
+          <button type="button" data-color="#1a237e"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1a237e;margin-inline-end:7px;"></span>${_t('Blue','أزرق')}</button>
+          <button type="button" data-color="#b91c1c"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b91c1c;margin-inline-end:7px;"></span>${_t('Red','أحمر')}</button>
+          <button type="button" data-color="#b45309"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b45309;margin-inline-end:7px;"></span>${_t('Orange','برتقالي')}</button>
+          <button type="button" data-color="#15803d"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#15803d;margin-inline-end:7px;"></span>${_t('Green','أخضر')}</button>
+          <button type="button" data-color="#7e22ce"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#7e22ce;margin-inline-end:7px;"></span>${_t('Purple','بنفسجي')}</button>
+        </div>`;
+  const tableSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg>';
+  const tableControl = fieldId==='qPayments' ? `
+        <button type="button" class="q-tb-style" data-role="table" title="${_t('Insert table','إدراج جدول')}">${tableSvg}${chev}</button>
+        <div class="q-tb-menu" id="${fieldId}Table">
+          <button type="button" data-table="2x2">${_t('2 columns × 2 rows','عمودان × صفان')}</button>
+          <button type="button" data-table="3x3">${_t('3 columns × 3 rows','3 أعمدة × 3 صفوف')}</button>
+          <button type="button" data-table="4x4">${_t('4 columns × 4 rows','4 أعمدة × 4 صفوف')}</button>
+        </div>` : '';
   return `
     <div class="q-rich-wrap">
       <div class="q-rich-tb" role="toolbar" aria-label="${_t('Text formatting','تنسيق النص')}">
@@ -2486,6 +2505,8 @@ function quoteRichToolbarHTML(fieldId, ph, lang){
         <span class="q-tb-div"></span>
         <button type="button" class="q-tb-style" data-role="align" title="${_t('Alignment','المحاذاة')}"><span class="main">${alSvg}</span>${chev}</button>
         <button type="button" class="q-tb-btn" data-cmd="link" title="${_t('Link','رابط')}">${linkSvg}</button>
+        ${colorControl}
+        ${tableControl}
         <div class="q-tb-menu" id="${fieldId}Style">
           <button type="button" data-block="P">${_t('Paragraph','فقرة')}</button>
           <button type="button" data-block="H1">${_t('Heading 1','عنوان 1')}</button>
@@ -2510,6 +2531,8 @@ function wireQuoteRichEditor(fieldId){
   const tb=wrap.querySelector('.q-rich-tb');
   const styleMenu=document.getElementById(fieldId+'Style');
   const alignMenu=document.getElementById(fieldId+'Align');
+  const colorMenu=document.getElementById(fieldId+'Color');
+  const tableMenu=document.getElementById(fieldId+'Table');
   const styleBtn=tb.querySelector('[data-role="style"]');
   const alignBtn=tb.querySelector('[data-role="align"]');
   if(!tb||!styleMenu||!alignMenu) return;
@@ -2519,6 +2542,25 @@ function wireQuoteRichEditor(fieldId){
   field.addEventListener('blur',()=>{ refreshBlank(); });
 
   const runCmd=(cmd,val)=>{ field.focus(); document.execCommand(cmd,false,val); refreshBlank(); };
+
+  /* Append directly to the editable field. This avoids browsers dropping the
+     saved selection when the person clicks the table-size menu. */
+  const insertTable=(rows, cols)=>{
+    const cell = '<td style="border:1px solid #cbd5e1;padding:6px;min-width:62px;height:22px;"><br></td>';
+    const table = `<table style="border-collapse:collapse;width:100%;margin:7px 0;"><tbody>${Array.from({length:rows},()=>`<tr>${cell.repeat(cols)}</tr>`).join('')}</tbody></table><p><br></p>`;
+    field.insertAdjacentHTML('beforeend', table);
+    const firstCell = field.querySelector('table:last-of-type td');
+    if(firstCell){
+      const cursor = document.createRange();
+      cursor.selectNodeContents(firstCell);
+      cursor.collapse(true);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(cursor);
+    }
+    field.focus();
+    field.dispatchEvent(new Event('input',{bubbles:true}));
+  };
 
   function refreshActive(){
     tb.querySelectorAll('[data-cmd]').forEach(btn=>{
@@ -2545,7 +2587,11 @@ function wireQuoteRichEditor(fieldId){
     });
   });
 
-  function closeMenus(){ styleMenu.classList.remove('is-open'); alignMenu.classList.remove('is-open'); }
+  function closeMenus(){
+    styleMenu.classList.remove('is-open'); alignMenu.classList.remove('is-open');
+    colorMenu.classList.remove('is-open');
+    if(tableMenu) tableMenu.classList.remove('is-open');
+  }
   function toggleMenu(menu,btn){
     const isOpen=menu.classList.contains('is-open');
     closeMenus();
@@ -2566,6 +2612,28 @@ function wireQuoteRichEditor(fieldId){
   alignBtn.addEventListener('mousedown',e=>e.preventDefault());
   alignBtn.addEventListener('click',e=>{ e.stopPropagation(); toggleMenu(alignMenu,alignBtn); });
 
+  const colorBtn=tb.querySelector('[data-role="color"]');
+  colorBtn.addEventListener('mousedown',e=>e.preventDefault());
+  colorBtn.addEventListener('click',e=>{ e.stopPropagation(); toggleMenu(colorMenu,colorBtn); });
+  colorMenu.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.preventDefault());
+    btn.addEventListener('click',()=>{ runCmd('foreColor',btn.dataset.color); closeMenus(); });
+  });
+
+  const tableBtn=tb.querySelector('[data-role="table"]');
+  if(tableBtn && tableMenu){
+    tableBtn.addEventListener('mousedown',e=>e.preventDefault());
+    tableBtn.addEventListener('click',e=>{ e.stopPropagation(); toggleMenu(tableMenu,tableBtn); });
+    tableMenu.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('mousedown',e=>e.preventDefault());
+      btn.addEventListener('click',()=>{
+        const [cols, rows] = btn.dataset.table.split('x').map(Number);
+        insertTable(rows, cols);
+        closeMenus();
+      });
+    });
+  }
+
   styleMenu.querySelectorAll('button').forEach(btn=>{
     btn.addEventListener('mousedown',e=>e.preventDefault());
     btn.addEventListener('click',()=>{ runCmd('formatBlock',btn.dataset.block); closeMenus(); });
@@ -2577,6 +2645,8 @@ function wireQuoteRichEditor(fieldId){
   document.addEventListener('mousedown',e=>{
     if(!styleMenu.contains(e.target) && e.target!==styleBtn && !styleBtn.contains(e.target)) styleMenu.classList.remove('is-open');
     if(!alignMenu.contains(e.target) && e.target!==alignBtn && !alignBtn.contains(e.target)) alignMenu.classList.remove('is-open');
+    if(!colorMenu.contains(e.target) && e.target!==colorBtn && !colorBtn.contains(e.target)) colorMenu.classList.remove('is-open');
+    if(tableMenu && !tableMenu.contains(e.target) && e.target!==tableBtn && !tableBtn.contains(e.target)) tableMenu.classList.remove('is-open');
   });
 }
 

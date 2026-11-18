@@ -3295,6 +3295,18 @@ html[dir="rtl"] #globalSearchWrap .sek-field{
   outline:none;
 }
 #qPayments.q-rich{ min-height:74px; }
+/* Payment tables must retain their full outer border in both the editor and
+   the quotation preview/print layout; otherwise collapsed cell borders can
+   hide the top edge in some browsers. */
+#qPayments.q-rich table,
+#quotePaymentsDisplay table{
+  border-collapse:collapse !important;
+  border:1px solid #94a3b8 !important;
+}
+#qPayments.q-rich td,
+#quotePaymentsDisplay td{
+  border:1px solid #cbd5e1 !important;
+}
 .q-rich-wrap .q-rich:empty::before{
   content:attr(data-ph);
   color:var(--text-3);
