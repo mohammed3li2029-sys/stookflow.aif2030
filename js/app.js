@@ -2064,7 +2064,7 @@ function renderQuoteRows(filter='', statusF=''){
   const rows = quotations
     .map((q, idx)=>({q, idx}))
     .filter(({q}) => {
-      if(f && !(q.id+q.customer+getQuoteStatusText(q.status)).toLowerCase().includes(f)) return false;
+      if(f && !(q.id+(q.customer||'')+(q.contactName||'')+getQuoteStatusText(q.status)).toLowerCase().includes(f)) return false;
       if(statusF && q.status !== statusF) return false;
       return true;
     });
@@ -2074,7 +2074,7 @@ function renderQuoteRows(filter='', statusF=''){
       if(sv==='date-asc') return a.q.date.localeCompare(b.q.date);
       if(sv==='date-desc') return b.q.date.localeCompare(a.q.date);
       if(sv==='id') return a.q.id.localeCompare(b.q.id);
-      if(sv==='customer') return a.q.customer.localeCompare(b.q.customer);
+      if(sv==='customer') return (a.q.customer||a.q.contactName||'').localeCompare(b.q.customer||b.q.contactName||'');
       if(sv==='total') return a.q.total - b.q.total;
       return 0;
     });
@@ -2094,7 +2094,7 @@ function renderQuoteRows(filter='', statusF=''){
       <td class="expand-col"><button type="button" class="expand-btn" onclick="toggleQuotePanel(this,'${q.id}')" aria-label="${lang==='en'?'Activity':'النشاط'}" title="${lang==='en'?'Who created/edited this quote':'من أنشأ وعدّل هذا العرض'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M6 9l6 6 6-6"/></svg></button></td>
       <td class="sel-check-col" style="display:${selMode.quote?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.quote.has(idx)?'checked':''} onchange="toggleSel('quote',${idx},this)"></td>
       <td><b>${q.id}</b><div style="font-size:10px;color:var(--text-2);margin-top:2px;">${lang==='en'?'Latest':'آخر إصدار'}: ${quoteVersionLabel(q.version)}</div></td>
-      <td>${q.customer}</td>
+      <td>${q.customer || q.contactName || '—'}</td>
       <td class="trace-cell">${quoteTraceHtml(q)}</td>
       <td>${q.date}</td>
       <td style="font-weight:700;color:var(--blue);">${lang==='en' ? q.total.toLocaleString('en',{minimumFractionDigits:2})+' '+RYAL : RYAL+' '+q.total.toLocaleString('en',{minimumFractionDigits:2})}</td>
@@ -2679,8 +2679,10 @@ function openQuoteModal(idx=null, version=null){
           <div id="qIdSuffixError" style="display:none; margin-top:4px; font-size:11px; font-weight:700; color:#e53935;"></div>
         </div>
         <div class="field">
-          <label>${lang==='en'?'Customer Name':'اسم العميل'}</label>
-          <input id="qCustomer" placeholder="${lang==='en'?'Enter customer name...':'أدخل اسم الشركة...'}" value="${isEdit ? q.customer : ''}">
+          <label>${lang==='en'?'Company / Establishment Name':'اسم الشركة أو المؤسسة'}</label>
+          <input id="qCustomer" placeholder="${lang==='en'?'Enter company or establishment name...':'أدخل اسم الشركة أو المؤسسة...'}" value="${isEdit ? q.customer : ''}">
+          <label style="margin-top:10px;">${lang==='en'?'Customer Contact Name':'اسم العميل'}</label>
+          <input id="qContactName" placeholder="${lang==='en'?'Enter customer contact name...':'أدخل اسم العميل...'}" value="${isEdit && q.contactName ? q.contactName : ''}">
         </div>
         <div class="field">
           <label>${lang==='en'?'Date':'التاريخ'}</label>
@@ -3274,6 +3276,7 @@ function scrollQuoteModalTo(el){
 function saveQuotation(){
   const suffix = document.getElementById('qIdSuffix').value.trim();
   const customer = document.getElementById('qCustomer').value.trim();
+  const contactName = document.getElementById('qContactName') ? document.getElementById('qContactName').value.trim() : '';
   const date = (document.getElementById('qDateTrig') ? document.getElementById('qDateTrig').dataset.value : '') || new Date().toISOString().split('T')[0];
   const terms = document.getElementById('qTerms').innerHTML.trim();
   const payments = document.getElementById('qPayments') ? document.getElementById('qPayments').innerHTML.trim() : '';
@@ -3286,7 +3289,7 @@ function saveQuotation(){
   
   const require = () => {};
   const clearInvalid = () => {
-    document.querySelectorAll('#quoteModalOverlay #qIdSuffix, #quoteModalOverlay #qCustomer').forEach(el => {
+    document.querySelectorAll('#quoteModalOverlay #qIdSuffix, #quoteModalOverlay #qCustomer, #quoteModalOverlay #qContactName').forEach(el => {
       el.style.border = '';
       el.style.boxShadow = '';
     });
@@ -3308,7 +3311,11 @@ function saveQuotation(){
   };
   let invalid = false;
   if(!suffix){ markErr(document.getElementById('qIdSuffix')); invalid = true; }
-  if(!customer){ markErr(document.getElementById('qCustomer')); invalid = true; }
+  if(!customer && !contactName){
+    markErr(document.getElementById('qCustomer'));
+    markErr(document.getElementById('qContactName'));
+    invalid = true;
+  }
   if(quoteLines.length === 0) invalid = true;
   quoteLines.forEach((l, i) => {
     if(!l.name.trim() || !(l.qty > 0) || !(l.price >= 0)) invalid = true;
@@ -3366,8 +3373,9 @@ function saveQuotation(){
   const q = {
     id: 'AIF-F' + suffix,
     version,
-    fileName: quoteFileName(customer, 'AIF-F' + suffix, version),
+    fileName: quoteFileName(customer || contactName, 'AIF-F' + suffix, version),
     customer,
+    contactName,
     date,
     phone,
     email,
@@ -3606,6 +3614,7 @@ function duplicateQuotation(idx){
     setTimeout(function(){
       document.getElementById('qIdSuffix').value = '';
       document.getElementById('qCustomer').value = src.customer || '';
+      if(document.getElementById('qContactName')) document.getElementById('qContactName').value = src.contactName || '';
       if(document.getElementById('qDateTrig')) qSetDateISO(new Date().toISOString().split('T')[0]);
       if(document.getElementById('qPhone')) document.getElementById('qPhone').value = src.phone || '';
       if(document.getElementById('qEmail')) document.getElementById('qEmail').value = src.email || '';
@@ -3723,8 +3732,8 @@ function openQuoteView(idx, version=null){
           
           <!-- Right: Customer Details -->
           <div style="text-align:${alOpp}; direction:${isAr?'ltr':'rtl'}; padding:6px 8px;">
-            <div style="font-size:12px; color:#d32f2f; font-weight:700; margin-bottom:3px; text-align:${al}; direction:${dir};">${isAr?'إلى السادة /':'To:'}</div>
-            <div style="font-size:18px; font-weight:900; color:#1a237e; margin-bottom:4px; text-align:${al}; direction:${dir};">${q.customer}</div>
+            <div style="font-size:18px; font-weight:900; color:#1a237e; margin-bottom:4px; text-align:${al}; direction:${dir};">${q.customer || q.contactName || ''}</div>
+            ${q.customer && q.contactName ? `<div style="font-size:12px; color:#444; margin-bottom:4px; text-align:${al}; direction:${dir};">${q.contactName}</div>` : ''}
             <div style="font-size:12px; color:#666; margin-bottom:5px; text-align:${al}; direction:${dir};">${q.address || (isAr?'المملكة العربية السعودية - الرياض':'Riyadh, Saudi Arabia')}</div>
             <div style="display:flex; align-items:center; gap:6px; font-size:12px; text-align:${al}; direction:${dir};">
               <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="10" fill="#1a237e"/><path d="M8 7h8c1.1 0 1.5.5 1.5 1v8c0 .5-.4 1-1.5 1H8c-1.1 0-1.5-.5-1.5-1V8c0-.5.4-1 1.5-1z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path d="M10.5 8.5h3" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M10.5 15.5h3" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -3964,7 +3973,7 @@ function printQuotation(idx, version=null){
   const q = version ? quoteVersionOf(parentQuote, version) : parentQuote;
   if(!q) return;
   const originalTitle = document.title;
-  const fileName = quoteFileName(q.customer, q.id, q.version || '001');
+  const fileName = quoteFileName(q.customer || q.contactName, q.id, q.version || '001');
   document.title = fileName;
   setTimeout(() => {
     window.print();
