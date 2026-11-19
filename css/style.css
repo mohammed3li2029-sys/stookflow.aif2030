@@ -3231,6 +3231,20 @@ html[dir="rtl"] #globalSearchWrap .sek-field{
    plain text (innerText) to match the rest of the pipeline.
    ========================================================= */
 .q-rich-wrap{ position:relative; }
+/* Quotation header: offer details on the right and client details on the left. */
+.quote-header-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:18px;
+  direction:rtl;
+  margin-bottom:14px;
+}
+.quote-header-details,
+.quote-header-client{display:flex;flex-direction:column;gap:10px;}
+.quote-header-layout .field{margin:0;}
+@media (max-width:700px){
+  .quote-header-layout{grid-template-columns:1fr;gap:12px;}
+}
 .q-rich-wrap .q-rich-tb{
   position:relative;
   display:flex;

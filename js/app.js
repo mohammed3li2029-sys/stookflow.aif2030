@@ -2661,7 +2661,6 @@ function openQuoteModal(idx=null, version=null){
   const savedValidity = isEdit ? parseInt(q && q.validity, 10) : null;
   const activeValidity = isEdit && savedValidity ? savedValidity : 15;
   const activeSalesperson = isEdit && q && q.salesperson && SALESPERSON_NAMES[q.salesperson] ? q.salesperson : 'محمد علي';
-  const activeStatus = isEdit && q && q.status ? q.status : 'review';
   const initialQDateISO = isEdit && q && q.date ? q.date : new Date().toISOString().split('T')[0];
   
   // Create Modal HTML
@@ -2712,7 +2711,7 @@ function openQuoteModal(idx=null, version=null){
       <div class="field-row">
         <div class="field">
           <label>${lang==='en'?'Phone':'رقم الجوال'}</label>
-          <input id="qPhone" placeholder="05XXXXXXXX" value="${isEdit&&q.phone?q.phone:'0546342735'}">
+          <input id="qPhone" placeholder="05XXXXXXXX" value="${isEdit&&q.phone?q.phone:''}">
         </div>
         <div class="field">
           <label>${lang==='en'?'E-mail':'البريد الإلكتروني'}</label>
@@ -2747,16 +2746,6 @@ function openQuoteModal(idx=null, version=null){
         <div class="field">
           <label>${lang==='en'?'Discount (SAR)':`الخصم (${RYAL})`}</label>
           <input id="qDiscount" type="number" min="0" step="0.01" placeholder="0.00" value="${isEdit&&q.discount?q.discount:''}" oninput="updateQuoteTotals()">
-        </div>
-        <div class="field">
-          <label>${lang==='en'?'Status':'الحالة'}</label>
-          <div class="q-pick-anchor">
-            <button type="button" class="q-pick-trigger" id="qStatus" aria-haspopup="listbox" aria-expanded="false" data-value="${activeStatus}">
-              <span class="q-pick-value">${getQuoteStatusText(activeStatus)}</span>
-              <span class="q-pick-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
-            </button>
-            <div class="q-pick-pop" id="qStatusPop" role="listbox" aria-labelledby=""></div>
-          </div>
         </div>
       </div>
       <div style="margin-top:15px;">
@@ -2809,6 +2798,7 @@ function openQuoteModal(idx=null, version=null){
   </div>`;
   
   document.body.insertAdjacentHTML('beforeend', modalHTML);
+  arrangeQuoteHeaderFields();
   const _qTermsEl=document.getElementById('qTerms');
   if(_qTermsEl) qSetRich(_qTermsEl, isEdit ? (q.terms||'') : Q_DEFAULT_TERMS_HTML);
   const _qPayEl=document.getElementById('qPayments');
@@ -2823,6 +2813,27 @@ function openQuoteModal(idx=null, version=null){
   wireQuoteRichEditor('qTerms');
   wireQuoteRichEditor('qPayments');
   wireQuoteRichEditor('qNotes');
+}
+
+/* Arrange the quotation header as two clear vertical columns. The DOM fields
+   keep their original ids, so all pickers and save logic continue unchanged. */
+function arrangeQuoteHeaderFields(){
+  const modal = document.querySelector('#quoteModalOverlay .modal');
+  if(!modal) return;
+  const fieldOf = id => document.getElementById(id)?.closest('.field');
+  const statusField = fieldOf('qStatus');
+  if(statusField) statusField.remove();
+  const details = ['qIdSuffix','qDateTrig','qValidity','qSalesperson','qDiscount'].map(fieldOf).filter(Boolean);
+  const client = ['qCustomer','qContactName','qAddress','qPhone','qEmail'].map(fieldOf).filter(Boolean);
+  if(!details.length || !client.length) return;
+  const rows = Array.from(modal.children).filter(el=>el.classList?.contains('field-row')).slice(0,3);
+  const layout = document.createElement('div');
+  layout.className = 'quote-header-layout';
+  layout.innerHTML = '<div class="quote-header-details"></div><div class="quote-header-client"></div>';
+  layout.querySelector('.quote-header-details').append(...details);
+  layout.querySelector('.quote-header-client').append(...client);
+  (rows[0] || modal.firstChild).before(layout);
+  rows.forEach(row=>row.remove());
 }
 
 function closeQuoteModal(){
@@ -3357,11 +3368,10 @@ function saveQuotation(){
   const discount = Math.min(parseFloat(document.getElementById('qDiscount') ? document.getElementById('qDiscount').value : 0) || 0, subtotal);
   const vat = (subtotal - discount) * 0.15;
   
-  const status = getQPickValue('qStatus') || 'review';
-
   const now = new Date().toISOString();
   const parent = editingQuoteIdx !== null && quotations[editingQuoteIdx] ? quotations[editingQuoteIdx] : null;
   const prev = parent ? quoteVersionOf(parent, editingQuoteVersion) : null;
+  const status = prev?.status || 'review';
   const saveAsNewVersion = !!(parent && document.querySelector('input[name="qSaveMode"]:checked')?.value === 'new');
   const existingVersions = parent ? quoteVersionsOf(parent) : [];
   const version = parent
