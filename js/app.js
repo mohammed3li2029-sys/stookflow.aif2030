@@ -2659,7 +2659,7 @@ function openQuoteModal(idx=null, version=null){
   if(isEdit && q) editingQuoteVersion = quoteVersionLabel(q.version);
 
   const savedValidity = isEdit ? parseInt(q && q.validity, 10) : null;
-  const activeValidity = isEdit && savedValidity ? savedValidity : 15;
+  const activeValidity = isEdit && savedValidity ? Math.min(Math.max(savedValidity, 1), 10) : 10;
   const activeSalesperson = isEdit && q && q.salesperson && SALESPERSON_NAMES[q.salesperson] ? q.salesperson : 'محمد علي';
   const initialQDateISO = isEdit && q && q.date ? q.date : new Date().toISOString().split('T')[0];
   
@@ -2725,27 +2725,22 @@ function openQuoteModal(idx=null, version=null){
       <div class="field-row">
         <div class="field">
           <label>${lang==='en'?'Validity (days)':'مدة العرض (أيام)'}</label>
-          <div class="q-pick-anchor">
-            <button type="button" class="q-pick-trigger" id="qValidity" aria-haspopup="listbox" aria-expanded="false" data-value="${activeValidity}">
-              <span class="q-pick-value">${activeValidity}</span>
-              <span class="q-pick-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
-            </button>
-            <div class="q-pick-pop" id="qValidityPop" role="listbox" aria-labelledby=""></div>
+          <div class="q-validity-days" id="qValidity" data-value="${activeValidity}" role="radiogroup" aria-label="${lang==='en'?'Validity in days':'مدة العرض بالأيام'}">
+            ${Array.from({length:10},(_,i)=>{ const d=i+1; return `<button type="button" class="${d===activeValidity?'is-selected':''}" data-day="${d}" role="radio" aria-checked="${d===activeValidity}">${d}</button>`; }).join('')}
           </div>
         </div>
         <div class="field">
           <label>${lang==='en'?'Salesperson':'المندوب'}</label>
-          <div class="q-pick-anchor">
-            <button type="button" class="q-pick-trigger" id="qSalesperson" aria-haspopup="listbox" aria-expanded="false" data-value="${activeSalesperson}">
-              <span class="q-pick-value">${qPickLabel('salesperson', activeSalesperson)}</span>
-              <span class="q-pick-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
-            </button>
-            <div class="q-pick-pop" id="qSalespersonPop" role="listbox" aria-labelledby=""></div>
+          <div class="q-salesperson-options" id="qSalesperson" data-value="${activeSalesperson}" role="radiogroup" aria-label="${lang==='en'?'Salesperson':'المندوب'}">
+            ${Object.keys(SALESPERSON_NAMES).map(name=>`<button type="button" class="${name===activeSalesperson?'is-selected':''}" data-salesperson="${name}" role="radio" aria-checked="${name===activeSalesperson}">${getSalespersonLabel(name)}</button>`).join('')}
           </div>
         </div>
-        <div class="field">
-          <label>${lang==='en'?'Discount (SAR)':`الخصم (${RYAL})`}</label>
-          <input id="qDiscount" type="number" min="0" step="0.01" placeholder="0.00" value="${isEdit&&q.discount?q.discount:''}" oninput="updateQuoteTotals()">
+        <div class="field q-discount-field">
+          <label><span aria-hidden="true">٪</span>${lang==='en'?'Discount':`الخصم`}</label>
+          <div class="q-discount-input">
+            <input id="qDiscount" type="number" min="0" step="0.01" placeholder="0.00" value="${isEdit&&q.discount?q.discount:''}" oninput="updateQuoteTotals()">
+            <span>${RYAL}</span>
+          </div>
         </div>
       </div>
       <div style="margin-top:15px;">
@@ -2809,6 +2804,8 @@ function openQuoteModal(idx=null, version=null){
   if(quoteLines.length === 0) addQuoteLine();
   renderQuoteLines();
   wireQuotePickers();
+  wireQuoteValidityDays();
+  wireQuoteSalespersonOptions();
   wireQuoteDatePicker();
   wireQuoteRichEditor('qTerms');
   wireQuoteRichEditor('qPayments');
@@ -2863,6 +2860,25 @@ function qSetPickValue(kind, value, labelText){
   const id = kind === 'validity' ? 'qValidity' : kind === 'status' ? 'qStatus' : 'qSalesperson';
   const trig = document.getElementById(id);
   if(!trig) return;
+  if(kind === 'validity' && trig.classList.contains('q-validity-days')){
+    const day = Math.min(Math.max(parseInt(value, 10) || 1, 1), 10);
+    trig.dataset.value = day;
+    trig.querySelectorAll('[data-day]').forEach(btn=>{
+      const selected = Number(btn.dataset.day) === day;
+      btn.classList.toggle('is-selected', selected);
+      btn.setAttribute('aria-checked', selected ? 'true' : 'false');
+    });
+    return;
+  }
+  if(kind === 'salesperson' && trig.classList.contains('q-salesperson-options')){
+    trig.dataset.value = value;
+    trig.querySelectorAll('[data-salesperson]').forEach(btn=>{
+      const selected = btn.dataset.salesperson === value;
+      btn.classList.toggle('is-selected', selected);
+      btn.setAttribute('aria-checked', selected ? 'true' : 'false');
+    });
+    return;
+  }
   trig.dataset.value = value;
   const sp = trig.querySelector('.q-pick-value');
   if(sp) sp.textContent = labelText;
@@ -2874,6 +2890,20 @@ function qSetPickValue(kind, value, labelText){
 function getQPickValue(id){
   const t = document.getElementById(id);
   return t ? t.dataset.value : null;
+}
+function wireQuoteValidityDays(){
+  const control = document.getElementById('qValidity');
+  if(!control || !control.classList.contains('q-validity-days')) return;
+  control.querySelectorAll('[data-day]').forEach(btn=>{
+    btn.addEventListener('click', ()=> qSetPickValue('validity', btn.dataset.day, btn.dataset.day));
+  });
+}
+function wireQuoteSalespersonOptions(){
+  const control = document.getElementById('qSalesperson');
+  if(!control || !control.classList.contains('q-salesperson-options')) return;
+  control.querySelectorAll('[data-salesperson]').forEach(btn=>{
+    btn.addEventListener('click', ()=> qSetPickValue('salesperson', btn.dataset.salesperson, btn.textContent));
+  });
 }
 function renderQPop(p){
   p.pop.innerHTML = '';
@@ -3109,7 +3139,7 @@ function renderQuoteLines(){
       </div></td>
       <td><textarea rows="1" class="auto-grow" oninput="quoteLines[${idx}].desc=this.value; autoGrow(this)" placeholder="${lang==='en'?'Specifications':'المواصفات'}">${l.desc||''}</textarea></td>
       <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="qtyInc(${idx},-1)">−</button><input type="number" id="qty-${idx}" value="${l.qty}" oninput="quoteLines[${idx}].qty=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input q-item-qty"><button type="button" class="qty-btn" onclick="qtyInc(${idx},1)">+</button></div></td>
-      <td><input value="${l.unit}" oninput="quoteLines[${idx}].unit=this.value" style="text-align:center;"></td>
+      <td><input class="q-unit-input" value="${l.unit}" oninput="quoteLines[${idx}].unit=this.value" style="text-align:center;"></td>
       <td><div class="qty-cell"><button type="button" class="qty-btn" onclick="priceInc(${idx},-1)">−</button><input type="number" id="price-${idx}" value="${l.price}" oninput="quoteLines[${idx}].price=parseFloat(this.value)||0; updateQuoteTotals()" class="qty-input q-item-price" style="width:70px;"><button type="button" class="qty-btn" onclick="priceInc(${idx},1)">+</button></div></td>
       <td><button onclick="removeQuoteLine(${idx})" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="${lang==='en'?'Delete item':'حذف الصنف'}">${ICONS.trash}</button></td>
     </tr>
