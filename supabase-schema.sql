@@ -84,6 +84,13 @@ create table if not exists stock_movements (
   updated_at timestamptz not null default now()
 );
 
+-- Delivery notices created from the Documents section.
+create table if not exists delivery_notices (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Keep updated_at current on every write, for every table above.
 create or replace function set_updated_at()
 returns trigger as $$
@@ -97,7 +104,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works','stock_movements']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works','stock_movements','delivery_notices']
   loop
     execute format('drop trigger if exists trg_%I_updated_at on %I;', t, t);
     execute format('create trigger trg_%I_updated_at before update on %I for each row execute function set_updated_at();', t, t);
@@ -140,7 +147,7 @@ select ra.email,
          'dept', 'Management',
          'deptAr', 'الإدارة',
          'init', upper(left(split_part(ra.email, '@', 1), 2)),
-         'permissions', '["dashboard","inventory","warehouses","sales","purchasing","issues","movements","reports","projects","tasks","users","notifications","settings"]'::jsonb
+         'permissions', '["dashboard","inventory","warehouses","sales","purchasing","issues","movements","reports","projects","documents","tasks","users","notifications","settings"]'::jsonb
        )
 from root_admins ra
 where not exists (select 1 from users u where u.id = ra.email)
@@ -216,7 +223,8 @@ begin
     ('purchase_orders'::text, 'purchasing'::text),
     ('tasks'::text, 'tasks'::text),
     ('standalone_works'::text, 'projects'::text),
-    ('stock_movements'::text, 'movements'::text)
+    ('stock_movements'::text, 'movements'::text),
+    ('delivery_notices'::text, 'documents'::text)
   ) as m(tbl, section)
   loop
     execute format('alter table %I enable row level security;', r.tbl);
@@ -264,7 +272,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works','stock_movements']
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works','stock_movements','delivery_notices']
   loop
     if not exists (
       select 1 from pg_publication_tables

@@ -16,6 +16,12 @@
    replacement with _suppressBackendSync = true / false.
 =================================================================== */
 let _suppressBackendSync = false;
+/* Quotes must never fall back to the built-in examples once a real Supabase
+   configuration is present. A failed read used to leave the examples on
+   screen, making it look as though they were the company's live records. */
+const hasRemoteDataConfig = !!(window.STOCKFLOW_SUPABASE_CONFIG &&
+  window.STOCKFLOW_SUPABASE_CONFIG.url && window.STOCKFLOW_SUPABASE_CONFIG.anonKey);
+let _quotesLoadAlerted = false;
 function withFirestoreSync(arr, collectionName, idField){
   return new Proxy(arr, {
     set(target, prop, value){
@@ -87,7 +93,7 @@ async function uploadFileOrFallback(file, folder){
 async function loadAllStockFlowData(skipRender){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
-    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users, saWorks, movements] = await Promise.all([
+    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users, saWorks, movements, delivery] = await Promise.all([
       window.StockFlowBackend.loadCollection('inventory'),
       window.StockFlowBackend.loadCollection('warehouses'),
       window.StockFlowBackend.loadCollection('material_requests'),
@@ -98,6 +104,7 @@ async function loadAllStockFlowData(skipRender){
       window.StockFlowBackend.loadCollection('users'),
       window.StockFlowBackend.loadCollection('standalone_works'),
       window.StockFlowBackend.loadCollection('stock_movements'),
+      window.StockFlowBackend.loadCollection('delivery_notices'),
     ]);
 
     // An array result (even empty) is authoritative: replace the local copy,
@@ -108,8 +115,15 @@ async function loadAllStockFlowData(skipRender){
     if(Array.isArray(wh)) silentReplace(warehouseData, wh);
     if(Array.isArray(reqs)) silentReplace(reqsData, reqs);
     if(Array.isArray(quotes)) silentReplace(quotations, quotes);
+    else if(!_quotesLoadAlerted){
+      _quotesLoadAlerted = true;
+      showToast(lang==='en'
+        ? 'Could not load quotations from the database. Sample quotations are hidden.'
+        : 'تعذر تحميل عروض الأسعار من قاعدة البيانات. تم إخفاء عروض التجربة.');
+    }
     if(Array.isArray(pos)) silentReplace(purchaseOrders, pos);
     if(Array.isArray(movements)) silentReplace(movementsData, movements);
+    if(Array.isArray(delivery)) silentReplace(deliveryNotices, delivery);
     // tasks keep a localStorage safety net, so only overwrite when the server
     // actually has rows (an empty table must not wipe local unsynced edits).
     if(tasksArr && tasksArr.length) silentReplace(tasksData, tasksArr);
@@ -180,6 +194,7 @@ async function loadAllStockFlowData(skipRender){
         [projects,'projects'],
         [standaloneWorks,'projects'],
         [movementsData,'movements'],
+        [deliveryNotices,'documents'],
       ].forEach(([arr, perm])=>{
         if(!currentUserPerms.includes(perm)) silentReplace(arr, []);
       });
@@ -246,6 +261,7 @@ async function setupRealtimeSync(){
     ['tasks', tasksData],
     ['standalone_works', standaloneWorks],
     ['stock_movements', movementsData],
+    ['delivery_notices', deliveryNotices],
   ];
 
   arrayTables.forEach(([table, arr]) => {
@@ -893,6 +909,24 @@ function syncStandaloneWorks(){
   }
 }
 const standaloneWorks = withFirestoreSync(loadStandaloneWorks(), 'standalone_works', 'id');
+
+/* Delivery notices are independent documents (not tied to a project).  Keep
+   a local copy for offline/demo use, while the same proxy mirrors them to
+   Supabase when the delivery_notices table is available. */
+function loadDeliveryNotices(){
+  try{ const s = localStorage.getItem('stockflow_delivery_notices'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
+  return [];
+}
+function saveDeliveryNotices(){
+  try{ localStorage.setItem('stockflow_delivery_notices', JSON.stringify(deliveryNotices)); }catch(e){}
+}
+function syncDeliveryNotices(){
+  saveDeliveryNotices();
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    window.StockFlowBackend.syncCollection('delivery_notices', deliveryNotices, 'id');
+  }
+}
+const deliveryNotices = withFirestoreSync(loadDeliveryNotices(), 'delivery_notices', 'id');
 
 /* Ids of standalone sheets deleted on THIS device. The load-time merge keeps
    local-only sheets (so a sheet whose write never reached the server is never
@@ -1833,7 +1867,7 @@ function buildDashCalColorPicker(){
 /* ===================================================================
    PAGE RENDER: SALES (QUOTATIONS)
 =================================================================== */
-let quotations = withFirestoreSync([
+let quotations = withFirestoreSync(hasRemoteDataConfig ? [] : [
   {id:'AIF-F25-19', customer:'شركة الاوسط العربية للمقاولات', date:'2024-05-12', status:'sent', total:101890.00, 
    terms:'الأسعار تشمل ضريبة القيمة المضافة.\nالتسليم خلال 3 إلى 7 أيام من تاريخ تأكيد الطلب.\nالدفع مقدماً أو حسب الاتفاق.\nهذا العرض لا يعتبر عقداً ملزماً.\nفي حال استلامكم هذا العرض، نأمل التكرم بتوقيع وختم الموافقة.',
    payments:'يدفع 50% عند التعاقد والباقي عند الاستلام.',
@@ -5149,6 +5183,7 @@ function collectAllData(){
       quotations: JSON.parse(JSON.stringify(quotations)),
       purchaseOrders: JSON.parse(JSON.stringify(purchaseOrders)),
       stockMovements: JSON.parse(JSON.stringify(movementsData)),
+      deliveryNotices: JSON.parse(JSON.stringify(deliveryNotices)),
       tasks: JSON.parse(JSON.stringify(tasksData)),
       users: JSON.parse(JSON.stringify(usersData.map(({password, ...rest}) => rest))),
       calendarEvents: JSON.parse(JSON.stringify(CAL_EVENTS)),
@@ -5213,6 +5248,7 @@ function applyImportedData(data){
   if(Array.isArray(c.quotations)) silentReplace(quotations, c.quotations);
   if(Array.isArray(c.purchaseOrders)) silentReplace(purchaseOrders, c.purchaseOrders);
   if(Array.isArray(c.stockMovements)) silentReplace(movementsData, c.stockMovements);
+  if(Array.isArray(c.deliveryNotices)){ silentReplace(deliveryNotices, c.deliveryNotices); saveDeliveryNotices(); }
   if(Array.isArray(c.tasks)){ silentReplace(tasksData, c.tasks); saveTasksToStorage(); }
   if(Array.isArray(c.users)){
     silentReplace(usersData, c.users.map(u => ({...u, password: u.password || encodePW('')})));
@@ -5238,6 +5274,7 @@ function pushImportedToBackend(){
     ['quotations', quotations, 'id'],
     ['purchase_orders', purchaseOrders, 'id'],
     ['stock_movements', movementsData, 'id'],
+    ['delivery_notices', deliveryNotices, 'id'],
     ['tasks', tasksData, 'id'],
     ['profile', [profileData], 'id'],
   ];
@@ -6489,6 +6526,7 @@ function docsText(){
 }
 
 let docsFilter = { q:'', proj:'all' };
+let docsTab = 'crane';
 
 /* Every work sheet in the app, flattened with its project coordinates so
    the existing per-record handlers (preview / edit / delete / print) can be
@@ -6535,6 +6573,11 @@ function renderDocuments(){
   const L = STR[lang];
   return `<div data-page="docs">
     ${liquidSortHTMLDefs()}
+    <div class="docs-tabs">
+      <button class="docs-tab ${docsTab==='crane'?'active':''}" onclick="docsSetTab('crane')">${lang==='en'?'Crane Works':'أعمال الكرين'} <span>${allCraneWorks().length}</span></button>
+      <button class="docs-tab ${docsTab==='delivery'?'active':''}" onclick="docsSetTab('delivery')">${lang==='en'?'Delivery Notices':'إشعارات التسليم'} <span>${deliveryNotices.length}</span></button>
+    </div>
+    ${docsTab === 'delivery' ? renderDeliveryNotices() : `
     <div class="docs-toolbar">
       <div class="docs-search">
         <span class="docs-search-ico">${ICONS.reports}</span>
@@ -6559,12 +6602,14 @@ function renderDocuments(){
     <div class="bulk-bar" id="bulkBar-docs"><span class="bulk-count"></span><button class="bulk-btn" onclick="toggleAllSel('docs')">${ICONS.checkSquare} ${L.sel.selectAll}</button><button class="bulk-btn bulk-danger" onclick="bulkDeleteItems('docs')">${ICONS.trash} ${L.sel.bulkDelete}</button><button class="bulk-btn" onclick="toggleSelMode('docs')">${ICONS.close} ${L.sel.cancelSelect}</button></div>
     <div id="docsStats"></div>
     <div id="docsResults"></div>
+    `}
   </div>`;
 }
 
 /* Only the stats + results are swapped on a filter change. The search input
    keeps its DOM node, so focus and the caret survive every keystroke. */
 function docsUpdateResults(){
+  if(docsTab === 'delivery') return;
   const T = docsText();
   const all = allCraneWorks();
   const rows = docsSortRows(all.filter(r => docsMatches(r, T)));
@@ -6621,6 +6666,12 @@ function docsUpdateResults(){
   docsApplySelUI();
 }
 
+function docsSetTab(tab){
+  docsTab = tab === 'delivery' ? 'delivery' : 'crane';
+  navigate('documents', {quiet:true});
+  if(docsTab === 'crane') docsUpdateResults();
+}
+
 /* Applies the active sort option (same control as Sales) to docs rows. */
 function docsSortRows(rows){
   const sv = sortState.docs;
@@ -6675,6 +6726,108 @@ function docsClear(){
   selSetValue('docsProjSelect', 'all');
   docsUpdateResults();
 }
+
+/* ===================================================================
+   DELIVERY NOTICES (إشعارات التسليم)
+   -------------------------------------------------------------------
+   A standalone document alongside Crane Works. Each notice has a clean A4
+   delivery form, editable items, and a trace stamped from the signed-in user.
+=================================================================== */
+function deliveryText(){
+  return lang==='en' ? {
+    title:'Delivery Notices', new:'New Delivery Notice', edit:'Edit Delivery Notice', search:'Search notices…',
+    no:'No delivery notices yet', noticeNo:'Notice No.', date:'Send Date', customer:'Customer',
+    contact:'Attention', location:'Address', driver:'Driver', vehicle:'Vehicle No.',
+    receiver:'Received by', prepared:'Prepared by', notes:'Notes', items:'Delivery Items', item:'Description',
+    qty:'Qty', unit:'Unit', add:'Add item', save:'Save', cancel:'Cancel', preview:'Preview', print:'Print / PDF',
+    delete:'Delete', saved:'Delivery notice saved.', updated:'Delivery notice updated.', removed:'Delivery notice deleted.',
+    needCustomer:'Enter the customer or company name first.', action:'Actions', created:'Created by', modified:'Last edited by'
+  } : {
+    title:'إشعارات التسليم', new:'إنشاء إشعار تسليم', edit:'تعديل إشعار التسليم', search:'بحث في الإشعارات…',
+    no:'لا توجد إشعارات تسليم بعد', noticeNo:'رقم الإشعار', date:'تاريخ الإرسال', customer:'العميل',
+    contact:'عناية الأستاذ', location:'العنوان', driver:'اسم السائق', vehicle:'رقم المركبة',
+    receiver:'استلم بواسطة', prepared:'أعد بواسطة', notes:'ملاحظات', items:'بنود التسليم', item:'البيان',
+    qty:'الكمية', unit:'الوحدة', add:'إضافة بند', save:'حفظ', cancel:'إلغاء', preview:'معاينة', print:'طباعة / PDF',
+    delete:'حذف', saved:'تم حفظ إشعار التسليم.', updated:'تم تعديل إشعار التسليم.', removed:'تم حذف إشعار التسليم.',
+    needCustomer:'أدخل اسم العميل أو الشركة أولاً.', action:'إجراءات', created:'أنشأ بواسطة', modified:'آخر تعديل بواسطة'
+  };
+}
+
+function dnNumber(){
+  const yy = String(new Date().getFullYear()).slice(-2);
+  return `DN-${yy}-${String(deliveryNotices.length+1).padStart(3,'0')}`;
+}
+function dnCreator(n){ return (n.createdBy && n.createdBy.name) || n.preparedBy || cwActorName(); }
+function dnItemRow(it, i, T){
+  it = it || {};
+  return `<tr><td class="cw-ri">${i}</td><td><input data-dn="desc" value="${escapeHtml(it.desc||'')}" placeholder="${T.item}"></td><td><input data-dn="qty" value="${escapeHtml(it.qty||'')}" inputmode="decimal"></td><td><input data-dn="notes" value="${escapeHtml(it.notes||it.unit||'')}" placeholder="${T.notes}"></td><td class="cw-rdel"><button type="button" title="${T.delete}" onclick="dnRemoveRow(this)">${ICONS.x}</button></td></tr>`;
+}
+function dnAddRow(){
+  const body=document.getElementById('dnItemsBody'); if(!body) return;
+  body.insertAdjacentHTML('beforeend', dnItemRow({}, body.querySelectorAll('tr').length+1, deliveryText()));
+  body.lastElementChild?.querySelector('input')?.focus();
+}
+function dnRemoveRow(btn){
+  const body=document.getElementById('dnItemsBody'); if(!body) return;
+  const rows=body.querySelectorAll('tr');
+  if(rows.length<=1) rows[0].querySelectorAll('input').forEach(i=>i.value=''); else btn.closest('tr')?.remove();
+  body.querySelectorAll('tr').forEach((tr,i)=>{ const c=tr.querySelector('.cw-ri'); if(c) c.textContent=i+1; });
+}
+function renderDeliveryNotices(){
+  const T=deliveryText();
+  const rows=[...deliveryNotices].sort((a,b)=>String(b.date||b.createdAt||'').localeCompare(String(a.date||a.createdAt||'')));
+  return `<div class="docs-toolbar dn-toolbar"><div class="docs-search"><span class="docs-search-ico">${ICONS.reports}</span><input id="dnSearch" placeholder="${T.search}" oninput="dnFilter(this.value)"></div><button class="btn-mini" onclick="showDeliveryNoticeModal()">+ ${T.new}</button></div>
+    <div id="dnResults">${deliveryNoticeRows(rows,T)}</div>`;
+}
+function deliveryNoticeRows(rows,T){
+  if(!rows.length) return `<div class="empty-state">${ICONS.inbox}<div>${T.no}</div><button class="btn-mini" style="margin-top:12px" onclick="showDeliveryNoticeModal()">+ ${T.new}</button></div>`;
+  return `<div class="table-card"><table class="docs-table"><thead><tr><th>${T.noticeNo}</th><th>${T.date}</th><th>${T.customer}</th><th>${T.location}</th><th>${T.items}</th><th class="trace-cell"></th><th style="text-align:left">${T.action}</th></tr></thead><tbody>${rows.map(n=>`<tr><td style="font-weight:800;direction:ltr;text-align:right">${escapeHtml(n.number||n.id)}</td><td>${escapeHtml(n.date||'—')}</td><td style="font-weight:700">${escapeHtml(n.customer||'—')}</td><td>${escapeHtml(n.location||'—')}</td><td><span class="cat-tag">${(n.items||[]).length}</span></td><td class="trace-cell">${traceTrailHtml(dnCreator(n),n.createdAt,n.edits,{created:T.created,edited:T.modified})}</td><td><div class="row-actions dw-actions dw-3"><button title="${T.preview}" onclick="openDeliveryPreview('${escapeHtml(n.id)}')">${ICONS.eye}</button><button title="${T.edit}" onclick="showDeliveryNoticeModal('${escapeHtml(n.id)}')">${ICONS.edit}</button><button title="${T.delete}" onclick="deleteDeliveryNotice('${escapeHtml(n.id)}')">${ICONS.trash}</button></div></td></tr>`).join('')}</tbody></table></div>`;
+}
+function dnFilter(value){
+  const q=String(value||'').trim().toLowerCase(), T=deliveryText();
+  const rows=deliveryNotices.filter(n=>[n.number,n.customer,n.contact,n.location,n.driver,n.vehicle,n.receiver].join(' ').toLowerCase().includes(q));
+  const host=document.getElementById('dnResults'); if(host) host.innerHTML=deliveryNoticeRows(rows,T);
+}
+function dnCollect(){
+  const get=id=>document.getElementById(id)?.value?.trim()||'';
+  const body=document.getElementById('dnItemsBody');
+  const items=body?[...body.querySelectorAll('tr')].map(tr=>({desc:tr.querySelector('[data-dn="desc"]')?.value.trim()||'',qty:tr.querySelector('[data-dn="qty"]')?.value.trim()||'',notes:tr.querySelector('[data-dn="notes"]')?.value.trim()||''})).filter(x=>x.desc||x.qty||x.notes):[];
+  return {number:get('dnNumber'),date:get('dnDate'),customer:get('dnCustomer'),projectNo:get('dnProjectNo'),contact:get('dnContact'),location:get('dnLocation'),phone:get('dnPhone'),responsible:get('dnResponsible'),responsiblePhone:get('dnResponsiblePhone'),shipper:get('dnShipper'),driver:get('dnDriver'),driverPhone:get('dnDriverPhone'),items};
+}
+function showDeliveryNoticeModal(id){
+  const T=deliveryText(), existing=id?deliveryNotices.find(n=>n.id===id):null, today=new Date().toISOString().slice(0,10);
+  const n=existing||{number:dnNumber(),date:today,items:[{}]}; const items=n.items?.length?n.items:[{}];
+  const overlay=document.createElement('div'); overlay.className='modal-overlay show'; overlay.style.cssText='z-index:9999;overflow-y:auto;'; overlay.onclick=e=>{if(e.target===overlay) overlay.remove();};
+  overlay.innerHTML=`<div class="modal cw-modal-wide"><h3>${existing?T.edit:T.new}</h3><div class="cw-form-grid dn-form-grid">
+    ${cwField('dnNumber',T.noticeNo,n.number,'text','dir="ltr"')}${cwField('dnDate',T.date,n.date,'date')}${cwField('dnCustomer',T.customer,n.customer,'text')}${cwField('dnProjectNo',lang==='en'?'Project No.':'رقم المشروع',n.projectNo,'text','dir="ltr"')}${cwField('dnLocation',T.location,n.location,'text')}${cwField('dnContact',T.contact,n.contact,'text')}${cwField('dnPhone',lang==='en'?'Mobile No.':'رقم الجوال',n.phone,'tel','dir="ltr"')}${cwField('dnResponsible',lang==='en'?'Our responsible':'المسؤول لدينا',n.responsible,'text')}${cwField('dnResponsiblePhone',lang==='en'?'Responsible mobile':'رقم جوال المسؤول',n.responsiblePhone,'tel','dir="ltr"')}${cwField('dnShipper',lang==='en'?'Materials shipped by':'تم شحن المواد بواسطة',n.shipper,'text')}${cwField('dnDriver',T.driver,n.driver,'text')}${cwField('dnDriverPhone',lang==='en'?'Driver mobile':'جوال السائق',n.driverPhone,'tel','dir="ltr"')}
+    </div><div class="cw-items-bar"><span class="cw-items-title">${T.items}</span><button type="button" class="btn-mini" onclick="dnAddRow()">+ ${T.add}</button></div><div class="cw-items-wrap"><table class="cw-items dn-items"><thead><tr><th>#</th><th>${T.item}</th><th>${T.qty}</th><th>${T.notes}</th><th></th></tr></thead><tbody id="dnItemsBody">${items.map((it,i)=>dnItemRow(it,i+1,T)).join('')}</tbody></table></div>
+    <div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${T.cancel}</button><button class="btn btn-primary" id="dnSave">${T.save}</button></div></div>`;
+  document.body.appendChild(overlay); document.getElementById('dnCustomer')?.focus();
+  document.getElementById('dnSave').onclick=()=>{const data=dnCollect(); if(!data.customer){showToast(T.needCustomer);return;} const now=new Date().toISOString(), who=cwActorName();
+    if(existing){existing.edits=Array.isArray(existing.edits)?existing.edits:[]; if(who) existing.edits.push({name:who,at:now}); Object.assign(existing,data,{updatedAt:now});}
+    else deliveryNotices.push(Object.assign({id:'DN-'+Date.now().toString(36).toUpperCase(),createdAt:now,createdBy:{name:who,at:now},edits:[],preparedBy:who},data));
+    syncDeliveryNotices(); overlay.remove(); navigate('documents',{quiet:true}); showToast(existing?T.updated:T.saved);
+  };
+}
+async function deleteDeliveryNotice(id){
+  const T=deliveryText(); if(!await showConfirm(lang==='en'?'Delete this delivery notice?':'هل تريد حذف إشعار التسليم؟')) return;
+  const i=deliveryNotices.findIndex(n=>n.id===id); if(i<0)return; deliveryNotices.splice(i,1); syncDeliveryNotices(); navigate('documents',{quiet:true}); showToast(T.removed);
+}
+function buildDeliverySheet(n){
+  const T=deliveryText(), en=lang==='en', items=n.items?.length?n.items:[{}], creator=dnCreator(n);
+  /* The supplied factory form uses a centred letterhead, a boxed 4×4 data
+     block and a long ruled item area. Blank rows deliberately remain visible
+     so a short delivery prints with the same page balance as the paper form. */
+  const printRows=items;
+  const cell=(label,value,ltr='')=>`<td class="dn-meta-label">${label}</td><td class="dn-meta-value ${ltr}">${escapeHtml(value||'')}</td>`;
+  return `<div class="dn-sheet ${en?'is-en':''}" dir="${en?'ltr':'rtl'}"><div class="dn-top-rule"></div><div class="dn-letterhead"><span class="cw-logo-box"><img class="cw-logo" src="assets/aif-logo.png" onerror="this.style.display='none'"><span class="cw-logo-fb">AIF</span></span><div class="dn-form-title"><b>${en?'Delivery Notice':'إشعار تسليم'}</b><strong>${en?'Issued':'صادر'} <em>(OUT)</em></strong></div><div class="dn-company"><b>${en?'Abu Duhair Iron Factory':'مصنع أبو ظهير للحديد'}</b><span>Abu Duhair Iron Factory</span></div></div><div class="dn-blue-rule"></div><table class="dn-meta"><tbody><tr>${cell(T.customer,n.customer)}${cell(en?'Project No.':'رقم المشروع',n.projectNo)}</tr><tr>${cell(T.location,n.location)}${cell(T.date,n.date)}</tr><tr>${cell(T.contact,n.contact)}${cell(en?'Our responsible':'المسؤول لدينا',n.responsible)}</tr><tr>${cell(en?'Mobile No.':'رقم الجوال',n.phone,'is-ltr')}${cell(en?'Responsible mobile':'رقم جوال المسؤول',n.responsiblePhone,'is-ltr')}</tr></tbody></table><table class="dn-table"><thead><tr><th>${en?'#':'م'}</th><th>${en?'Description':'البيان / الوصف'}</th><th>${T.qty}</th><th>${T.notes}</th></tr></thead><tbody>${printRows.map((it,i)=>`<tr><td>${it.desc||it.qty||it.notes?i+1:''}</td><td>${escapeHtml(it.desc||'')}</td><td>${escapeHtml(it.qty||'')}</td><td>${escapeHtml(it.notes||it.unit||'')}</td></tr>`).join('')}</tbody></table><div class="dn-bottom"><table class="dn-confirm"><thead><tr><th colspan="6">${en?'Materials shipped by...':'تم شحن البضاعة بواسطة...'}</th></tr></thead><tbody><tr><th>${en?'Name:':'الاسم:'}</th><td>${escapeHtml(n.shipper||'')}</td><th>${en?'Signature:':'التوقيع:'}</th><td></td><th>${en?'Date:':'التاريخ:'}</th><td></td></tr></tbody></table><table class="dn-confirm"><thead><tr><th colspan="6">${en?'Driver / Carrier details...':'بيانات السائق / الموصل...'}</th></tr></thead><tbody><tr><th>${en?'Driver name:':'اسم السائق:'}</th><td>${escapeHtml(n.driver||'')}</td><th>${en?'Driver mobile:':'جوال السائق:'}</th><td class="is-ltr">${escapeHtml(n.driverPhone||'')}</td><th>${en?'Residence No.:':'رقم الإقامة:'}</th><td></td></tr><tr><th colspan="2">${en?'Vehicle plate No.:':'رقم لوحة المركبة:'}</th><td colspan="3"></td><th>${en?'Signature:':'التوقيع:'}</th></tr></tbody></table><table class="dn-confirm"><thead><tr><th colspan="6">${en?'Goods received by...':'تم استلام البضاعة بواسطة...'}</th></tr></thead><tbody><tr><th>${en?'Name:':'الاسم:'}</th><td></td><th>${en?'Stamp / signature:':'الختم / التوقيع:'}</th><td></td><th>${en?'Date:':'التاريخ:'}</th><td></td></tr></tbody></table><div class="dn-disclaimer"><b>${en?'The materials listed above have been received by the customer.':'تم استلام المواد الموضحة أعلاه من قبل العميل.'}</b><span>${en?'Abu Duhair Iron Factory bears no liability for any damage that may arise after receipt.':'يخلي مصنع أبو ظهير للحديد مسؤوليته الكاملة عن أي أضرار قد تنتج مستقبلاً بعد الاستلام.'}</span></div><div class="dn-footer"><div>☎ 0144320699<br>✉ info@abuduhair.com.sa<br>◉ www.abuduhair.com.sa</div><div><b>${en?'Kingdom of Saudi Arabia':'المملكة العربية السعودية'}</b><br>${en?'Northern Region - Tabuk':'المنطقة الشمالية - تبوك'}<br>${en?'Industrial City':'المدينة الصناعية'}</div></div></div></div>`;
+}
+let dnFitHandler=null;
+function fitDeliveryPreview(){const s=document.getElementById('dnPreviewScroll'),h=document.getElementById('dnPreviewHolder'),sheet=h?.querySelector('.dn-sheet');if(!s||!h||!sheet)return;sheet.style.transform='none';const w=sheet.offsetWidth,ht=sheet.offsetHeight,scale=Math.min(1,(s.clientWidth-24)/w);sheet.style.transformOrigin='top left';sheet.style.transform=`scale(${scale})`;h.style.width=Math.round(w*scale)+'px';h.style.height=Math.round(ht*scale)+'px';}
+function openDeliveryPreview(id){const n=deliveryNotices.find(x=>x.id===id);if(!n)return;const T=deliveryText(),o=document.createElement('div');o.className='modal-overlay show';o.id='dnPreviewOverlay';o.style.cssText='z-index:10000;overflow-y:auto;';o.onclick=e=>{if(e.target===o)closeDeliveryPreview();};o.innerHTML=`<div class="modal cw-preview-modal"><div class="cw-preview-bar"><div class="cw-preview-title">${escapeHtml(n.number||T.title)}</div><div class="cw-preview-actions"><button class="btn-mini" onclick="editDeliveryFromPreview('${escapeHtml(id)}')">${T.edit}</button><button class="btn btn-primary btn-mini" onclick="printDeliveryNotice('${escapeHtml(id)}')">${T.print}</button><button class="btn-mini" onclick="closeDeliveryPreview()">${lang==='en'?'Close':'إغلاق'}</button></div></div><div class="cw-preview-scroll" id="dnPreviewScroll"><div id="dnPreviewHolder" class="cw-preview-holder">${buildDeliverySheet(n)}</div></div></div>`;document.body.appendChild(o);dnFitHandler=fitDeliveryPreview;window.addEventListener('resize',dnFitHandler);requestAnimationFrame(fitDeliveryPreview);}
+function closeDeliveryPreview(){if(dnFitHandler)window.removeEventListener('resize',dnFitHandler);dnFitHandler=null;document.getElementById('dnPreviewOverlay')?.remove();}
+function editDeliveryFromPreview(id){closeDeliveryPreview();setTimeout(()=>showDeliveryNoticeModal(id),80);}
+function printDeliveryNotice(id){const n=deliveryNotices.find(x=>x.id===id);if(!n)return;let h=document.getElementById('dnPrintHost');if(!h){h=document.createElement('div');h.id='dnPrintHost';document.body.appendChild(h);}const st=document.createElement('style');st.textContent='@page{size:A4;margin:0;}';document.head.appendChild(st);h.innerHTML=buildDeliverySheet(n);let done=false;const clean=()=>{if(done)return;done=true;h.innerHTML='';st.remove();window.removeEventListener('afterprint',clean);};window.addEventListener('afterprint',clean);setTimeout(clean,60000);setTimeout(()=>window.print(),80);}
 
 /* A work sheet can either belong to a project or stand on its own (idx = -1).
    Offer both every time; when a project filter is active it is preselected.

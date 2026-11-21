@@ -18,6 +18,11 @@ const isConfigured = !!(cfg.url && cfg.anonKey &&
   !String(cfg.url).includes("REPLACE_ME") && !String(cfg.anonKey).includes("REPLACE_ME"));
 
 let supabase = null;
+/* A full-collection sync also prunes rows that are not present locally. It is
+   therefore only safe AFTER that collection has been successfully read from
+   Supabase in this browser session. Without this guard a transient read/RLS
+   failure could leave a partial in-memory list and then delete real rows. */
+const successfullyLoadedTables = new Set();
 
 if (isConfigured) {
   try {
@@ -74,6 +79,7 @@ async function loadCollection(table) {
   try {
     const { data, error } = await supabase.from(table).select("data");
     if (error) throw error;
+    successfullyLoadedTables.add(table);
     return (data || []).map(row => row.data);
   } catch (err) {
     console.error(`[StockFlow] Failed to load Supabase table "${table}":`, err);
@@ -127,6 +133,10 @@ async function _doSyncTable(table, items, idField) {
 }
 function syncCollection(table, items, idField) {
   if (!supabase) return; // demo mode: nothing to sync
+  if (!successfullyLoadedTables.has(table)) {
+    console.warn(`[StockFlow] Blocked unsafe sync for "${table}" because its current server data was not loaded successfully.`);
+    return;
+  }
   clearTimeout(_timers[table]);
   _pendingSyncs[table] = () => _doSyncTable(table, items, idField);
   _timers[table] = setTimeout(() => {
@@ -163,6 +173,10 @@ async function _doSyncOne(table, row) {
 }
 function syncRow(table, item, idField) {
   if (!supabase) return; // demo mode: nothing to sync
+  if (!successfullyLoadedTables.has(table)) {
+    console.warn(`[StockFlow] Blocked unsafe row sync for "${table}" because its current server data was not loaded successfully.`);
+    return;
+  }
   const id = safeKey(item && item[idField] !== undefined ? item[idField] : '');
   if (!id) return; // nothing identifiable to write
   // Row writes get their own timer slot ("table#row"). Sharing the slot with
