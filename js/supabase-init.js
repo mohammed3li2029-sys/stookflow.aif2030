@@ -87,6 +87,22 @@ async function loadCollection(table) {
   }
 }
 
+async function loadSystemActivityLogs() {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('system_activity_logs')
+      .select('id, occurred_at, actor_name, actor_email, section, operation, entity_table, entity_id, entity_name, before_data, after_data')
+      .order('occurred_at', { ascending: false })
+      .limit(1000);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('[StockFlow] Failed to load system activity logs:', err);
+    return null;
+  }
+}
+
 /**
  * Overwrite a Supabase table with the current contents of `items`.
  * Each item is stored as a JSONB blob keyed by a safe version of its
@@ -279,6 +295,7 @@ window.StockFlowBackend = {
   onAuthChange,
   getSession,
   loadCollection,
+  loadSystemActivityLogs,
   syncCollection,
   syncRow,
   uploadFile,

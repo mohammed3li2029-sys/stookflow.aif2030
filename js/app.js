@@ -93,7 +93,7 @@ async function uploadFileOrFallback(file, folder){
 async function loadAllStockFlowData(skipRender){
   if(!window.StockFlowBackend || !window.StockFlowBackend.enabled) return;
   try{
-    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users, saWorks, movements, delivery] = await Promise.all([
+    const [inv, wh, reqs, projs, quotes, pos, tasksArr, users, saWorks, movements, delivery, systemLogs] = await Promise.all([
       window.StockFlowBackend.loadCollection('inventory'),
       window.StockFlowBackend.loadCollection('warehouses'),
       window.StockFlowBackend.loadCollection('material_requests'),
@@ -105,6 +105,7 @@ async function loadAllStockFlowData(skipRender){
       window.StockFlowBackend.loadCollection('standalone_works'),
       window.StockFlowBackend.loadCollection('stock_movements'),
       window.StockFlowBackend.loadCollection('delivery_notices'),
+      window.StockFlowBackend.loadSystemActivityLogs(),
     ]);
 
     // An array result (even empty) is authoritative: replace the local copy,
@@ -124,6 +125,7 @@ async function loadAllStockFlowData(skipRender){
     if(Array.isArray(pos)) silentReplace(purchaseOrders, pos);
     if(Array.isArray(movements)) silentReplace(movementsData, movements);
     if(Array.isArray(delivery)) silentReplace(deliveryNotices, delivery);
+    if(Array.isArray(systemLogs)) systemActivityLogs = systemLogs;
     // tasks keep a localStorage safety net, so only overwrite when the server
     // actually has rows (an empty table must not wipe local unsynced edits).
     if(tasksArr && tasksArr.length) silentReplace(tasksData, tasksArr);
@@ -453,7 +455,7 @@ const FACTORY_LOGO = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="htt
 const STR = {
 en:{
   brand:{tagline:'Smart Warehouse & Inventory'},
-  nav:{dashboard:'Dashboard',inventory:'Inventory',warehouses:'Warehouses',sales:'Sales',purchasing:'Purchasing',issues:'Issue & Consumption',movements:'Stock Movements',reports:'Reports & Analytics',projects:'Projects',tasks:'Tasks',users:'User Management',notifications:'Notifications',settings:'Settings',help:'Help',logout:'Logout'},
+  nav:{dashboard:'Dashboard',inventory:'Inventory',warehouses:'Warehouses',sales:'Sales',purchasing:'Purchasing',issues:'Issue & Consumption',movements:'Activity',reports:'Reports & Analytics',projects:'Projects',tasks:'Tasks',users:'User Management',notifications:'Notifications',settings:'Settings',help:'Help',logout:'Logout'},
   topbar:{search:'Search items, suppliers, orders...',role:'Administrator'},
   page:{
     dashboard:['Dashboard','Real-time overview of your warehouse'],
@@ -462,7 +464,7 @@ en:{
     warehouses:['Warehouse Management','Locations, sections & transfers'],
     purchasing:['Purchasing','Suppliers, orders & receiving'],
     issues:['Issue & Consumption','Material requests & approvals'],
-    movements:['Stock Movements','Inbound, outbound & transfers'],
+    movements:['Activity','Stock and system activity'],
     reports:['Reports & Analytics','Insight into stock performance'],
     projects:['Projects Management','Track all project phases from contract to delivery'],
     tasks:['Task Management','Create, assign and track all tasks'],
@@ -525,7 +527,7 @@ en:{
 },
 ar:{
   brand:{tagline:'إدارة المخازن الذكية للمصانع'},
-  nav:{dashboard:'لوحة القيادة',inventory:'المخزون',warehouses:'المستودعات',sales:'المبيعات',purchasing:'المشتريات',issues:'الصرف والاستهلاك',movements:'حركة المخزون',reports:'التقارير والتحليلات',projects:'المشاريع',tasks:'إدارة المهام',users:'إدارة المستخدمين',notifications:'التنبيهات',settings:'الإعدادات',help:'المساعدة',logout:'تسجيل الخروج'},
+  nav:{dashboard:'لوحة القيادة',inventory:'المخزون',warehouses:'المستودعات',sales:'المبيعات',purchasing:'المشتريات',issues:'الصرف والاستهلاك',movements:'الحركة',reports:'التقارير والتحليلات',projects:'المشاريع',tasks:'إدارة المهام',users:'إدارة المستخدمين',notifications:'التنبيهات',settings:'الإعدادات',help:'المساعدة',logout:'تسجيل الخروج'},
   topbar:{search:'ابحث عن منتج، مورد، طلب...',role:'مدير النظام'},
   page:{
     dashboard:['لوحة القيادة','نظرة عامة فورية على المستودع'],
@@ -534,7 +536,7 @@ ar:{
     warehouses:['إدارة المستودعات','المواقع، الأقسام والتحويلات'],
     purchasing:['المشتريات','الموردون والطلبات والاستلام'],
     issues:['الصرف والاستهلاك','طلبات المواد والموافقات'],
-    movements:['حركة المخزون','الوارد والصادر والتحويلات'],
+    movements:['الحركة','حركة المخزون وحركة النظام'],
     reports:['التقارير والتحليلات','رؤية أداء المخزون'],
     projects:['إدارة المشاريع','متابعة جميع مراحل المشروع من العقد إلى التسليم'],
     tasks:['إدارة المهام','إنشاء وتتبع وتعيين جميع المهام'],
@@ -4429,6 +4431,8 @@ function renderIssues(){
 /* Stock movements are transaction records, not sample display data. Each
    mutation below writes a complete, persistent audit entry. */
 const movementsData = withFirestoreSync([], 'stock_movements', 'id');
+let systemActivityLogs = [];
+let movementTab = 'stock';
 
 function addStockMovement({type, item, qty, warehouse, before, after, ref, note=''}){
   const now = new Date();
@@ -4456,7 +4460,13 @@ function movementWhen(m){
 
 function renderMovements(){
   const L = STR[lang];
+  const isSystem = movementTab === 'system';
   return `
+  <div class="report-tabs" style="margin-bottom:16px;">
+    <button class="report-tab ${!isSystem?'active':''}" data-mov-tab="stock">${lang==='en'?'Stock movements':'حركة المخزون'}</button>
+    <button class="report-tab ${isSystem?'active':''}" data-mov-tab="system">${lang==='en'?'System activity':'حركة النظام'}</button>
+  </div>
+  <div id="movStockPanel" style="display:${isSystem?'none':'block'};">
   <div class="toolbar">
     <button class="btn" id="movFilterBtn">${ICONS.filter}${L.toolbar.filter}</button>
     <button class="btn" id="movExportBtn">${ICONS.download}${L.toolbar.export}</button>
@@ -4488,6 +4498,20 @@ function renderMovements(){
     <tbody id="movTbody"></tbody>
     </table>
     <div class="pg-footer" id="pgFoot-mov"></div>
+  </div>
+  </div>
+  <div id="movSystemPanel" style="display:${isSystem?'block':'none'};">
+    <div class="toolbar">
+      <input id="sysLogSearch" placeholder="${lang==='en'?'Search by user, item or number...':'ابحث بالمستخدم أو اسم العنصر أو الرقم...'}" style="min-width:260px;">
+      <button class="btn" id="sysLogExportBtn">${ICONS.download}${L.toolbar.export}</button>
+    </div>
+    <div class="filter-panel open" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+      <div class="field"><label>${lang==='en'?'Section':'القسم'}</label><select id="sysLogSection"><option value="">${lang==='en'?'All sections':'كل الأقسام'}</option></select></div>
+      <div class="field"><label>${lang==='en'?'Operation':'نوع الحركة'}</label><select id="sysLogOperation"><option value="">${lang==='en'?'All operations':'كل العمليات'}</option><option value="INSERT">${lang==='en'?'Created':'إنشاء'}</option><option value="UPDATE">${lang==='en'?'Updated':'تعديل'}</option><option value="DELETE">${lang==='en'?'Deleted':'حذف'}</option></select></div>
+      <div class="field"><label>${lang==='en'?'User':'المستخدم'}</label><select id="sysLogUser"><option value="">${lang==='en'?'All users':'كل المستخدمين'}</option></select></div>
+      <button class="btn-mini" id="sysLogReset">${L.toolbar.resetFilter}</button>
+    </div>
+    <div class="table-card"><table><thead><tr><th>${lang==='en'?'Date & time':'التاريخ والوقت'}</th><th>${lang==='en'?'User':'المستخدم'}</th><th>${lang==='en'?'Section':'القسم'}</th><th>${lang==='en'?'Operation':'نوع الحركة'}</th><th>${lang==='en'?'Affected item':'العنصر المتأثر'}</th><th>${lang==='en'?'Details':'التفاصيل'}</th></tr></thead><tbody id="sysLogTbody"></tbody></table><div class="pg-footer" id="pgFoot-syslog"></div></div>
   </div>`;
 }
 
@@ -4520,6 +4544,37 @@ function renderMovRows(typeF=''){
       <td>${m.note || m.user || '—'}</td>
     </tr>`;
   }).join('');
+}
+
+function systemSectionLabel(section){
+  const labels = {inventory:['Inventory','المخزون'],warehouses:['Warehouses','المستودعات'],material_requests:['Issue & consumption','الصرف والاستهلاك'],projects:['Projects','المشاريع'],quotations:['Sales & quotations','المبيعات وعروض الأسعار'],purchase_orders:['Purchasing','المشتريات'],tasks:['Tasks','المهام'],standalone_works:['Documents','المستندات'],stock_movements:['Stock movements','حركة المخزون'],delivery_notices:['Delivery notices','إشعارات التسليم'],users:['Users','المستخدمون'],profile:['Profile','الملف الشخصي']};
+  return (labels[section] || [section||'—',section||'—'])[lang==='en'?0:1];
+}
+function systemOperationLabel(operation){
+  return ({INSERT:lang==='en'?'Created':'إنشاء',UPDATE:lang==='en'?'Updated':'تعديل',DELETE:lang==='en'?'Deleted':'حذف'})[operation] || operation || '—';
+}
+function systemLogWhen(log){
+  return log.occurred_at ? new Date(log.occurred_at).toLocaleString(lang==='ar'?'ar-SA':'en-GB',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+}
+function populateSystemLogFilters(){
+  const sections=[...new Set(systemActivityLogs.map(x=>x.section).filter(Boolean))];
+  const users=[...new Set(systemActivityLogs.map(x=>x.actor_name||x.actor_email).filter(Boolean))];
+  const sectionEl=document.getElementById('sysLogSection'), userEl=document.getElementById('sysLogUser');
+  if(sectionEl) sectionEl.insertAdjacentHTML('beforeend',sections.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(systemSectionLabel(x))}</option>`).join(''));
+  if(userEl) userEl.insertAdjacentHTML('beforeend',users.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join(''));
+}
+function renderSystemActivityRows(){
+  const tbody=document.getElementById('sysLogTbody'); if(!tbody) return;
+  const q=(document.getElementById('sysLogSearch')?.value||'').trim().toLowerCase();
+  const section=document.getElementById('sysLogSection')?.value||'';
+  const operation=document.getElementById('sysLogOperation')?.value||'';
+  const user=document.getElementById('sysLogUser')?.value||'';
+  const rows=systemActivityLogs.filter(x=>{
+    const hay=[x.actor_name,x.actor_email,x.entity_name,x.entity_id,x.entity_table,x.section].join(' ').toLowerCase();
+    return (!q||hay.includes(q)) && (!section||x.section===section) && (!operation||x.operation===operation) && (!user||(x.actor_name||x.actor_email)===user);
+  });
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-2);">${lang==='en'?'No system activity has been recorded yet':'لا توجد حركات نظام مسجلة بعد'}</td></tr>`;return;}
+  tbody.innerHTML=rows.map(x=>{const name=x.actor_name||x.actor_email||'—';const initials=name.slice(0,2).toUpperCase();return `<tr><td>${systemLogWhen(x)}</td><td><span class="avatar" style="width:25px;height:25px;font-size:9px;display:inline-flex;vertical-align:middle;margin-inline-end:6px;">${escapeHtml(initials)}</span>${escapeHtml(name)}</td><td>${escapeHtml(systemSectionLabel(x.section))}</td><td><span class="pill ${x.operation==='DELETE'?'pill-critical':x.operation==='UPDATE'?'pill-low':'pill-ok'}">${systemOperationLabel(x.operation)}</span></td><td><b>${escapeHtml(x.entity_name||x.entity_id||'—')}</b><div style="font-size:11px;color:var(--text-3);direction:ltr;">${escapeHtml(x.entity_id||'')}</div></td><td>${systemOperationLabel(x.operation)} ${escapeHtml(x.entity_name||x.entity_id||'')}</td></tr>`;}).join('');
 }
 
 /* ===================================================================
@@ -8269,6 +8324,9 @@ function postRenderHooks(page){
   }
   if(page==='movements'){
     renderMovRows();
+    populateSystemLogFilters();
+    renderSystemActivityRows();
+    document.querySelectorAll('[data-mov-tab]').forEach(btn=>btn.addEventListener('click',()=>{ movementTab=btn.dataset.movTab; navigate('movements',{quiet:true}); }));
     document.getElementById('movFilterBtn').addEventListener('click', ()=>{
       document.getElementById('movFilterPanel').classList.toggle('open');
     });
@@ -8281,6 +8339,12 @@ function postRenderHooks(page){
       renderMovRows();
     });
     document.getElementById('movExportBtn').addEventListener('click', ()=> exportCSV(movementsData, 'movements'));
+    document.getElementById('sysLogSearch').addEventListener('input', renderSystemActivityRows);
+    document.getElementById('sysLogSection').addEventListener('change', renderSystemActivityRows);
+    document.getElementById('sysLogOperation').addEventListener('change', renderSystemActivityRows);
+    document.getElementById('sysLogUser').addEventListener('change', renderSystemActivityRows);
+    document.getElementById('sysLogReset').addEventListener('click', ()=>{ document.getElementById('sysLogSearch').value=''; document.getElementById('sysLogSection').value=''; document.getElementById('sysLogOperation').value=''; document.getElementById('sysLogUser').value=''; renderSystemActivityRows(); });
+    document.getElementById('sysLogExportBtn').addEventListener('click', ()=> exportCSV(systemActivityLogs, 'system-activity'));
   }
   if(page==='users'){
     renderUsersRows();

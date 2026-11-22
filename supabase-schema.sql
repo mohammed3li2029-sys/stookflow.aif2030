@@ -317,3 +317,63 @@ drop policy if exists "Staff delete stockflow-files" on storage.objects;
 create policy "Staff delete stockflow-files"
   on storage.objects for delete
   using (bucket_id = 'stockflow-files' and public.is_staff());
+
+-- Immutable audit trail for every business-record change.
+create table if not exists system_activity_logs (
+  id bigint generated always as identity primary key,
+  occurred_at timestamptz not null default now(),
+  actor_email text,
+  actor_name text,
+  section text not null,
+  operation text not null check (operation in ('INSERT','UPDATE','DELETE')),
+  entity_table text not null,
+  entity_id text,
+  entity_name text,
+  before_data jsonb,
+  after_data jsonb
+);
+
+create index if not exists system_activity_logs_occurred_at_idx on system_activity_logs (occurred_at desc);
+
+create or replace function public.stockflow_audit_change()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  before_json jsonb;
+  after_json jsonb;
+  actor text;
+  display_name text;
+  entity_label text;
+  row_id text;
+begin
+  if tg_op = 'UPDATE' and old.data is not distinct from new.data then return new; end if;
+  if tg_op = 'DELETE' then
+    before_json := old.data; row_id := old.id::text;
+  elsif tg_op = 'INSERT' then
+    after_json := new.data; row_id := new.id::text;
+  else
+    before_json := old.data; after_json := new.data; row_id := new.id::text;
+  end if;
+  actor := nullif(auth.email(), '');
+  select data ->> 'name' into display_name from public.users
+    where actor is not null and lower(data ->> 'email') = lower(actor) limit 1;
+  display_name := coalesce(display_name, actor, 'System');
+  entity_label := coalesce(after_json ->> 'nameAr', after_json ->> 'name', after_json ->> 'customer', after_json ->> 'number', before_json ->> 'nameAr', before_json ->> 'name', before_json ->> 'customer', before_json ->> 'number', row_id);
+  insert into public.system_activity_logs (actor_email,actor_name,section,operation,entity_table,entity_id,entity_name,before_data,after_data)
+  values (actor,display_name,tg_table_name,tg_op,tg_table_name,row_id,entity_label,before_json,after_json);
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
+end;
+$$;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['inventory','warehouses','material_requests','projects','quotations','purchase_orders','profile','users','tasks','standalone_works','stock_movements','delivery_notices'] loop
+    execute format('drop trigger if exists trg_stockflow_audit_%I on public.%I;', t, t);
+    execute format('create trigger trg_stockflow_audit_%I after insert or update or delete on public.%I for each row execute function public.stockflow_audit_change();', t, t);
+  end loop;
+end $$;
+
+alter table public.system_activity_logs enable row level security;
+drop policy if exists "Root read system activity" on public.system_activity_logs;
+create policy "Root read system activity" on public.system_activity_logs for select using (public.is_root());
