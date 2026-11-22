@@ -5630,7 +5630,7 @@ function openProjectDetail(idx){
       </div>
       <div style="padding:20px 28px;">
         <div class="report-tabs" style="margin-bottom:16px;gap:4px;">${tabs.map(t => `<span class="report-tab${detailTab===t.key?' active':''}" data-dtab="${t.key}" style="font-size:11.5px;padding:7px 12px;">${t.label}</span>`).join('')}</div>
-        <div id="projDetailBody">${renderProjInfoTab(p, L, end, remain)}</div>
+        <div id="projDetailBody">${renderProjInfoTab(p, L, end, remain, idx)}</div>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -5651,7 +5651,7 @@ function openProjectDetail(idx){
         detailTab = this.dataset.dtab;
         const body = document.getElementById('projDetailBody'); if(!body) return;
         const map = {
-          info: renderProjInfoTab(p, L, end, remain),
+          info: renderProjInfoTab(p, L, end, remain, idx),
           phases: renderProjPhasesTab(p, idx, L),
           materials: renderProjMaterialsTab(p, idx, L),
           purchases: renderProjPurchasesTab(p, idx, L),
@@ -5668,7 +5668,7 @@ function openProjectDetail(idx){
   }, 50);
 }
 
-function renderProjInfoTab(p, L, end, remain){
+function renderProjInfoTab(p, L, end, remain, idx){
   return `<div class="row-2" style="grid-template-columns:1fr 1fr;">
     <div class="card" style="margin-bottom:0;"><div class="card-head"><div class="card-title">${lang==='en'?'General Info':'معلومات عامة'}</div></div>
       <div class="proj-info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">${[
@@ -5687,7 +5687,7 @@ function renderProjInfoTab(p, L, end, remain){
       <div style="display:flex;justify-content:space-between;font-size:12px;"><span>${p.progress}% ${lang==='en'?'Complete':'مكتمل'}</span><span style="color:${remain<0?'var(--red)':'var(--text-2)'};">${remain!==null?(remain<0?Math.abs(remain)+(lang==='en'?' days overdue':' أيام تأخير'):remain+' '+L.daysRemaining):'—'}</span></div>
     </div>
     <div class="card" style="margin-bottom:12px;"><div class="card-head"><div class="card-title">${L.notes}</div></div><p style="font-size:13px;color:var(--text-2);margin:0;white-space:pre-wrap;">${lang==='en'?p.notes:p.notesAr||'—'}</p></div>
-    <div class="card" style="margin-bottom:0;"><div class="card-head"><div class="card-title">${lang==='en'?'Payments':'الدفعات'}</div></div><p style="font-size:13px;color:var(--text-2);margin:0;white-space:pre-wrap;">${p.payments||'—'}</p></div></div>
+    ${renderProjectPaymentsCard(p, idx)}</div>
   </div>`;
 }
 
@@ -6990,11 +6990,64 @@ function getNotifItems(){
   });
   return items;
 }
+/* ── Project payments ── */
+function projectPaymentInstallments(plan){
+  return Array.isArray(plan?.installments) ? plan.installments : [];
+}
+function projectPaymentPaid(installment){
+  return (installment?.payments||[]).reduce((sum,p)=>sum+(Number(p.amount)||0),0);
+}
+function projectPaymentPlanInputs(count, values=[]){
+  const n=Math.max(1,Math.min(8,Number(count)||1));
+  const base=+(100/n).toFixed(2);
+  return Array.from({length:n},(_,i)=>{const value=values[i] ?? (i===n-1 ? +(100-base*(n-1)).toFixed(2) : base);return `<div class="project-payment-editor-row"><b>${lang==='en'?'Payment':'الدفعة'} ${i+1}</b><div><input class="pm-payment-percent" type="number" min="0" max="100" step="0.01" value="${value}" dir="ltr"><span>%</span></div><small class="pm-payment-amount" data-payment-index="${i}"></small></div>`;}).join('');
+}
+function refreshProjectPaymentPlanAmounts(){
+  const total=parseFloat(document.getElementById('pmContractValue')?.value)||0;
+  document.querySelectorAll('.pm-payment-percent').forEach((input,i)=>{const amount=total*(parseFloat(input.value)||0)/100;const output=document.querySelector(`.pm-payment-amount[data-payment-index="${i}"]`);if(output) output.textContent=`${lang==='en'?'SAR':'ر.س'} ${amount.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`;});
+}
+function renderProjectPaymentPlanInputs(count, values=[]){
+  const holder=document.getElementById('pmPaymentPlanRows'); if(!holder) return;
+  holder.innerHTML=projectPaymentPlanInputs(count,values);
+  holder.querySelectorAll('.pm-payment-percent').forEach(input=>input.addEventListener('input',refreshProjectPaymentPlanAmounts));
+  refreshProjectPaymentPlanAmounts();
+}
+function readProjectPaymentPlan(existingPlan){
+  const count=parseInt(document.getElementById('pmPaymentCount')?.value,10)||1;
+  const percentages=[...document.querySelectorAll('.pm-payment-percent')].map(x=>parseFloat(x.value)||0);
+  const sum=percentages.reduce((a,b)=>a+b,0);
+  if(percentages.length!==count || percentages.some(x=>x<=0) || Math.abs(sum-100)>0.01){showToast(lang==='en'?'Payment percentages must total 100%':'يجب أن يكون مجموع نسب الدفعات 100%');return null;}
+  const total=parseFloat(document.getElementById('pmContractValue')?.value)||0;
+  const previous=projectPaymentInstallments(existingPlan);
+  return {installments:percentages.map((percent,i)=>({id:previous[i]?.id||`PAY-${Date.now().toString(36)}-${i+1}`,number:i+1,percent,amount:+(total*percent/100).toFixed(2),payments:previous[i]?.payments||[]}))};
+}
+function projectPaymentStatus(installment){
+  const paid=projectPaymentPaid(installment), due=Number(installment.amount)||0;
+  return paid<=0?'pending':paid+0.005>=due?'paid':'partial';
+}
+function renderProjectPaymentsCard(p, idx){
+  const installments=projectPaymentInstallments(p.paymentPlan), total=Number(p.contractValue)||0, paid=installments.reduce((s,x)=>s+projectPaymentPaid(x),0), remaining=Math.max(0,total-paid);
+  if(!installments.length) return `<div class="card project-payments-card"><div class="card-head"><div class="card-title">${lang==='en'?'Payments':'الدفعات'}</div></div><div class="project-payments-empty">${lang==='en'?'No payment plan added yet.':'لم تتم إضافة خطة دفعات بعد.'}</div>${p.payments?`<p class="project-payment-notes">${escapeHtml(p.payments)}</p>`:''}</div>`;
+  const history=installments.flatMap(ins=>(ins.payments||[]).map(pay=>({number:ins.number, ...pay}))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  return `<div class="card project-payments-card"><div class="card-head"><div class="card-title">${lang==='en'?'Payments':'الدفعات'}</div><span class="project-payment-total">${lang==='en'?'Paid':'المدفوع'} ${paid.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} / ${total.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} ${lang==='en'?'SAR':'ر.س'}</span></div><div class="project-payment-progress"><span style="width:${total?Math.min(100,paid/total*100):0}%"></span></div><div class="project-payment-balance"><span>${lang==='en'?'Remaining':'المتبقي'}: <b>${remaining.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})} ${lang==='en'?'SAR':'ر.س'}</b></span></div><div class="project-payment-circles">${installments.map((ins,i)=>{const paidValue=projectPaymentPaid(ins),status=projectPaymentStatus(ins);const stateText=status==='paid'?(lang==='en'?'Paid':'مكتملة'):status==='partial'?(lang==='en'?'Partial':'جزئية'):(lang==='en'?'Pending':'بانتظار الدفع');return `<button class="project-payment-circle ${status}" onclick="openProjectPaymentModal(${idx},'${ins.id}')" title="${lang==='en'?'Record payment':'تسجيل دفعة'}"><em>${lang==='en'?'Payment':'دفعة'} ${i+1}</em><strong>${ins.percent}%</strong><small>${paidValue.toLocaleString('en',{maximumFractionDigits:0})} / ${Number(ins.amount).toLocaleString('en',{maximumFractionDigits:0})}</small><i>${stateText}</i></button>`;}).join('')}</div>${history.length?`<div class="project-payment-history">${history.map(pay=>`<div><b>${lang==='en'?'Payment':'دفعة'} ${pay.number}</b><span>${Number(pay.amount).toLocaleString('en',{minimumFractionDigits:2})} ${lang==='en'?'SAR':'ر.س'}</span><time>${escapeHtml(pay.date||'—')}</time>${pay.note?`<small>${escapeHtml(pay.note)}</small>`:''}</div>`).join('')}</div>`:''}${p.payments?`<p class="project-payment-notes">${escapeHtml(p.payments)}</p>`:''}</div>`;
+}
+function openProjectPaymentModal(idx, installmentId){
+  const p=projects[idx], installment=projectPaymentInstallments(p?.paymentPlan).find(x=>x.id===installmentId); if(!p||!installment)return;
+  const paid=projectPaymentPaid(installment), due=Number(installment.amount)||0, remaining=Math.max(0,due-paid);
+  const overlay=document.createElement('div'); overlay.className='modal-overlay show'; overlay.style.zIndex='3000'; overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  overlay.innerHTML=`<div class="modal" style="max-width:440px;"><h3>${lang==='en'?'Record payment':'تسجيل دفعة'} ${installment.number}</h3><div class="project-payment-modal-summary"><span>${lang==='en'?'Due':'المستحق'}: <b>${due.toLocaleString('en',{minimumFractionDigits:2})} ${lang==='en'?'SAR':'ر.س'}</b></span><span>${lang==='en'?'Remaining':'المتبقي'}: <b>${remaining.toLocaleString('en',{minimumFractionDigits:2})} ${lang==='en'?'SAR':'ر.س'}</b></span></div><div class="field"><label>${lang==='en'?'Payment amount':'مبلغ الدفعة'}</label><input id="projectPaymentAmount" type="number" min="0.01" max="${remaining}" step="0.01" value="${remaining}" dir="ltr"></div><div class="field"><label>${lang==='en'?'Payment date':'تاريخ الدفعة'}</label><input id="projectPaymentDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>${lang==='en'?'Note / reference':'ملاحظة / رقم المرجع'}</label><input id="projectPaymentNote"></div><div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${lang==='en'?'Cancel':'إلغاء'}</button><button class="btn btn-primary" id="projectPaymentSave">${lang==='en'?'Save payment':'حفظ الدفعة'}</button></div></div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('projectPaymentSave')?.addEventListener('click',()=>{const amount=parseFloat(document.getElementById('projectPaymentAmount')?.value)||0;if(amount<=0||amount>remaining+0.005){showToast(lang==='en'?'Enter an amount within the remaining balance':'أدخل مبلغًا ضمن الرصيد المتبقي');return;}installment.payments=installment.payments||[];installment.payments.push({id:`PMT-${Date.now().toString(36)}`,amount:+amount.toFixed(2),date:document.getElementById('projectPaymentDate')?.value||'',note:document.getElementById('projectPaymentNote')?.value.trim()||'',createdBy:cwActorName()});syncCurrentProject(idx);overlay.remove();const body=document.getElementById('projDetailBody');if(body){const end=calcEndDate(p.startDate,p.duration),remain=calcDaysRemaining(end);body.innerHTML=renderProjInfoTab(p,STR[lang].projects,end,remain,idx);}showSuccessCheck(lang==='en'?'Payment saved!':'تم حفظ الدفعة!');});
+}
+
 /* ── Project Modal ── */
 function openProjectModal(idx=null){
   const isEdit = idx !== null;
   const p = isEdit ? projects[idx] : null;
   const L = STR[lang].projects;
+  const savedInstallments = projectPaymentInstallments(p?.paymentPlan);
+  const initialPaymentCount = savedInstallments.length || 1;
+  const initialPaymentPercents = savedInstallments.map(x=>x.percent);
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay show';
   overlay.style.cssText = 'z-index:2000;';
@@ -7011,11 +7064,17 @@ function openProjectModal(idx=null){
       <div class="project-schedule-fields"><div class="field-row project-schedule-row"><div class="field"><label>${L.startDate}</label><input type="date" id="pmStartDate" value="${p?p.startDate:''}"></div><div class="field"><label>${L.duration} (${lang==='en'?'days':'أيام'})</label><input type="number" id="pmDuration" value="${p?p.duration:''}"></div><div class="field"><label>${L.status}</label><select id="pmStatus">${PROJECT_STATUSES.map(s=>`<option value="${s}"${p&&p.status===s?' selected':''}>${getProjStatusLabel(s)}</option>`).join('')}</select></div></div></div>
       <div class="field"><label>${L.notes} (EN)</label><textarea id="pmNotes" rows="2">${p?p.notes||'':''}</textarea></div>
       <div class="field"><label>${L.notes} (AR)</label><textarea id="pmNotesAr" rows="2">${p?p.notesAr||'':''}</textarea></div>
-      <div class="field"><label>${lang==='en'?'Payments':'الدفعات'}</label><textarea id="pmPayments" rows="3" placeholder="${lang==='en'?'Enter payment terms...':'أدخل تفاصيل الدفعات...'}">${p?p.payments||'':''}</textarea></div>
+      <div class="project-payment-plan"><div class="project-payment-plan-head"><label>${lang==='en'?'Payment plan':'خطة الدفعات'}</label><select id="pmPaymentCount" dir="ltr">${Array.from({length:8},(_,i)=>i+1).map(n=>`<option value="${n}"${n===initialPaymentCount?' selected':''}>${n}</option>`).join('')}</select><span>${lang==='en'?'payments':'دفعات'}</span></div><div id="pmPaymentPlanRows">${projectPaymentPlanInputs(initialPaymentCount,initialPaymentPercents)}</div></div>
+      <div class="field"><label>${lang==='en'?'Payment notes':'ملاحظات الدفعات'}</label><textarea id="pmPayments" rows="2" placeholder="${lang==='en'?'Optional payment notes...':'ملاحظات إضافية للدفعات...'}">${p?p.payments||'':''}</textarea></div>
       <div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${lang==='en'?'Cancel':'إلغاء'}</button><button class="btn btn-primary" id="pmSaveBtn">${isEdit?(lang==='en'?'Save':'حفظ'):(lang==='en'?'Create Project':'إنشاء المشروع')}</button></div>
     </div>`;
   document.body.appendChild(overlay);
-  setTimeout(() => document.getElementById('pmSaveBtn')?.addEventListener('click', ()=> saveProject(idx)), 50);
+  setTimeout(() => {
+    renderProjectPaymentPlanInputs(initialPaymentCount,initialPaymentPercents);
+    document.getElementById('pmPaymentCount')?.addEventListener('change',e=>renderProjectPaymentPlanInputs(e.target.value));
+    document.getElementById('pmContractValue')?.addEventListener('input',refreshProjectPaymentPlanAmounts);
+    document.getElementById('pmSaveBtn')?.addEventListener('click', ()=> saveProject(idx));
+  }, 50);
 }
 
 function saveProject(idx){
@@ -7024,6 +7083,8 @@ function saveProject(idx){
   const name = get('pmName'), nameAr = get('pmNameAr');
   if(!name && !nameAr) return showToast(lang==='en'?'Project name is required':'اسم المشروع مطلوب');
   const pid = get('pmId');
+  const paymentPlan = readProjectPaymentPlan(idx!==null ? projects[idx]?.paymentPlan : null);
+  if(!paymentPlan) return;
   const stampNow = new Date().toISOString();
   const stampWho = cwActorName();
   if(idx !== null){
@@ -7048,7 +7109,7 @@ function saveProject(idx){
     p.contractDate = get('pmContractDate')||p.contractDate; p.startDate = get('pmStartDate')||p.startDate;
     p.duration = parseInt(get('pmDuration'))||p.duration;
     p.status = get('pmStatus')||p.status;
-    p.notes = get('pmNotes')||p.notes; p.notesAr = get('pmNotesAr')||p.notesAr;
+    p.notes = get('pmNotes')||p.notes; p.notesAr = get('pmNotesAr')||p.notesAr; p.paymentPlan = paymentPlan;
     p.payments = get('pmPayments')||p.payments;
   } else {
     projects.push({
@@ -7060,7 +7121,7 @@ function saveProject(idx){
       contractDate:get('pmContractDate'), startDate:get('pmStartDate'), duration:parseInt(get('pmDuration'))||30,
       progress:0, status:get('pmStatus')||'active', priority:'medium',
       createdAt: stampNow, createdBy:{name: stampWho, at: stampNow}, edits:[],
-      notes:get('pmNotes'), notesAr:get('pmNotesAr'), payments:get('pmPayments'),
+      notes:get('pmNotes'), notesAr:get('pmNotesAr'), payments:get('pmPayments'), paymentPlan,
       phases: defaultPhases.map(dp => ({id:dp.id, name:dp.name, nameAr:dp.nameAr, status:'notStarted', start:'', end:'', resp:'', notes:'', notesAr:'', progress:0})),
       materials:[], team:[], docs:[], works:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
     });
