@@ -5699,7 +5699,7 @@ function renderProjPhasesTab(p, idx, L){
     <td><input class="phase-inline" value="${ph.resp||''}" placeholder="${lang==='en'?'Name':'الاسم'}" onchange="updatePhaseField(${idx},${pi},'resp',this.value)" style="max-width:120px;width:80px;"></td>
     <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:5px;background:var(--surface-2);border-radius:3px;"><div style="width:${getPhaseProgressFromStatus(ph.status)}%;height:100%;background:${ph.status==='completed'?'var(--green)':ph.status==='inProgress'||ph.status==='delayed'?'var(--blue)':'var(--surface-2)'};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:700;">${getPhaseProgressFromStatus(ph.status)}%</span></div></td>
     <td><select class="phase-inline" onchange="updatePhaseField(${idx},${pi},'status',this.value)">${['notStarted','inProgress','completed','delayed'].map(s => `<option value="${s}"${ph.status===s?' selected':''}>${getPhaseStatusLabel(s)}</option>`).join('')}</select></td>
-    <td><input class="phase-inline" value="${lang==='en'?ph.notes:ph.notesAr||''}" placeholder="${lang==='en'?'Notes':'ملاحظات'}" onchange="updatePhaseField(${idx},${pi},'notes',this.value)" style="max-width:130px;width:90px;"></td>
+    <td><input class="phase-inline" value="${lang==='en'?(ph.notes||''):(ph.notesAr||ph.notes||'')}" placeholder="${lang==='en'?'Notes':'ملاحظات'}" onchange="updatePhaseField(${idx},${pi},'notes',this.value)" style="max-width:130px;width:90px;"></td>
     <td><div class="row-actions"><button title="${lang==='en'?'Delete':'حذف'}" onclick="deletePhase(${idx},${pi})">${ICONS.trash}</button></div></td>
   </tr>`).join('')}</tbody></table></div><div style="margin-top:8px;display:flex;gap:8px;justify-content:space-between;"><button class="btn-mini" onclick="showAddPhaseModal(${idx})">+ ${lang==='en'?'Add Phase':'إضافة مرحلة'}</button><button class="btn-mini" onclick="savePhases(${idx})">${lang==='en'?'Save Changes':'حفظ التغييرات'}</button></div>`;
 }
@@ -7283,7 +7283,12 @@ function getPhaseProgressFromStatus(status){
 function updatePhaseField(idx, pi, field, value){
   const p = projects[idx]; if(!p) return;
   if(!p.phases[pi]) return;
-  p.phases[pi][field] = value;
+  if(field === 'notes'){
+    // A phase note is shared content. Keep both language fields in sync so
+    // it remains visible after a language switch or a page refresh.
+    p.phases[pi].notes = value;
+    p.phases[pi].notesAr = value;
+  } else p.phases[pi][field] = value;
   if(field === 'status') p.phases[pi].progress = getPhaseProgressFromStatus(value);
   syncCurrentProject(idx);
 }
