@@ -5617,18 +5617,22 @@ function renderProjInfoTab(p, L, end, remain){
   return `<div class="row-2" style="grid-template-columns:1fr 1fr;">
     <div class="card" style="margin-bottom:0;"><div class="card-head"><div class="card-title">${lang==='en'?'General Info':'معلومات عامة'}</div></div>
       <div class="proj-info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">${[
-        [L.projectName, lang==='en'?p.name:p.nameAr],[L.client, lang==='en'?p.client:p.clientAr],[L.type, lang==='en'?p.type:p.typeAr],
-        [L.location, lang==='en'?p.location:p.locationAr],[L.coordinates, p.coords],[L.contractNo, p.contractNo],
+        [lang==='en'?'Quote number':'رقم العرض', p.id],[L.projectName, lang==='en'?p.name:p.nameAr],
+        [L.client, lang==='en'?p.client:p.clientAr],[lang==='en'?'Client mobile number':'رقم جوال العميل', p.clientPhone],
+        [L.type, lang==='en'?p.type:p.typeAr],[L.location, lang==='en'?p.location:p.locationAr],
+        [lang==='en'?'Engineering tracking number':'رقم المتابعة الهندسي', p.engineeringTrackingNo],[L.manager, p.manager],[L.engineer, p.engineer],
+        [L.contractNo, p.contractNo],
         [L.contractValue, 'SAR '+p.contractValue.toLocaleString('en',{minimumFractionDigits:2})],[L.contractDate, p.contractDate],
         [L.startDate, p.startDate],[L.duration, p.duration+' '+(lang==='en'?'days':'يوم')],[L.endDate, end],
-        [L.manager, p.manager],[L.engineer, p.engineer],
+        [L.status, getProjStatusLabel(p.status)],
       ].map(([k,v]) => `<div><span style="color:var(--text-2);font-size:11px;font-weight:600;">${k}</span><div style="font-weight:600;margin-top:2px;">${v||'—'}</div></div>`).join('')}</div>
     </div>
     <div><div class="card" style="margin-bottom:12px;"><div class="card-head"><div class="card-title">${L.progress}</div></div>
       <div style="margin:10px 0;"><div style="height:12px;background:var(--surface-2);border-radius:6px;"><div style="width:${p.progress}%;height:100%;background:${remain<0?'var(--red)':p.progress>=80?'var(--green)':'var(--blue)'};border-radius:6px;"></div></div></div>
       <div style="display:flex;justify-content:space-between;font-size:12px;"><span>${p.progress}% ${lang==='en'?'Complete':'مكتمل'}</span><span style="color:${remain<0?'var(--red)':'var(--text-2)'};">${remain!==null?(remain<0?Math.abs(remain)+(lang==='en'?' days overdue':' أيام تأخير'):remain+' '+L.daysRemaining):'—'}</span></div>
     </div>
-    <div class="card" style="margin-bottom:0;"><div class="card-head"><div class="card-title">${L.notes}</div></div><p style="font-size:13px;color:var(--text-2);margin:0;">${lang==='en'?p.notes:p.notesAr||'—'}</p></div></div>
+    <div class="card" style="margin-bottom:12px;"><div class="card-head"><div class="card-title">${L.notes}</div></div><p style="font-size:13px;color:var(--text-2);margin:0;white-space:pre-wrap;">${lang==='en'?p.notes:p.notesAr||'—'}</p></div>
+    <div class="card" style="margin-bottom:0;"><div class="card-head"><div class="card-title">${lang==='en'?'Payments':'الدفعات'}</div></div><p style="font-size:13px;color:var(--text-2);margin:0;white-space:pre-wrap;">${p.payments||'—'}</p></div></div>
   </div>`;
 }
 
@@ -6941,21 +6945,18 @@ function openProjectModal(idx=null){
   overlay.style.cssText = 'z-index:2000;';
   overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
   overlay.innerHTML = `
-    <div class="modal modal-xl">
+    <div class="modal modal-xl project-modal">
       <h3>${isEdit ? L.editProject : L.newProject}</h3>
-      <div class="field-row"><div class="field"><label>${L.projectNumber}</label><input id="pmId" value="${p?p.id:''}" placeholder="${isEdit?'':lang==='en'?'Auto: PRJ-00'+projCounter:'تلقائي: PRJ-00'+projCounter}"></div><div class="field"></div></div>
-      <div class="field-row"><div class="field"><label>${L.projectName} (EN)</label><input id="pmName" value="${p?p.name:''}"></div><div class="field"><label>${L.projectName} (AR)</label><input id="pmNameAr" value="${p?p.nameAr:''}"></div></div>
-      <div class="field-row"><div class="field"><label>${L.client} (EN)</label><input id="pmClient" value="${p?p.client:''}"></div><div class="field"><label>${L.client} (AR)</label><input id="pmClientAr" value="${p?p.clientAr:''}"></div></div>
-      <div class="field-row"><div class="field"><label>${L.type} (EN)</label><input id="pmType" value="${p?p.type:''}"></div><div class="field"><label>${L.type} (AR)</label><input id="pmTypeAr" value="${p?p.typeAr:''}"></div></div>
+      <div class="field-row"><div class="field"><label>${lang==='en'?'Quote number':'رقم العرض'}</label><input id="pmId" value="${p?p.id:''}" placeholder="${isEdit?'':lang==='en'?'Auto: PRJ-00'+projCounter:'تلقائي: PRJ-00'+projCounter}"></div><div class="field"></div></div>
+      <div class="project-identity-layout"><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.client} (EN)</label><input id="pmClient" value="${p?p.client:''}"></div><div class="field"><label>${L.client} (AR)</label><input id="pmClientAr" value="${p?p.clientAr:''}"></div></div></div><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.projectName} (EN)</label><input id="pmName" value="${p?p.name:''}"></div><div class="field"><label>${L.projectName} (AR)</label><input id="pmNameAr" value="${p?p.nameAr:''}"></div></div></div></div>
+      <div class="project-type-contact-row"><div class="field"><label>${lang==='en'?'Client mobile number':'رقم جوال العميل'}</label><input id="pmClientPhone" type="tel" inputmode="tel" dir="ltr" value="${p?p.clientPhone||'':''}" placeholder="05XXXXXXXX"></div><div class="field"><label>${L.type}</label><div class="project-type-options">${['STW','HNG','TSP','FDT','PTC','CPS','MZN'].map(type=>`<label class="project-type-option"><input type="radio" name="pmProjectType" value="${type}"${p&&(p.type===type||p.typeAr===type)?' checked':''}><span>${type}</span></label>`).join('')}</div></div></div>
       <div class="field-row"><div class="field"><label>${L.location} (EN)</label><input id="pmLoc" value="${p?p.location:''}"></div><div class="field"><label>${L.location} (AR)</label><input id="pmLocAr" value="${p?p.locationAr:''}"></div></div>
-      <div class="field-row"><div class="field"><label>${L.coordinates}</label><input id="pmCoords" value="${p?p.coords:''}" placeholder="e.g. 26.42N, 50.08E"></div><div class="field"><label>${L.manager}</label><input id="pmManager" value="${p?p.manager:''}"></div></div>
-      <div class="field-row"><div class="field"><label>${L.engineer}</label><input id="pmEngineer" value="${p?p.engineer:''}"></div><div class="field"><label>${L.contractNo}</label><input id="pmContractNo" value="${p?p.contractNo:''}"></div></div>
-      <div class="field-row"><div class="field"><label>${L.contractValue} (SAR)</label><input type="number" id="pmContractValue" value="${p?p.contractValue:''}"></div><div class="field"><label>${L.contractDate}</label><input type="date" id="pmContractDate" value="${p?p.contractDate:''}"></div></div>
-      <div class="field-row"><div class="field"><label>${L.startDate}</label><input type="date" id="pmStartDate" value="${p?p.startDate:''}"></div><div class="field"><label>${L.duration} (${lang==='en'?'days':'أيام'})</label><input type="number" id="pmDuration" value="${p?p.duration:''}"></div></div>
-      <div class="field-row"><div class="field"><label>${L.status}</label><select id="pmStatus">${PROJECT_STATUSES.map(s=>`<option value="${s}"${p&&p.status===s?' selected':''}>${getProjStatusLabel(s)}</option>`).join('')}</select></div>
-      <div class="field"><label>${L.priority}</label><select id="pmPriority">${PROJECT_PRIORITIES.map(pr=>`<option value="${pr}"${p&&p.priority===pr?' selected':''}>${getPriorityLabel(pr)}</option>`).join('')}</select></div></div>
+      <div class="project-technical-fields"><div class="field-row project-technical-row"><div class="field"><label>${lang==='en'?'Engineering tracking number':'رقم المتابعة الهندسي'}</label><input id="pmEngineeringTrackingNo" value="${p?p.engineeringTrackingNo||'':''}" dir="ltr"></div><div class="field"><label>${L.manager}</label><input id="pmManager" value="${p?p.manager:''}"></div><div class="field"><label>${L.engineer}</label><input id="pmEngineer" value="${p?p.engineer:''}"></div></div></div>
+      <div class="project-contract-fields"><div class="field-row project-contract-row"><div class="field"><label>${L.contractNo}</label><input id="pmContractNo" value="${p?p.contractNo:''}"></div><div class="field"><label>${L.contractDate}</label><input type="date" id="pmContractDate" value="${p?p.contractDate:''}"></div><div class="field"><label>${L.contractValue} (SAR)</label><input type="number" id="pmContractValue" value="${p?p.contractValue:''}"></div></div></div>
+      <div class="project-schedule-fields"><div class="field-row project-schedule-row"><div class="field"><label>${L.startDate}</label><input type="date" id="pmStartDate" value="${p?p.startDate:''}"></div><div class="field"><label>${L.duration} (${lang==='en'?'days':'أيام'})</label><input type="number" id="pmDuration" value="${p?p.duration:''}"></div><div class="field"><label>${L.status}</label><select id="pmStatus">${PROJECT_STATUSES.map(s=>`<option value="${s}"${p&&p.status===s?' selected':''}>${getProjStatusLabel(s)}</option>`).join('')}</select></div></div></div>
       <div class="field"><label>${L.notes} (EN)</label><textarea id="pmNotes" rows="2">${p?p.notes||'':''}</textarea></div>
       <div class="field"><label>${L.notes} (AR)</label><textarea id="pmNotesAr" rows="2">${p?p.notesAr||'':''}</textarea></div>
+      <div class="field"><label>${lang==='en'?'Payments':'الدفعات'}</label><textarea id="pmPayments" rows="3" placeholder="${lang==='en'?'Enter payment terms...':'أدخل تفاصيل الدفعات...'}">${p?p.payments||'':''}</textarea></div>
       <div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${lang==='en'?'Cancel':'إلغاء'}</button><button class="btn btn-primary" id="pmSaveBtn">${isEdit?(lang==='en'?'Save':'حفظ'):(lang==='en'?'Create Project':'إنشاء المشروع')}</button></div>
     </div>`;
   document.body.appendChild(overlay);
@@ -6964,6 +6965,7 @@ function openProjectModal(idx=null){
 
 function saveProject(idx){
   const get = id => document.getElementById(id)?.value?.trim() || '';
+  const selectedType = document.querySelector('input[name="pmProjectType"]:checked')?.value || '';
   const name = get('pmName'), nameAr = get('pmNameAr');
   if(!name && !nameAr) return showToast(lang==='en'?'Project name is required':'اسم المشروع مطلوب');
   const pid = get('pmId');
@@ -6982,26 +6984,28 @@ function saveProject(idx){
     if(pid) p.id = pid;
     p.name = name||p.name; p.nameAr = nameAr||p.nameAr;
     p.client = get('pmClient')||p.client; p.clientAr = get('pmClientAr')||p.clientAr;
-    p.type = get('pmType')||p.type; p.typeAr = get('pmTypeAr')||p.typeAr;
+    p.clientPhone = get('pmClientPhone')||p.clientPhone;
+    p.type = selectedType||p.type; p.typeAr = selectedType||p.typeAr;
     p.location = get('pmLoc')||p.location; p.locationAr = get('pmLocAr')||p.locationAr;
-    p.coords = get('pmCoords')||p.coords; p.manager = get('pmManager')||p.manager;
+    p.engineeringTrackingNo = get('pmEngineeringTrackingNo')||p.engineeringTrackingNo; p.manager = get('pmManager')||p.manager;
     p.engineer = get('pmEngineer')||p.engineer; p.contractNo = get('pmContractNo')||p.contractNo;
     p.contractValue = parseFloat(get('pmContractValue'))||p.contractValue;
     p.contractDate = get('pmContractDate')||p.contractDate; p.startDate = get('pmStartDate')||p.startDate;
     p.duration = parseInt(get('pmDuration'))||p.duration;
-    p.status = get('pmStatus')||p.status; p.priority = get('pmPriority')||p.priority;
+    p.status = get('pmStatus')||p.status;
     p.notes = get('pmNotes')||p.notes; p.notesAr = get('pmNotesAr')||p.notesAr;
+    p.payments = get('pmPayments')||p.payments;
   } else {
     projects.push({
       id: pid || nextProjectId(),
-      name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'),
-      type:get('pmType'), typeAr:get('pmTypeAr'), location:get('pmLoc'), locationAr:get('pmLocAr'),
-      coords:get('pmCoords'), manager:get('pmManager'), engineer:get('pmEngineer'),
+      name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'), clientPhone:get('pmClientPhone'),
+      type:selectedType, typeAr:selectedType, location:get('pmLoc'), locationAr:get('pmLocAr'),
+      engineeringTrackingNo:get('pmEngineeringTrackingNo'), manager:get('pmManager'), engineer:get('pmEngineer'),
       contractNo:get('pmContractNo'), contractFile:'', contractValue:parseFloat(get('pmContractValue'))||0,
       contractDate:get('pmContractDate'), startDate:get('pmStartDate'), duration:parseInt(get('pmDuration'))||30,
-      progress:0, status:get('pmStatus')||'active', priority:get('pmPriority')||'medium',
+      progress:0, status:get('pmStatus')||'active', priority:'medium',
       createdAt: stampNow, createdBy:{name: stampWho, at: stampNow}, edits:[],
-      notes:get('pmNotes'), notesAr:get('pmNotesAr'),
+      notes:get('pmNotes'), notesAr:get('pmNotesAr'), payments:get('pmPayments'),
       phases: defaultPhases.map(dp => ({id:dp.id, name:dp.name, nameAr:dp.nameAr, status:'notStarted', start:'', end:'', resp:'', notes:'', notesAr:'', progress:0})),
       materials:[], team:[], docs:[], works:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
     });

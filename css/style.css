@@ -1210,6 +1210,26 @@ html[dir="rtl"] .toast{transform:translateX(50%);}
 .po-totals-row{display:flex;justify-content:space-between;margin-bottom:6px;}
 .po-totals-row:last-child{margin-bottom:0;font-size:15px;font-weight:800;border-top:1px solid var(--border);padding-top:8px;margin-top:2px;color:var(--blue);}
 .modal-xl{max-width:960px;width:94%;max-height:90vh;overflow-y:auto;}
+.project-modal{width:min(1120px,96vw);max-width:1120px;}
+.project-identity-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;direction:ltr;margin-bottom:13px;}
+.project-identity-group{border:1px solid var(--border);border-radius:11px;padding:9px 10px 0;background:color-mix(in srgb,var(--surface-2) 45%,transparent);direction:rtl;}
+.project-identity-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.project-identity-group .field{margin-bottom:9px;}
+.project-identity-group .field label{font-size:10.5px;margin-bottom:4px;}
+.project-identity-group .field input{padding:7px 9px;font-size:12px;}
+.project-type-contact-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:ltr;}
+.project-type-contact-row .field{direction:rtl;}
+.project-technical-fields{border:1px solid var(--border);border-radius:11px;padding:11px 12px 0;margin-bottom:13px;background:color-mix(in srgb,var(--surface-2) 45%,transparent);}
+.project-technical-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.project-contract-fields{border:1px solid var(--border);border-radius:11px;padding:11px 12px 0;margin-bottom:13px;background:color-mix(in srgb,var(--surface-2) 45%,transparent);}
+.project-contract-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.project-schedule-fields{border:1px solid var(--border);border-radius:11px;padding:11px 12px 0;margin-bottom:13px;background:color-mix(in srgb,var(--surface-2) 45%,transparent);}
+.project-schedule-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.project-type-options{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px;direction:ltr;}
+.project-type-option{display:flex;align-items:center;justify-content:center;margin:0;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;transition:border-color .15s var(--ease),background .15s var(--ease),color .15s var(--ease);}
+.project-type-option:hover{border-color:var(--blue);}
+.project-type-option:has(input:checked){border-color:var(--blue);background:var(--blue);color:#fff;box-shadow:0 2px 5px rgba(10,102,255,.22);}
+.project-type-option input{position:absolute;opacity:0;pointer-events:none;}
 
 /* ─── PO Document (View) ─── */
 .po-doc{padding:0;font-family:'Inter','Tajawal',sans-serif;}
