@@ -1910,6 +1910,7 @@ function getQuoteStatusText(status){
   if(status==='review') return lang==='en'?'Under Review':'تحت المراجعة';
   if(status==='approved') return lang==='en'?'Approved':'معتمد';
   if(status==='sent') return lang==='en'?'Sent':'تم الإرسال';
+  if(status==='contracted') return lang==='en'?'Contracted':'تم التعاقد';
   return status;
 }
 
@@ -1917,6 +1918,7 @@ function getQuoteStatusPill(status){
   if(status==='review') return 'pill-low';
   if(status==='approved') return 'pill-ok';
   if(status==='sent') return 'pill-ok';
+  if(status==='contracted') return 'pill-ok';
   return 'pill-ok';
 }
 
@@ -1941,7 +1943,7 @@ function getSalespersonPhone(name){
 // (deep mutation of q alone wouldn't trigger the array's sync proxy).
 function setQuoteStatus(idx, status){
   const q = quotations[idx];
-  if(!q || !['review','approved','sent'].includes(status)) return;
+  if(!q || !['review','approved','sent','contracted'].includes(status)) return;
   q.status = status;
   quotations[idx] = q;
   renderQuoteRows(document.getElementById('quoteSearch')?.value||'', document.getElementById('quoteFilterStatus')?.value||'');
@@ -2129,12 +2131,12 @@ function renderQuoteRows(filter='', statusF=''){
     <tr class="data-quote-row ${selState.quote.has(idx)?'selected-row':''} ${open?'is-open':''}" data-qid="${q.id}" data-page-idx="${idx}">
       <td class="expand-col"><button type="button" class="expand-btn" onclick="toggleQuotePanel(this,'${q.id}')" aria-label="${lang==='en'?'Activity':'النشاط'}" title="${lang==='en'?'Who created/edited this quote':'من أنشأ وعدّل هذا العرض'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M6 9l6 6 6-6"/></svg></button></td>
       <td class="sel-check-col" style="display:${selMode.quote?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.quote.has(idx)?'checked':''} onchange="toggleSel('quote',${idx},this)"></td>
-      <td><b>${q.id}</b><div style="font-size:10px;color:var(--text-2);margin-top:2px;">${lang==='en'?'Latest':'آخر إصدار'}: ${quoteVersionLabel(q.version)}</div></td>
+      <td><b>${q.id}</b>${q.contractProjectId?`<div style="margin-top:4px;"><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;background:var(--green-soft);color:var(--green);font-size:10px;font-weight:800;">✓ ${lang==='en'?'Project created':'تم إنشاء مشروع'}</span></div>`:''}<div style="font-size:10px;color:var(--text-2);margin-top:2px;">${lang==='en'?'Latest':'آخر إصدار'}: ${quoteVersionLabel(q.version)}</div></td>
       <td>${q.customer || q.contactName || '—'}</td>
       <td class="trace-cell">${quoteTraceHtml(q)}</td>
       <td>${q.date}</td>
       <td style="font-weight:700;color:var(--blue);">${lang==='en' ? q.total.toLocaleString('en',{minimumFractionDigits:2})+' '+RYAL : RYAL+' '+q.total.toLocaleString('en',{minimumFractionDigits:2})}</td>
-      <td><select class="pill ${getQuoteStatusPill(q.status)} pill-select" onchange="setQuoteStatus(${idx},this.value)" style="cursor:pointer;text-align:center;" title="${lang==='en'?'Change status':'تغيير الحالة'}">${['review','approved','sent'].map(s=>`<option value="${s}"${s===q.status?' selected':''}>${getQuoteStatusText(s)}</option>`).join('')}</select></td>
+      <td><select class="pill ${getQuoteStatusPill(q.status)} pill-select" onchange="setQuoteStatus(${idx},this.value)" style="cursor:pointer;text-align:center;" title="${lang==='en'?'Change status':'تغيير الحالة'}">${['review','approved','sent','contracted'].map(s=>`<option value="${s}"${s===q.status?' selected':''}>${getQuoteStatusText(s)}</option>`).join('')}</select></td>
       <td style="text-align:center;white-space:nowrap;">
         ${q.attachments && q.attachments.length
           ? q.attachments.map((a,i)=>`
@@ -2436,6 +2438,7 @@ function renderSales(){
         <option value="review">${lang==='en'?'Under Review':'تحت المراجعة'}</option>
         <option value="approved">${lang==='en'?'Approved':'معتمد'}</option>
         <option value="sent">${lang==='en'?'Sent':'تم الإرسال'}</option>
+        <option value="contracted">${lang==='en'?'Contracted':'تم التعاقد'}</option>
       </select>
     </div>
     <button class="btn-mini" id="quoteFilterApply">${L.toolbar.applyFilter}</button>
@@ -2920,7 +2923,7 @@ function qSetPickValue(kind, value, labelText){
   if(sp) sp.textContent = labelText;
   const pop = document.getElementById(id + 'Pop');
   if(pop){
-    renderQPop({ trig, pop, kind, value:String(value), options: kind==='validity' ? qValidityOptions(value) : kind==='status' ? ['review','approved','sent'] : Object.keys(SALESPERSON_NAMES) });
+    renderQPop({ trig, pop, kind, value:String(value), options: kind==='validity' ? qValidityOptions(value) : kind==='status' ? ['review','approved','sent','contracted'] : Object.keys(SALESPERSON_NAMES) });
   }
 }
 function getQPickValue(id){
@@ -3084,7 +3087,7 @@ function wireQuotePickers(){
   kinds.forEach(k=>{
     if(!k.trig || !k.pop) return;
     k.value = String(k.trig.dataset.value);
-    k.options = k.kind === 'validity' ? qValidityOptions(k.value) : k.kind === 'status' ? ['review','approved','sent'] : Object.keys(SALESPERSON_NAMES);
+    k.options = k.kind === 'validity' ? qValidityOptions(k.value) : k.kind === 'status' ? ['review','approved','sent','contracted'] : Object.keys(SALESPERSON_NAMES);
     renderQPop(k);
     k.trig.addEventListener('click', ()=>{ k.pop.classList.contains('is-open') ? closeQPop(k) : openQPop(k); });
     k.trig.addEventListener('keydown', (e)=>{
@@ -7086,6 +7089,43 @@ async function undoProjectPayment(idx, installmentId, paymentId){
 }
 
 /* ── Project Modal ── */
+function findQuotationByNumber(number){
+  const normalized = String(number||'').trim().toLowerCase();
+  if(!normalized) return null;
+  const index = quotations.findIndex(q => String(q.id||'').trim().toLowerCase() === normalized);
+  return index === -1 ? null : {quote:quotations[index], index};
+}
+function quotePlainText(value){
+  return String(value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+}
+function renderProjectQuoteMatch(){
+  const holder = document.getElementById('pmQuoteMatch');
+  const quoteId = document.getElementById('pmId')?.value || '';
+  if(!holder) return;
+  const found = findQuotationByNumber(quoteId);
+  if(!found){ holder.innerHTML=''; return; }
+  const quote = found.quote;
+  const customer = quote.customer || quote.contactName || quote.id;
+  holder.innerHTML = `<div style="margin-top:7px;padding:8px 10px;border:1px solid var(--blue);background:var(--blue-soft);border-radius:8px;font-size:12px;display:flex;gap:8px;align-items:center;justify-content:space-between;"><span>${lang==='en'?'Matching quote found: ':'تم العثور على عرض سعر مطابق: '}<b>${escapeHtml(customer)}</b></span><button type="button" class="btn-mini" id="pmImportQuote" style="white-space:nowrap;">${lang==='en'?'Fill from quotation':'تعبئة من عرض السعر'}</button></div>`;
+  holder.querySelector('#pmImportQuote').onclick = () => applyQuotationToProjectForm(quote);
+}
+function applyQuotationToProjectForm(quote){
+  if(!quote) return;
+  const set = (id, value) => { const el=document.getElementById(id); if(el) el.value=value||''; };
+  const customer = quote.customer || quote.contactName || '';
+  set('pmClient', customer);
+  set('pmClientAr', customer);
+  set('pmClientPhone', quote.phone || '');
+  set('pmLoc', quote.address || '');
+  set('pmLocAr', quote.address || '');
+  set('pmContractValue', quote.total || '');
+  set('pmPayments', quotePlainText(quote.payments));
+  set('pmNotes', quotePlainText(quote.notes));
+  set('pmNotesAr', quotePlainText(quote.notes));
+  set('pmLinkedQuoteId', quote.id);
+  refreshProjectPaymentPlanAmounts();
+  showToast(lang==='en'?'Quotation data has been filled.':'تمت تعبئة بيانات عرض السعر.');
+}
 function openProjectModal(idx=null){
   const isEdit = idx !== null;
   const p = isEdit ? projects[idx] : null;
@@ -7100,7 +7140,7 @@ function openProjectModal(idx=null){
   overlay.innerHTML = `
     <div class="modal modal-xl project-modal">
       <h3>${isEdit ? L.editProject : L.newProject}</h3>
-      <div class="field-row"><div class="field"><label>${lang==='en'?'Quote number':'رقم العرض'}</label><input id="pmId" value="${p?p.id:''}" placeholder="${isEdit?'':lang==='en'?'Auto: PRJ-00'+projCounter:'تلقائي: PRJ-00'+projCounter}"></div><div class="field"></div></div>
+      <div class="field-row"><div class="field"><label>${lang==='en'?'Quote number':'رقم العرض'}</label><input id="pmId" value="${p?p.id:''}" placeholder="${isEdit?'':lang==='en'?'Auto: PRJ-00'+projCounter:'تلقائي: PRJ-00'+projCounter}"><input id="pmLinkedQuoteId" type="hidden" value="${p?.quoteId||''}"><div id="pmQuoteMatch"></div></div><div class="field"></div></div>
       <div class="project-identity-layout"><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.client} (EN)</label><input id="pmClient" value="${p?p.client:''}"></div><div class="field"><label>${L.client} (AR)</label><input id="pmClientAr" value="${p?p.clientAr:''}"></div></div></div><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.projectName} (EN)</label><input id="pmName" value="${p?p.name:''}"></div><div class="field"><label>${L.projectName} (AR)</label><input id="pmNameAr" value="${p?p.nameAr:''}"></div></div></div></div>
       <div class="project-type-contact-row"><div class="field"><label>${lang==='en'?'Client mobile number':'رقم جوال العميل'}</label><input id="pmClientPhone" type="tel" inputmode="tel" dir="ltr" value="${p?p.clientPhone||'':''}" placeholder="05XXXXXXXX"></div><div class="field"><label>${L.type}</label><div class="project-type-options">${['STW','HNG','TSP','FDT','PTC','CPS','MZN'].map(type=>`<label class="project-type-option"><input type="radio" name="pmProjectType" value="${type}"${p&&(p.type===type||p.typeAr===type)?' checked':''}><span>${type}</span></label>`).join('')}</div></div></div>
       <div class="field-row"><div class="field"><label>${L.location} (EN)</label><input id="pmLoc" value="${p?p.location:''}"></div><div class="field"><label>${L.location} (AR)</label><input id="pmLocAr" value="${p?p.locationAr:''}"></div></div>
@@ -7118,6 +7158,8 @@ function openProjectModal(idx=null){
     renderProjectPaymentPlanInputs(initialPaymentCount,initialPaymentPercents);
     document.getElementById('pmPaymentCount')?.addEventListener('change',e=>renderProjectPaymentPlanInputs(e.target.value));
     document.getElementById('pmContractValue')?.addEventListener('input',refreshProjectPaymentPlanAmounts);
+    document.getElementById('pmId')?.addEventListener('input',()=>{ document.getElementById('pmLinkedQuoteId').value=''; renderProjectQuoteMatch(); });
+    renderProjectQuoteMatch();
     document.getElementById('pmSaveBtn')?.addEventListener('click', ()=> saveProject(idx));
   }, 50);
 }
@@ -7128,6 +7170,13 @@ function saveProject(idx){
   const name = get('pmName'), nameAr = get('pmNameAr');
   if(!name && !nameAr) return showToast(lang==='en'?'Project name is required':'اسم المشروع مطلوب');
   const pid = get('pmId');
+  const plannedProjectId = idx !== null ? (pid || projects[idx].id) : (pid || nextProjectId());
+  const quoteReference = get('pmLinkedQuoteId') || pid || (idx!==null ? projects[idx]?.quoteId : '');
+  const quoteMatch = findQuotationByNumber(quoteReference);
+  if(quoteMatch?.quote.contractProjectId && quoteMatch.quote.contractProjectId !== plannedProjectId){
+    showToast(lang==='en'?'This quotation is already linked to another project.':'عرض السعر هذا مرتبط بالفعل بمشروع آخر.');
+    return;
+  }
   const paymentPlan = readProjectPaymentPlan(idx!==null ? projects[idx]?.paymentPlan : null);
   if(!paymentPlan) return;
   const stampNow = new Date().toISOString();
@@ -7143,6 +7192,7 @@ function saveProject(idx){
     p.edits = Array.isArray(p.edits) ? p.edits : [];
     if(stampWho) p.edits.push({name: stampWho, at: stampNow});
     if(pid) p.id = pid;
+    if(quoteMatch) p.quoteId = quoteMatch.quote.id;
     p.name = name||p.name; p.nameAr = nameAr||p.nameAr;
     p.client = get('pmClient')||p.client; p.clientAr = get('pmClientAr')||p.clientAr;
     p.clientPhone = get('pmClientPhone')||p.clientPhone;
@@ -7158,7 +7208,7 @@ function saveProject(idx){
     p.payments = get('pmPayments')||p.payments;
   } else {
     projects.push({
-      id: pid || nextProjectId(),
+      id: plannedProjectId, quoteId:quoteMatch?.quote.id||'',
       name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'), clientPhone:get('pmClientPhone'),
       type:selectedType, typeAr:selectedType, location:get('pmLoc'), locationAr:get('pmLocAr'),
       engineeringTrackingNo:get('pmEngineeringTrackingNo'), manager:get('pmManager'), engineer:get('pmEngineer'),
@@ -7170,6 +7220,17 @@ function saveProject(idx){
       phases: defaultPhases.map(dp => ({id:dp.id, name:dp.name, nameAr:dp.nameAr, status:'notStarted', start:'', end:'', resp:'', notes:'', notesAr:'', progress:0})),
       materials:[], team:[], docs:[], works:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
     });
+  }
+  const savedProject = idx !== null ? projects[idx] : projects[projects.length-1];
+  if(quoteMatch && savedProject){
+    savedProject.quoteId = quoteMatch.quote.id;
+    quotations[quoteMatch.index] = {
+      ...quoteMatch.quote,
+      status:'contracted',
+      contractProjectId:savedProject.id,
+      contractedAt:stampNow
+    };
+    syncQuotations();
   }
   syncCurrentProject(idx !== null ? idx : undefined);
   document.querySelectorAll('.modal-overlay.show').forEach(m => m.remove());
