@@ -1219,6 +1219,8 @@ html[dir="rtl"] .toast{transform:translateX(50%);}
 .project-identity-group .field input{padding:7px 9px;font-size:12px;}
 .project-type-contact-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:ltr;}
 .project-type-contact-row .field{direction:rtl;}
+.project-notes-field textarea{width:100%;min-width:130px;resize:vertical;padding:6px 9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:12.5px;font-family:inherit;outline:none;line-height:1.45;box-sizing:border-box;vertical-align:middle;transition:border-color .15s var(--ease),box-shadow .15s var(--ease);}
+.project-notes-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);}
 .project-payment-plan{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:13px;background:color-mix(in srgb,var(--surface-2) 45%,transparent);}
 .project-payment-plan-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;font-weight:800;color:var(--text-2);}
 .project-payment-plan-head label{margin:0;color:var(--text);}
