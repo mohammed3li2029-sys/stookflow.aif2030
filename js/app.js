@@ -5727,11 +5727,19 @@ function renderProjPhasesTab(p, idx, L){
 
 function renderProjMaterialsTab(p, idx, L){
   const forms=Array.isArray(p.materialForms)?p.materialForms:[];
-  const total = p.materials.length;
-  const prov = p.materials.filter(m=>m.status==='provided').length;
-  const ordered = p.materials.filter(m=>m.status==='ordered').length;
-  const na = p.materials.filter(m=>m.status==='notAvailable').length;
+  const allMaterials=Array.isArray(p.materials)?p.materials:[];
+  const directMaterials=allMaterials.filter(m=>!m.inventorySku);
+  const inventoryMaterials=allMaterials.filter(m=>m.inventorySku);
+  const total = allMaterials.length;
+  const prov = allMaterials.filter(m=>m.status==='provided').length;
+  const ordered = allMaterials.filter(m=>m.status==='ordered').length;
+  const na = allMaterials.filter(m=>m.status==='notAvailable').length;
   const pct = total ? Math.round(prov/total*100) : 0;
+  const materialTable = materials => `<div class="table-card"><table><thead><tr><th>${L.materialName}</th><th>${L.qtyRequired}</th><th>${L.qtyIssued}</th><th>${L.qtyRemaining}</th><th>${L.materialStatus}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${materials.map(m => `<tr>
+    <td>${lang==='en'?m.name:m.nameAr}</td><td>${m.qtyReq}</td><td>${m.qtyIssued}</td><td>${m.qtyRemaining}</td>
+    <td><span class="pill ${m.status==='provided'?'pill-ok':m.status==='ordered'?'pill-low':'pill-critical'}">${m.status==='provided'?L.statusProvided:m.status==='ordered'?L.statusOrdered:L.statusNotAvailable}</span></td>
+    <td><div class="row-actions"><button title="${lang==='en'?'Edit':'تعديل'}" onclick='editProjectMaterial(${idx},${JSON.stringify(m.id)})'>${ICONS.edit}</button><button title="${lang==='en'?'Delete':'حذف'}" onclick='deleteProjectMaterial(${idx},${JSON.stringify(m.id)})'>${ICONS.trash}</button></div></td>
+  </tr>`).join('')}</tbody></table></div>`;
   return `<div class="report-kpis" style="margin-bottom:12px;">
     <div class="report-kpi"><span class="report-kpi-label">${L.totalMaterials}</span><span class="report-kpi-value">${total}</span></div>
     <div class="report-kpi"><span class="report-kpi-label">${L.provided}</span><span class="report-kpi-value" style="color:var(--green);">${prov}</span></div>
@@ -5741,11 +5749,9 @@ function renderProjMaterialsTab(p, idx, L){
   <div style="margin-bottom:12px;"><div style="height:8px;background:var(--surface-2);border-radius:4px;"><div style="width:${pct}%;height:100%;background:var(--green);border-radius:4px;"></div></div><span style="font-size:11px;color:var(--text-2);">${pct}% ${lang==='en'?'provided':'متوفرة'}</span></div>
   <div style="margin-bottom:12px;display:flex;gap:8px;"><button class="btn-mini" onclick="addProjectMaterial(${idx})">+ ${L.addMaterial}</button><button class="btn-mini" style="background:var(--blue);" onclick="addProjectMaterialFromInventory(${idx})">+ ${lang==='en'?'Add from inventory':'إضافة من المخزون'}</button><button class="btn-mini" style="background:var(--green);">${L.importExcel}</button></div>
   ${forms.length?`<div class="table-card" style="margin-bottom:14px;"><table><thead><tr><th>${lang==='en'?'Material form':'نموذج المواد'}</th><th>${lang==='en'?'Date':'التاريخ'}</th><th>${L.contractNo}</th><th>${lang==='en'?'Items':'المواد'}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${forms.map((f,fi)=>`<tr><td><b>${escapeHtml(f.number||f.id)}</b></td><td>${escapeHtml(f.date||'—')}</td><td>${escapeHtml(f.contractNo||'—')}</td><td>${(f.items||[]).length}</td><td><div class="row-actions dw-actions dw-3"><button title="${lang==='en'?'View / print':'عرض / طباعة'}" onclick="openProjectMaterialFormPreview(${idx},${fi})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="addProjectMaterial(${idx},${fi})">${ICONS.edit}</button>${dwHtml(idx, 'project-material-form', fi)}</div></td></tr>`).join('')}</tbody></table></div>`:''}
-  ${total ? `<div class="table-card"><table><thead><tr><th>${L.materialName}</th><th>${L.qtyRequired}</th><th>${L.qtyIssued}</th><th>${L.qtyRemaining}</th><th>${L.materialStatus}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${p.materials.map(m => `<tr>
-    <td>${lang==='en'?m.name:m.nameAr}</td><td>${m.qtyReq}</td><td>${m.qtyIssued}</td><td>${m.qtyRemaining}</td>
-    <td><span class="pill ${m.status==='provided'?'pill-ok':m.status==='ordered'?'pill-low':'pill-critical'}">${m.status==='provided'?L.statusProvided:m.status==='ordered'?L.statusOrdered:L.statusNotAvailable}</span></td>
-    <td><div class="row-actions"><button title="${lang==='en'?'Edit':'تعديل'}" onclick="editProjectMaterial(${idx},${JSON.stringify(m.id)})">${ICONS.edit}</button><button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteProjectMaterial(${idx},${JSON.stringify(m.id)})">${ICONS.trash}</button></div></td>
-  </tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">'+ICONS.box+'<div>'+L.noMaterials+'</div></div>'}`;
+  ${directMaterials.length?`<div style="font-size:13px;font-weight:800;margin:16px 0 8px;">${lang==='en'?'Materials added manually':'المواد المضافة يدويًا'}</div>${materialTable(directMaterials)}`:''}
+  ${inventoryMaterials.length?`<div style="font-size:13px;font-weight:800;margin:16px 0 8px;color:var(--blue);">${lang==='en'?'Materials added from inventory':'المواد المضافة من المخزون'}</div>${materialTable(inventoryMaterials)}`:''}
+  ${!total?'<div class="empty-state">'+ICONS.box+'<div>'+L.noMaterials+'</div></div>':''}`;
 }
 
 function renderProjPurchasesTab(p, idx, L){
@@ -7229,6 +7235,18 @@ async function deleteProjectMaterial(idx, mid){
   const p = projects[idx]; if(!p) return;
   const material=p.materials.find(x=>x.id===mid); if(!material) return;
   if(!await showConfirm(lang==='en'?`Delete material "${material.name}"?`:`هل تريد حذف المادة «${material.nameAr||material.name}»؟`)) return;
+  /* A material selected from inventory has a matching issue request. Remove
+     that request too; if it was approved, put the issued quantity back first. */
+  const linkedRequestIndexes = reqsData.reduce((matches, request, requestIndex) => {
+    if(request.project === p.id && request.projectMaterialId === material.id) matches.push(requestIndex);
+    return matches;
+  }, []);
+  for(let i=linkedRequestIndexes.length-1; i>=0; i--){
+    const requestIndex = linkedRequestIndexes[i];
+    const request = reqsData[requestIndex];
+    if(request?.status === 'approved') applyReqStockChange(request, false);
+    reqsData.splice(requestIndex, 1);
+  }
   if(material.sourceFormId && Array.isArray(p.materialForms)){
     const form=p.materialForms.find(f=>f.id===material.sourceFormId);
     const itemNumber=Number(String(mid).split('-').pop());
