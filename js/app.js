@@ -3609,6 +3609,8 @@ function dwConfirm(btn){
         if(body) body.innerHTML = renderProjMaterialsTab(project, idx, STR[lang].projects);
         showToast(lang==='en'?'Material form deleted!':'تم حذف نموذج المواد!');
       }
+    } else if(wpage==='project-material'){
+      deleteProjectMaterial(idx, w.dataset.wsub, true);
     }
   }, 1300);
 }
@@ -5738,7 +5740,7 @@ function renderProjMaterialsTab(p, idx, L){
   const materialTable = materials => `<div class="table-card"><table><thead><tr><th>${L.materialName}</th><th>${L.qtyRequired}</th><th>${L.qtyIssued}</th><th>${L.qtyRemaining}</th><th>${L.materialStatus}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${materials.map(m => `<tr>
     <td>${lang==='en'?m.name:m.nameAr}</td><td>${m.qtyReq}</td><td>${m.qtyIssued}</td><td>${m.qtyRemaining}</td>
     <td><span class="pill ${m.status==='provided'?'pill-ok':m.status==='ordered'?'pill-low':'pill-critical'}">${m.status==='provided'?L.statusProvided:m.status==='ordered'?L.statusOrdered:L.statusNotAvailable}</span></td>
-    <td><div class="row-actions"><button title="${lang==='en'?'Edit':'تعديل'}" onclick='editProjectMaterial(${idx},${JSON.stringify(m.id)})'>${ICONS.edit}</button><button title="${lang==='en'?'Delete':'حذف'}" onclick='deleteProjectMaterial(${idx},${JSON.stringify(m.id)})'>${ICONS.trash}</button></div></td>
+    <td><div class="row-actions dw-actions dw-2"><button title="${lang==='en'?'Edit':'تعديل'}" onclick='editProjectMaterial(${idx},${JSON.stringify(m.id)})'>${ICONS.edit}</button>${dwHtml(idx, 'project-material', m.id)}</div></td>
   </tr>`).join('')}</tbody></table></div>`;
   return `<div class="report-kpis" style="margin-bottom:12px;">
     <div class="report-kpi"><span class="report-kpi-label">${L.totalMaterials}</span><span class="report-kpi-value">${total}</span></div>
@@ -7231,10 +7233,10 @@ function toggleProjectStatus(idx){
 function refreshProjectsPageIfNeeded(){
   if(currentPage === 'projects') navigate('projects', {quiet:true});
 }
-async function deleteProjectMaterial(idx, mid){
+async function deleteProjectMaterial(idx, mid, skipConfirm=false){
   const p = projects[idx]; if(!p) return;
   const material=p.materials.find(x=>x.id===mid); if(!material) return;
-  if(!await showConfirm(lang==='en'?`Delete material "${material.name}"?`:`هل تريد حذف المادة «${material.nameAr||material.name}»؟`)) return;
+  if(!skipConfirm && !await showConfirm(lang==='en'?`Delete material "${material.name}"?`:`هل تريد حذف المادة «${material.nameAr||material.name}»؟`)) return;
   /* A material selected from inventory has a matching issue request. Remove
      that request too; if it was approved, put the issued quantity back first. */
   const linkedRequestIndexes = reqsData.reduce((matches, request, requestIndex) => {

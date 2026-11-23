@@ -789,6 +789,7 @@ tbody tr:hover{background:var(--surface-2);}
 
 /* --- Delete-confirm widget (quotations) --- */
 .dw-actions{display:inline-flex;position:relative;width:130px;}
+.dw-actions.dw-2{width:62px;}
 .dw-actions.dw-3{width:96px;}
 .dw-actions.dw-req{width:172px;}
 .dw-req .delete-widget.expanded{width:104px;}
@@ -805,9 +806,11 @@ tbody tr:hover{background:var(--surface-2);}
   transition:width .32s cubic-bezier(.4,0,.2,1), background-color .25s ease, border-color .25s ease;
 }
 html:not([dir="rtl"]) .dw-actions .delete-widget{left:102px;}
+html:not([dir="rtl"]) .dw-actions.dw-2 .delete-widget{left:34px;}
 html:not([dir="rtl"]) .dw-actions.dw-3 .delete-widget{left:68px;}
 html:not([dir="rtl"]) .dw-actions.dw-req .delete-widget{left:68px;}
 html[dir="rtl"] .dw-actions .delete-widget{right:102px;}
+html[dir="rtl"] .dw-actions.dw-2 .delete-widget{right:34px;}
 html[dir="rtl"] .dw-actions.dw-3 .delete-widget{right:68px;}
 html[dir="rtl"] .dw-actions.dw-req .delete-widget{right:68px;}
 .delete-widget.expanded{width:108px;}
