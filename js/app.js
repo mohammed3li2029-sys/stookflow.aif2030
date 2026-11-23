@@ -4421,7 +4421,7 @@ function renderIssues(){
         <div class="alert-icon" style="background:var(--blue-soft);color:var(--blue)">${ICONS.issue}</div>
         <div class="alert-mid">
           <div class="alert-name">${r.id} — ${lang==='en'?r.item:r.itemAr} × ${r.qty}</div>
-          <div class="alert-sku">${lang==='en'?r.dept:r.deptAr}${r.project && reportProjectName(r.project) ? ' • ' + reportProjectName(r.project) : ''}</div>
+          <div class="alert-sku">${lang==='en'?r.dept:r.deptAr}${r.project && reportProjectName(r.project) ? ' • ' + reportProjectName(r.project) : ''}${(lang==='en'?r.projectClient:r.projectClientAr) ? ' • ' + (lang==='en'?r.projectClient:r.projectClientAr) : ''}${r.projectContractNo ? ' • ' + (lang==='en'?'Contract: ':'رقم العقد: ') + r.projectContractNo : ''}</div>
         </div>
         <span class="pill ${r.status==='approved'?'pill-ok':'pill-low'}" onclick="toggleReqStatus(${idx})" style="cursor:pointer;">${r.status==='approved'?(lang==='en'?'Approved':'تمت الموافقة'):(lang==='en'?'Pending':'قيد الانتظار')}</span>
         <div class="row-actions dw-actions dw-3 dw-req">
@@ -4605,6 +4605,15 @@ function reportProjectName(id){
   const p = projects.find(x => x.id === id);
   if(!p) return '';
   return lang==='en' ? (p.name||p.nameAr||id) : (p.nameAr||p.name||id);
+}
+function projectIssueDetails(project){
+  if(!project) return {name:'', client:'', clientAr:'', contractNo:''};
+  return {
+    name: lang==='en' ? (project.name||project.nameAr||project.id) : (project.nameAr||project.name||project.id),
+    client: project.client||project.clientAr||'',
+    clientAr: project.clientAr||project.client||'',
+    contractNo: project.contractNo||''
+  };
 }
 
 function getReportDateRange(){
@@ -5730,7 +5739,7 @@ function renderProjMaterialsTab(p, idx, L){
     <div class="report-kpi"><span class="report-kpi-label">${L.notAvailable}</span><span class="report-kpi-value" style="color:var(--red);">${na}</span></div>
   </div>
   <div style="margin-bottom:12px;"><div style="height:8px;background:var(--surface-2);border-radius:4px;"><div style="width:${pct}%;height:100%;background:var(--green);border-radius:4px;"></div></div><span style="font-size:11px;color:var(--text-2);">${pct}% ${lang==='en'?'provided':'متوفرة'}</span></div>
-  <div style="margin-bottom:12px;display:flex;gap:8px;"><button class="btn-mini" onclick="addProjectMaterial(${idx})">+ ${L.addMaterial}</button><button class="btn-mini" style="background:var(--green);">${L.importExcel}</button></div>
+  <div style="margin-bottom:12px;display:flex;gap:8px;"><button class="btn-mini" onclick="addProjectMaterial(${idx})">+ ${L.addMaterial}</button><button class="btn-mini" style="background:var(--blue);" onclick="addProjectMaterialFromInventory(${idx})">+ ${lang==='en'?'Add from inventory':'إضافة من المخزون'}</button><button class="btn-mini" style="background:var(--green);">${L.importExcel}</button></div>
   ${forms.length?`<div class="table-card" style="margin-bottom:14px;"><table><thead><tr><th>${lang==='en'?'Material form':'نموذج المواد'}</th><th>${lang==='en'?'Date':'التاريخ'}</th><th>${L.contractNo}</th><th>${lang==='en'?'Items':'المواد'}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${forms.map((f,fi)=>`<tr><td><b>${escapeHtml(f.number||f.id)}</b></td><td>${escapeHtml(f.date||'—')}</td><td>${escapeHtml(f.contractNo||'—')}</td><td>${(f.items||[]).length}</td><td><div class="row-actions dw-actions dw-3"><button title="${lang==='en'?'View / print':'عرض / طباعة'}" onclick="openProjectMaterialFormPreview(${idx},${fi})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="addProjectMaterial(${idx},${fi})">${ICONS.edit}</button>${dwHtml(idx, 'project-material-form', fi)}</div></td></tr>`).join('')}</tbody></table></div>`:''}
   ${total ? `<div class="table-card"><table><thead><tr><th>${L.materialName}</th><th>${L.qtyRequired}</th><th>${L.qtyIssued}</th><th>${L.qtyRemaining}</th><th>${L.materialStatus}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${p.materials.map(m => `<tr>
     <td>${lang==='en'?m.name:m.nameAr}</td><td>${m.qtyReq}</td><td>${m.qtyIssued}</td><td>${m.qtyRemaining}</td>
@@ -7482,6 +7491,76 @@ function addProjectMaterial(idx, formIndex=null){
   document.body.appendChild(overlay);const table=overlay.querySelector('#mfEditTable');numberMaterialFormRows(table);overlay.querySelector('#mfAddRow').onclick=()=>{table.querySelector('tbody').insertAdjacentHTML('beforeend',materialFormRow());numberMaterialFormRows(table);};
   overlay.querySelector('#mfSave').onclick=()=>{const formItems=[...table.querySelectorAll('tbody tr')].map(tr=>({formItemId:tr.dataset.mfItemId||`ITEM-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,5)}`,name:tr.querySelector('[data-mf-name]').value.trim(),qty:parseFloat(tr.querySelector('[data-mf-qty]').value)||0,note:tr.querySelector('[data-mf-note]').value.trim()})).filter(x=>x.name&&x.qty>0);if(!formItems.length){showToast(lang==='en'?'Add at least one material':'أضف مادة واحدة على الأقل');return;}const form=editing||{id:`MF-${Date.now().toString(36).toUpperCase()}`,number:`MF-${String(Date.now()).slice(-6)}`,createdAt:new Date().toISOString(),createdBy:{name:cwActorName()}};form.date=overlay.querySelector('#mfDate').value;form.type=p.type||'';form.contractNo=p.contractNo||'';form.items=formItems;if(!editing)p.materialForms.push(form);p.materials=p.materials.filter(m=>m.sourceFormId!==form.id);formItems.forEach((it,i)=>p.materials.push({id:`${form.id}-${it.formItemId}`,name:it.name,nameAr:it.name,qtyReq:it.qty,qtyIssued:0,qtyRemaining:it.qty,status:'notAvailable',note:it.note,sourceFormId:form.id,sourceFormItemId:it.formItemId}));syncCurrentProject(idx);overlay.remove();const body=document.getElementById('projDetailBody');if(body)body.innerHTML=renderProjMaterialsTab(p,idx,STR[lang].projects);showSuccessCheck(lang==='en'?'Material form saved!':'تم حفظ نموذج المواد!');};
 }
+function addProjectMaterialFromInventory(idx){
+  const p = projects[idx];
+  if(!p) return;
+  const items = inventoryData.filter(item => Number(item.stock) > 0);
+  if(!items.length){
+    showToast(lang==='en'?'No available items in inventory':'لا توجد أصناف متاحة في المخزون');
+    return;
+  }
+  const options = items.map((item,i) => `<option value="${i}">${escapeHtml(lang==='en'?item.name:item.nameAr||item.name)} — ${item.stock} ${escapeHtml(item.unit||'')}</option>`).join('');
+  const overlay = withModalOverlay(`<h3>${lang==='en'?'Add material from inventory':'إضافة مادة من المخزون'}</h3>
+    <div class="field"><label>${lang==='en'?'Inventory item':'صنف المخزون'}</label><select id="projectInventoryItem">${options}</select></div>
+    <div class="field"><label>${lang==='en'?'Required quantity':'الكمية المطلوبة'}</label><input id="projectInventoryQty" type="number" min="0.01" step="0.01" value="1" dir="ltr"></div>
+    <div id="projectInventoryStock" style="font-size:12px;color:var(--text-2);margin-top:-4px;"></div>
+    <div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${lang==='en'?'Cancel':'إلغاء'}</button><button class="btn btn-primary" id="projectInventorySave">${lang==='en'?'Add material':'إضافة المادة'}</button></div>`);
+  const select = overlay.querySelector('#projectInventoryItem');
+  const qty = overlay.querySelector('#projectInventoryQty');
+  const stockHint = overlay.querySelector('#projectInventoryStock');
+  const refreshHint = () => {
+    const item = items[Number(select.value)] || items[0];
+    stockHint.textContent = `${lang==='en'?'Available in stock: ':'المتاح في المخزون: '}${item.stock} ${item.unit||''}`;
+  };
+  select.onchange = refreshHint;
+  refreshHint();
+  overlay.querySelector('#projectInventorySave').onclick = () => {
+    const item = items[Number(select.value)];
+    const required = Number(qty.value);
+    if(!item || !Number.isFinite(required) || required <= 0){
+      showToast(lang==='en'?'Enter a valid quantity':'أدخل كمية صحيحة');
+      return;
+    }
+    p.materials = Array.isArray(p.materials) ? p.materials : [];
+    const projectMaterialId = `PM-${Date.now().toString(36).toUpperCase()}`;
+    p.materials.push({
+      id:projectMaterialId,
+      name:item.name,
+      nameAr:item.nameAr||item.name,
+      qtyReq:required,
+      qtyIssued:0,
+      qtyRemaining:required,
+      qtyAvailable:Number(item.stock)||0,
+      inventorySku:item.sku,
+      status:required <= Number(item.stock) ? 'provided' : 'notAvailable'
+    });
+    const maxRequestId = reqsData.reduce((max, request) => Math.max(max, parseInt(String(request.id||'').replace('REQ-',''), 10) || 0), 0);
+    const issueDetails = projectIssueDetails(p);
+    reqsData.push({
+      id:`REQ-${maxRequestId + 1}`,
+      dept:'Projects',
+      deptAr:'المشاريع',
+      project:p.id,
+      projectMaterialId,
+      projectClient:issueDetails.client,
+      projectClientAr:issueDetails.clientAr,
+      projectContractNo:issueDetails.contractNo,
+      sku:item.sku,
+      item:item.name,
+      itemAr:item.nameAr||item.name,
+      qty:required,
+      date:new Date().toISOString().slice(0,10),
+      reason:lang==='en'?'Project material request':'طلب مادة لمشروع',
+      priority:'normal',
+      status:'pending'
+    });
+    syncCurrentProject(idx);
+    overlay.remove();
+    const body = document.getElementById('projDetailBody');
+    if(body) body.innerHTML = renderProjMaterialsTab(p, idx, STR[lang].projects);
+    showSuccessCheck(lang==='en'?'Material added from inventory!':'تمت إضافة المادة من المخزون!');
+  };
+}
 function buildProjectMaterialSheet(p,f){return `<div class="mf-print-sheet" dir="${lang==='en'?'ltr':'rtl'}"><div class="mf-print-head"><div>${lang==='en'?'Material request':'طلب مواد'}<br><b>${escapeHtml(lang==='en'?p.type:p.typeAr||p.type||'—')}</b></div><div><b>ABU DUHAIR IRON FACTORY</b><br><span>${lang==='en'?'Material Form':'نموذج المواد'}</span></div><div>${escapeHtml(f.date||'—')}<br><b>${escapeHtml(f.contractNo||'—')}</b></div></div><table><thead><tr><th>#</th><th>${lang==='en'?'ITEM':'المادة'}</th><th>${lang==='en'?'QTY.':'العدد'}</th><th>${lang==='en'?'NOTE':'ملاحظة'}</th></tr></thead><tbody>${(f.items||[]).map((it,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(it.name)}</td><td>${it.qty}</td><td>${escapeHtml(it.note||'')}</td></tr>`).join('')}</tbody></table></div>`;}
 function openProjectMaterialFormPreview(idx,fi){const p=projects[idx],f=p?.materialForms?.[fi];if(!p||!f)return;const o=document.createElement('div');o.className='modal-overlay show';o.id='mfPreviewOverlay';o.style.cssText='z-index:10000;overflow-y:auto;';o.onclick=e=>{if(e.target===o)o.remove();};o.innerHTML=`<div class="modal mf-preview-modal"><div class="cw-preview-bar"><div class="cw-preview-title">${escapeHtml(f.number)}</div><div class="cw-preview-actions"><button class="btn-mini" onclick="document.getElementById('mfPreviewOverlay').remove();addProjectMaterial(${idx},${fi})">${lang==='en'?'Edit':'تعديل'}</button><button class="btn btn-primary btn-mini" onclick="printProjectMaterialForm(${idx},${fi})">${lang==='en'?'Print':'طباعة'}</button><button class="btn-mini" onclick="document.getElementById('mfPreviewOverlay').remove()">${lang==='en'?'Close':'إغلاق'}</button></div></div><div class="mf-preview-body">${buildProjectMaterialSheet(p,f)}</div></div>`;document.body.appendChild(o);}
 function printProjectMaterialForm(idx,fi){const p=projects[idx],f=p?.materialForms?.[fi];if(!p||!f)return;let host=document.getElementById('mfPrintHost');if(!host){host=document.createElement('div');host.id='mfPrintHost';document.body.appendChild(host);}host.innerHTML=buildProjectMaterialSheet(p,f);const st=document.createElement('style');st.textContent='@page{size:A4 portrait;margin:12mm;}';document.head.appendChild(st);let done=false;const clean=()=>{if(done)return;done=true;host.innerHTML='';st.remove();window.removeEventListener('afterprint',clean);};window.addEventListener('afterprint',clean);setTimeout(clean,60000);setTimeout(()=>window.print(),80);}
@@ -9208,6 +9287,18 @@ function buildReqDocHTML(r){
         <div style="font-weight:700;">${isAr?r.deptAr:r.dept}</div>
       </div>
       <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
+        <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'المشروع':'Project'}</div>
+        <div style="font-weight:700;">${(r.project && reportProjectName(r.project)) || (isAr?'—':'—')}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
+        <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'العميل':'Client'}</div>
+        <div style="font-weight:700;">${(isAr?r.projectClientAr:r.projectClient) || (isAr?'—':'—')}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
+        <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'رقم العقد':'Contract no.'}</div>
+        <div style="font-weight:700;" dir="ltr">${r.projectContractNo || (isAr?'—':'—')}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
         <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'تاريخ الطلب':'Date'}</div>
         <div style="font-weight:700;">${r.date}</div>
       </div>
@@ -9281,6 +9372,14 @@ function viewIssue(idx){
             <div style="font-weight:700;">${(r.project && reportProjectName(r.project)) || (isAr?'—':'—')}</div>
           </div>
           <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
+            <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'العميل':'Client'}</div>
+            <div style="font-weight:700;">${(isAr?r.projectClientAr:r.projectClient) || (isAr?'—':'—')}</div>
+          </div>
+          <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
+            <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'رقم العقد':'Contract no.'}</div>
+            <div style="font-weight:700;" dir="ltr">${r.projectContractNo || (isAr?'—':'—')}</div>
+          </div>
+          <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #1a237e;">
             <div style="font-size:11px;color:#888;margin-bottom:4px;">${isAr?'تاريخ الطلب':'Date'}</div>
             <div style="font-weight:700;">${r.date}</div>
           </div>
@@ -9350,10 +9449,10 @@ function findReqInventoryIndex(req){
 function applyReqStockChange(req, deduct){
   const idx = findReqInventoryIndex(req);
   if(idx === -1) return false;
-  const qty = Math.abs(parseInt(req.qty) || 0);
+  const qty = Math.abs(Number(req.qty) || 0);
   if(!qty) return false;
   const it = inventoryData[idx];
-  const cur = parseInt(it.stock) || 0;
+  const cur = Number(it.stock) || 0;
   const next = Math.max(0, cur + (deduct ? -qty : qty));
   inventoryData[idx] = { ...it, stock: next };
   if(next !== cur){
@@ -9368,6 +9467,19 @@ function applyReqStockChange(req, deduct){
   return true;
 }
 
+function updateProjectMaterialIssue(req, issued){
+  if(!req?.project || !req?.projectMaterialId) return;
+  const projectIndex = projects.findIndex(project => project.id === req.project);
+  if(projectIndex === -1) return;
+  const project = projects[projectIndex];
+  const material = (project.materials || []).find(item => item.id === req.projectMaterialId);
+  if(!material) return;
+  const amount = Math.abs(Number(req.qty) || 0);
+  material.qtyIssued = Math.max(0, (Number(material.qtyIssued) || 0) + (issued ? amount : -amount));
+  material.qtyRemaining = Math.max(0, (Number(material.qtyReq) || 0) - material.qtyIssued);
+  syncCurrentProject(projectIndex);
+}
+
 function toggleReqStatus(idx){
   const r = reqsData[idx];
   if(!r) return;
@@ -9378,6 +9490,7 @@ function toggleReqStatus(idx){
      and persists the new status to Supabase. */
   reqsData[idx] = { ...r, status: approving ? 'approved' : 'pending' };
   const touched = applyReqStockChange(reqsData[idx], approving);
+  updateProjectMaterialIssue(reqsData[idx], approving);
   if(approving){
     showToast(touched
       ? (lang==='en'?`Approved — ${r.qty} deducted from stock`:`تمت الموافقة — تم خصم ${r.qty} من المخزون`)
