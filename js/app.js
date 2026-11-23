@@ -3597,6 +3597,18 @@ function dwConfirm(btn){
     } else if(wpage==='crane'){
       // the widget itself is the confirmation, so skip the modal
       deleteCraneWorkDirect(idx, parseInt(w.dataset.wsub, 10));
+    } else if(wpage==='project-material-form'){
+      const formIndex = parseInt(w.dataset.wsub, 10);
+      const project = projects[idx];
+      const form = project?.materialForms?.[formIndex];
+      if(project && form){
+        project.materialForms.splice(formIndex, 1);
+        project.materials = (project.materials || []).filter(m => m.sourceFormId !== form.id);
+        syncCurrentProject(idx);
+        const body = document.getElementById('projDetailBody');
+        if(body) body.innerHTML = renderProjMaterialsTab(project, idx, STR[lang].projects);
+        showToast(lang==='en'?'Material form deleted!':'تم حذف نموذج المواد!');
+      }
     }
   }, 1300);
 }
@@ -5705,6 +5717,7 @@ function renderProjPhasesTab(p, idx, L){
 }
 
 function renderProjMaterialsTab(p, idx, L){
+  const forms=Array.isArray(p.materialForms)?p.materialForms:[];
   const total = p.materials.length;
   const prov = p.materials.filter(m=>m.status==='provided').length;
   const ordered = p.materials.filter(m=>m.status==='ordered').length;
@@ -5718,6 +5731,7 @@ function renderProjMaterialsTab(p, idx, L){
   </div>
   <div style="margin-bottom:12px;"><div style="height:8px;background:var(--surface-2);border-radius:4px;"><div style="width:${pct}%;height:100%;background:var(--green);border-radius:4px;"></div></div><span style="font-size:11px;color:var(--text-2);">${pct}% ${lang==='en'?'provided':'متوفرة'}</span></div>
   <div style="margin-bottom:12px;display:flex;gap:8px;"><button class="btn-mini" onclick="addProjectMaterial(${idx})">+ ${L.addMaterial}</button><button class="btn-mini" style="background:var(--green);">${L.importExcel}</button></div>
+  ${forms.length?`<div class="table-card" style="margin-bottom:14px;"><table><thead><tr><th>${lang==='en'?'Material form':'نموذج المواد'}</th><th>${lang==='en'?'Date':'التاريخ'}</th><th>${L.contractNo}</th><th>${lang==='en'?'Items':'المواد'}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${forms.map((f,fi)=>`<tr><td><b>${escapeHtml(f.number||f.id)}</b></td><td>${escapeHtml(f.date||'—')}</td><td>${escapeHtml(f.contractNo||'—')}</td><td>${(f.items||[]).length}</td><td><div class="row-actions dw-actions dw-3"><button title="${lang==='en'?'View / print':'عرض / طباعة'}" onclick="openProjectMaterialFormPreview(${idx},${fi})">${ICONS.eye}</button><button title="${lang==='en'?'Edit':'تعديل'}" onclick="addProjectMaterial(${idx},${fi})">${ICONS.edit}</button>${dwHtml(idx, 'project-material-form', fi)}</div></td></tr>`).join('')}</tbody></table></div>`:''}
   ${total ? `<div class="table-card"><table><thead><tr><th>${L.materialName}</th><th>${L.qtyRequired}</th><th>${L.qtyIssued}</th><th>${L.qtyRemaining}</th><th>${L.materialStatus}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${p.materials.map(m => `<tr>
     <td>${lang==='en'?m.name:m.nameAr}</td><td>${m.qtyReq}</td><td>${m.qtyIssued}</td><td>${m.qtyRemaining}</td>
     <td><span class="pill ${m.status==='provided'?'pill-ok':m.status==='ordered'?'pill-low':'pill-critical'}">${m.status==='provided'?L.statusProvided:m.status==='ordered'?L.statusOrdered:L.statusNotAvailable}</span></td>
@@ -7202,11 +7216,24 @@ function toggleProjectStatus(idx){
 function refreshProjectsPageIfNeeded(){
   if(currentPage === 'projects') navigate('projects', {quiet:true});
 }
-function deleteProjectMaterial(idx, mid){
+async function deleteProjectMaterial(idx, mid){
   const p = projects[idx]; if(!p) return;
+  const material=p.materials.find(x=>x.id===mid); if(!material) return;
+  if(!await showConfirm(lang==='en'?`Delete material "${material.name}"?`:`هل تريد حذف المادة «${material.nameAr||material.name}»؟`)) return;
+  if(material.sourceFormId && Array.isArray(p.materialForms)){
+    const form=p.materialForms.find(f=>f.id===material.sourceFormId);
+    const itemNumber=Number(String(mid).split('-').pop());
+    const itemIndex=form?.items?.findIndex(x=>x.formItemId===material.sourceFormItemId);
+    if(form && (itemIndex>=0 || Number.isFinite(itemNumber))){
+      form.items.splice(itemIndex>=0?itemIndex:itemNumber-1,1);
+      if(!form.items.length) p.materialForms=p.materialForms.filter(f=>f!==form);
+    }
+  }
   p.materials = p.materials.filter(x=>x.id!==mid);
+  syncCurrentProject(idx);
   const body = document.getElementById('projDetailBody');
   if(body) body.innerHTML = renderProjMaterialsTab(p, idx, STR[lang].projects);
+  showSuccessCheck(lang==='en'?'Material deleted!':'تم حذف المادة!');
 }
 function withModalOverlay(html){
   const o = document.createElement('div');
@@ -7445,17 +7472,19 @@ function showAddPOModal(idx){
     });
   }, 50);
 }
-function addProjectMaterial(idx){
-  const p = projects[idx]; if(!p) return;
-  const name = prompt(lang==='en'?'Material name:':'اسم المادة:');
-  if(!name) return;
-  const qty = parseInt(prompt(lang==='en'?'Required quantity:':'الكمية المطلوبة:')) || 0;
-  p.materials.push({id:'M'+Date.now(), name, nameAr:name, qtyReq:qty, qtyIssued:0, qtyRemaining:qty, status:'notAvailable'});
-  syncCurrentProject(idx);
-  const existing = document.getElementById('projDetailOverlay');
-  if(existing) existing.remove();
-  openProjectDetail(idx);
+function materialFormRow(item={}){return `<tr data-mf-item-id="${escapeHtml(item.formItemId||'')}"><td class="mf-no"></td><td><input data-mf-name value="${escapeHtml(item.name||'')}" placeholder="${lang==='en'?'Material name':'اسم المادة'}"></td><td><input data-mf-qty type="number" min="0" step="0.01" value="${item.qty||''}" placeholder="0" dir="ltr"></td><td><input data-mf-note value="${escapeHtml(item.note||'')}" placeholder="${lang==='en'?'Note':'ملاحظة'}"></td><td><button type="button" class="mf-remove">×</button></td></tr>`;}
+function numberMaterialFormRows(holder){holder.querySelectorAll('tbody tr').forEach((tr,i)=>{const no=tr.querySelector('.mf-no');if(no)no.textContent=i+1;tr.querySelector('.mf-remove').onclick=()=>{tr.remove();numberMaterialFormRows(holder);};});}
+function addProjectMaterial(idx, formIndex=null){
+  const p=projects[idx];if(!p)return; p.materialForms=Array.isArray(p.materialForms)?p.materialForms:[];
+  const editing=formIndex!==null?p.materialForms[formIndex]:null;const items=editing?.items?.length?editing.items:[{},{}];
+  const overlay=document.createElement('div');overlay.className='modal-overlay show';overlay.style.cssText='z-index:3000;overflow-y:auto;';overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  overlay.innerHTML=`<div class="modal material-form-modal"><h3>${editing?(lang==='en'?'Edit material form':'تعديل نموذج المواد'):(lang==='en'?'New material form':'نموذج مواد جديد')}</h3><div class="mf-head"><div><small>${lang==='en'?'Project type':'نوع المشروع'}</small><b>${escapeHtml(lang==='en'?p.type:p.typeAr||p.type||'—')}</b></div><div><small>${lang==='en'?'Contract no.':'رقم العقد'}</small><b>${escapeHtml(p.contractNo||'—')}</b></div><div><small>${lang==='en'?'Creation date':'تاريخ الإنشاء'}</small><input id="mfDate" type="date" value="${editing?.date||new Date().toISOString().slice(0,10)}"></div></div><div class="mf-table-wrap"><table id="mfEditTable" class="mf-table"><thead><tr><th>#</th><th>${lang==='en'?'Item':'المادة'}</th><th>${lang==='en'?'Qty.':'العدد'}</th><th>${lang==='en'?'Note':'ملاحظة'}</th><th></th></tr></thead><tbody>${items.map(materialFormRow).join('')}</tbody></table></div><button class="btn-mini" type="button" id="mfAddRow">+ ${lang==='en'?'Add material':'إضافة مادة'}</button><div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${lang==='en'?'Cancel':'إلغاء'}</button><button class="btn btn-primary" id="mfSave">${lang==='en'?'Save form':'حفظ النموذج'}</button></div></div>`;
+  document.body.appendChild(overlay);const table=overlay.querySelector('#mfEditTable');numberMaterialFormRows(table);overlay.querySelector('#mfAddRow').onclick=()=>{table.querySelector('tbody').insertAdjacentHTML('beforeend',materialFormRow());numberMaterialFormRows(table);};
+  overlay.querySelector('#mfSave').onclick=()=>{const formItems=[...table.querySelectorAll('tbody tr')].map(tr=>({formItemId:tr.dataset.mfItemId||`ITEM-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,5)}`,name:tr.querySelector('[data-mf-name]').value.trim(),qty:parseFloat(tr.querySelector('[data-mf-qty]').value)||0,note:tr.querySelector('[data-mf-note]').value.trim()})).filter(x=>x.name&&x.qty>0);if(!formItems.length){showToast(lang==='en'?'Add at least one material':'أضف مادة واحدة على الأقل');return;}const form=editing||{id:`MF-${Date.now().toString(36).toUpperCase()}`,number:`MF-${String(Date.now()).slice(-6)}`,createdAt:new Date().toISOString(),createdBy:{name:cwActorName()}};form.date=overlay.querySelector('#mfDate').value;form.type=p.type||'';form.contractNo=p.contractNo||'';form.items=formItems;if(!editing)p.materialForms.push(form);p.materials=p.materials.filter(m=>m.sourceFormId!==form.id);formItems.forEach((it,i)=>p.materials.push({id:`${form.id}-${it.formItemId}`,name:it.name,nameAr:it.name,qtyReq:it.qty,qtyIssued:0,qtyRemaining:it.qty,status:'notAvailable',note:it.note,sourceFormId:form.id,sourceFormItemId:it.formItemId}));syncCurrentProject(idx);overlay.remove();const body=document.getElementById('projDetailBody');if(body)body.innerHTML=renderProjMaterialsTab(p,idx,STR[lang].projects);showSuccessCheck(lang==='en'?'Material form saved!':'تم حفظ نموذج المواد!');};
 }
+function buildProjectMaterialSheet(p,f){return `<div class="mf-print-sheet" dir="${lang==='en'?'ltr':'rtl'}"><div class="mf-print-head"><div>${lang==='en'?'Material request':'طلب مواد'}<br><b>${escapeHtml(lang==='en'?p.type:p.typeAr||p.type||'—')}</b></div><div><b>ABU DUHAIR IRON FACTORY</b><br><span>${lang==='en'?'Material Form':'نموذج المواد'}</span></div><div>${escapeHtml(f.date||'—')}<br><b>${escapeHtml(f.contractNo||'—')}</b></div></div><table><thead><tr><th>#</th><th>${lang==='en'?'ITEM':'المادة'}</th><th>${lang==='en'?'QTY.':'العدد'}</th><th>${lang==='en'?'NOTE':'ملاحظة'}</th></tr></thead><tbody>${(f.items||[]).map((it,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(it.name)}</td><td>${it.qty}</td><td>${escapeHtml(it.note||'')}</td></tr>`).join('')}</tbody></table></div>`;}
+function openProjectMaterialFormPreview(idx,fi){const p=projects[idx],f=p?.materialForms?.[fi];if(!p||!f)return;const o=document.createElement('div');o.className='modal-overlay show';o.id='mfPreviewOverlay';o.style.cssText='z-index:10000;overflow-y:auto;';o.onclick=e=>{if(e.target===o)o.remove();};o.innerHTML=`<div class="modal mf-preview-modal"><div class="cw-preview-bar"><div class="cw-preview-title">${escapeHtml(f.number)}</div><div class="cw-preview-actions"><button class="btn-mini" onclick="document.getElementById('mfPreviewOverlay').remove();addProjectMaterial(${idx},${fi})">${lang==='en'?'Edit':'تعديل'}</button><button class="btn btn-primary btn-mini" onclick="printProjectMaterialForm(${idx},${fi})">${lang==='en'?'Print':'طباعة'}</button><button class="btn-mini" onclick="document.getElementById('mfPreviewOverlay').remove()">${lang==='en'?'Close':'إغلاق'}</button></div></div><div class="mf-preview-body">${buildProjectMaterialSheet(p,f)}</div></div>`;document.body.appendChild(o);}
+function printProjectMaterialForm(idx,fi){const p=projects[idx],f=p?.materialForms?.[fi];if(!p||!f)return;let host=document.getElementById('mfPrintHost');if(!host){host=document.createElement('div');host.id='mfPrintHost';document.body.appendChild(host);}host.innerHTML=buildProjectMaterialSheet(p,f);const st=document.createElement('style');st.textContent='@page{size:A4 portrait;margin:12mm;}';document.head.appendChild(st);let done=false;const clean=()=>{if(done)return;done=true;host.innerHTML='';st.remove();window.removeEventListener('afterprint',clean);};window.addEventListener('afterprint',clean);setTimeout(clean,60000);setTimeout(()=>window.print(),80);}
 
 
 /* ===================================================================
