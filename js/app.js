@@ -5488,7 +5488,7 @@ function renderProjectsPlan(){
         ondragstart="event.stopPropagation();event.dataTransfer.setData('text/plain',${idx});this.style.opacity='.4'"
         ondragend="this.style.opacity='1'" ondragover="event.preventDefault()">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div><b style="font-size:13px;color:var(--text-2);">${p.id}</b><div style="font-size:15px;font-weight:800;margin-top:2px;">${lang==='en'?p.name:p.nameAr}</div></div>
+          <div><b style="font-size:13px;color:var(--text-2);">${p.id}</b><div style="font-size:15px;font-weight:800;margin-top:2px;">${lang==='en'?p.name:p.nameAr}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:10px;"><span style="padding:2px 7px;border-radius:999px;background:var(--blue-soft);color:var(--blue);font-weight:800;">${escapeHtml(p.type||p.typeAr||'—')}</span><span style="color:var(--text-3);">${lang==='en'?'Contract: ':'رقم العقد: '}</span><b dir="ltr" style="color:var(--text-2);">${escapeHtml(p.contractNo||'—')}</b></div></div>
           <div style="text-align:right;"><span class="pill ${getProjStatusClass(p.status)}" onclick="event.stopPropagation();toggleProjectStatus(${idx})" style="cursor:pointer;">${getProjStatusLabel(p.status)}</span><div style="font-size:11px;color:var(--text-2);margin-top:3px;">${p.progress}% · ${remain !== null ? (remain < 0 ? Math.abs(remain)+(lang==='en'?'d overdue':'تأخير') : remain+(lang==='en'?'d left':'متبقي')) : '—'}</div></div>
         </div>
         <div style="display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;">
@@ -5695,12 +5695,13 @@ function openProjectDetail(idx){
 }
 
 function renderProjInfoTab(p, L, end, remain, idx){
+  const customerCategory = p.customerCategory==='individual' ? (lang==='en'?'Individual':'فردي') : p.customerCategory==='other' ? (lang==='en'?'Other':'غير ذلك') : (lang==='en'?'Company / Establishment':'مؤسسة أو شركة');
   return `<div class="row-2" style="grid-template-columns:1fr 1fr;">
     <div class="card" style="margin-bottom:0;"><div class="card-head"><div class="card-title">${lang==='en'?'General Info':'معلومات عامة'}</div></div>
       <div class="proj-info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">${[
         [lang==='en'?'Quote number':'رقم العرض', p.id],[L.projectName, lang==='en'?p.name:p.nameAr],
         [L.client, lang==='en'?p.client:p.clientAr],[lang==='en'?'Client mobile number':'رقم جوال العميل', p.clientPhone],
-        [L.type, lang==='en'?p.type:p.typeAr],[L.location, lang==='en'?p.location:p.locationAr],
+        [L.type, lang==='en'?p.type:p.typeAr],[lang==='en'?'Customer category':'فئة العميل', customerCategory],[L.location, lang==='en'?p.location:p.locationAr],
         [lang==='en'?'Engineering tracking number':'رقم المتابعة الهندسي', p.engineeringTrackingNo],[L.manager, p.manager],[L.engineer, p.engineer],
         [L.contractNo, p.contractNo],
         [L.contractValue, 'SAR '+p.contractValue.toLocaleString('en',{minimumFractionDigits:2})],[L.contractDate, p.contractDate],
@@ -7143,9 +7144,9 @@ function openProjectModal(idx=null){
       <h3>${isEdit ? L.editProject : L.newProject}</h3>
       <div class="field-row"><div class="field"><label>${lang==='en'?'Quote number':'رقم العرض'}</label><input id="pmId" value="${p?p.id:''}" placeholder="${isEdit?'':lang==='en'?'Auto: PRJ-00'+projCounter:'تلقائي: PRJ-00'+projCounter}"><input id="pmLinkedQuoteId" type="hidden" value="${p?.quoteId||''}"><div id="pmQuoteMatch"></div></div><div class="field"></div></div>
       <div class="project-identity-layout"><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.client} (EN)</label><input id="pmClient" value="${p?p.client:''}"></div><div class="field"><label>${L.client} (AR)</label><input id="pmClientAr" value="${p?p.clientAr:''}"></div></div></div><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.projectName} (EN)</label><input id="pmName" value="${p?p.name:''}"></div><div class="field"><label>${L.projectName} (AR)</label><input id="pmNameAr" value="${p?p.nameAr:''}"></div></div></div></div>
-      <div class="project-type-contact-row"><div class="field"><label>${lang==='en'?'Client mobile number':'رقم جوال العميل'}</label><input id="pmClientPhone" type="tel" inputmode="tel" dir="ltr" value="${p?p.clientPhone||'':''}" placeholder="05XXXXXXXX"></div><div class="field"><label>${L.type}</label><div class="project-type-options">${['STW','HNG','TSP','FDT','PTC','CPS','MZN'].map(type=>`<label class="project-type-option"><input type="radio" name="pmProjectType" value="${type}"${p&&(p.type===type||p.typeAr===type)?' checked':''}><span>${type}</span></label>`).join('')}</div></div></div>
+      <div class="project-type-contact-row"><div class="field"><label>${lang==='en'?'Client mobile number':'رقم جوال العميل'}</label><input id="pmClientPhone" type="tel" inputmode="tel" dir="ltr" value="${p?p.clientPhone||'':''}" placeholder="05XXXXXXXX"></div><div class="field"><label>${lang==='en'?'Customer category':'فئة العميل'}</label><select id="pmCustomerCategory"><option value="company"${(!p||p.customerCategory==='company'||!p.customerCategory)?' selected':''}>${lang==='en'?'Company / Establishment':'مؤسسة أو شركة'}</option><option value="individual"${p?.customerCategory==='individual'?' selected':''}>${lang==='en'?'Individual':'فردي'}</option><option value="other"${p?.customerCategory==='other'?' selected':''}>${lang==='en'?'Other':'غير ذلك'}</option></select></div><div class="field"><label>${L.type}</label><div class="project-type-options">${['STW','HNG','TSP','FDT','PTC','CPS','MZN'].map(type=>`<label class="project-type-option"><input type="radio" name="pmProjectType" value="${type}"${p&&(p.type===type||p.typeAr===type)?' checked':''}><span>${type}</span></label>`).join('')}</div></div></div>
       <div class="field-row"><div class="field"><label>${L.location} (EN)</label><input id="pmLoc" value="${p?p.location:''}"></div><div class="field"><label>${L.location} (AR)</label><input id="pmLocAr" value="${p?p.locationAr:''}"></div></div>
-      <div class="project-technical-fields"><div class="field-row project-technical-row"><div class="field"><label>${lang==='en'?'Engineering tracking number':'رقم المتابعة الهندسي'}</label><input id="pmEngineeringTrackingNo" value="${p?p.engineeringTrackingNo||'':''}" dir="ltr"></div><div class="field"><label>${L.manager}</label><input id="pmManager" value="${p?p.manager:''}"></div><div class="field"><label>${L.engineer}</label><input id="pmEngineer" value="${p?p.engineer:''}"></div></div></div>
+      <div class="project-technical-fields"><div class="field-row project-technical-row"><div class="field"><label>${lang==='en'?'Engineering tracking number':'رقم المتابعة الهندسي'}</label><input id="pmEngineeringTrackingNo" value="${p?p.engineeringTrackingNo||'':''}" dir="ltr"></div><div class="field"><label>${lang==='en'?'Contractor name':'اسم المقاول'}</label><input id="pmManager" value="${p?p.manager:''}"></div><div class="field"><label>${L.engineer}</label><input id="pmEngineer" value="${p?p.engineer:''}"></div></div></div>
       <div class="project-contract-fields"><div class="field-row project-contract-row"><div class="field"><label>${L.contractNo}</label><input id="pmContractNo" value="${p?p.contractNo:''}"></div><div class="field"><label>${L.contractDate}</label><input type="date" id="pmContractDate" value="${p?p.contractDate:''}"></div><div class="field"><label>${L.contractValue} (SAR)</label><input type="number" id="pmContractValue" value="${p?p.contractValue:''}"></div></div></div>
       <div class="project-schedule-fields"><div class="field-row project-schedule-row"><div class="field"><label>${L.startDate}</label><input type="date" id="pmStartDate" value="${p?p.startDate:''}"></div><div class="field"><label>${L.duration} (${lang==='en'?'days':'أيام'})</label><input type="number" id="pmDuration" value="${p?p.duration:''}"></div><div class="field"><label>${L.status}</label><select id="pmStatus">${PROJECT_STATUSES.map(s=>`<option value="${s}"${p&&p.status===s?' selected':''}>${getProjStatusLabel(s)}</option>`).join('')}</select></div></div></div>
       <div class="field project-notes-field"><label>${L.notes} (EN)</label><textarea id="pmNotes" rows="2">${p?p.notes||'':''}</textarea></div>
@@ -7196,7 +7197,7 @@ function saveProject(idx){
     if(quoteMatch) p.quoteId = quoteMatch.quote.id;
     p.name = name||p.name; p.nameAr = nameAr||p.nameAr;
     p.client = get('pmClient')||p.client; p.clientAr = get('pmClientAr')||p.clientAr;
-    p.clientPhone = get('pmClientPhone')||p.clientPhone;
+    p.clientPhone = get('pmClientPhone')||p.clientPhone; p.customerCategory = get('pmCustomerCategory')||p.customerCategory||'company';
     p.type = selectedType||p.type; p.typeAr = selectedType||p.typeAr;
     p.location = get('pmLoc')||p.location; p.locationAr = get('pmLocAr')||p.locationAr;
     p.engineeringTrackingNo = get('pmEngineeringTrackingNo')||p.engineeringTrackingNo; p.manager = get('pmManager')||p.manager;
@@ -7210,7 +7211,7 @@ function saveProject(idx){
   } else {
     projects.push({
       id: plannedProjectId, quoteId:quoteMatch?.quote.id||'',
-      name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'), clientPhone:get('pmClientPhone'),
+      name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'), clientPhone:get('pmClientPhone'), customerCategory:get('pmCustomerCategory')||'company',
       type:selectedType, typeAr:selectedType, location:get('pmLoc'), locationAr:get('pmLocAr'),
       engineeringTrackingNo:get('pmEngineeringTrackingNo'), manager:get('pmManager'), engineer:get('pmEngineer'),
       contractNo:get('pmContractNo'), contractFile:'', contractValue:parseFloat(get('pmContractValue'))||0,
