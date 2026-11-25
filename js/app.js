@@ -5790,7 +5790,8 @@ function switchProjDocsSub(view, idx){
 
 function renderDocsFilesList(p, idx, L){
   const fileIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
-  return `<div style="margin-bottom:12px;"><button class="btn-mini" onclick="showAddDocModal(${idx})">+ ${L.addDocument}</button></div>${p.docs.length ? `<div class="table-card"><table><thead><tr><th>${L.documentName}</th><th>${L.docType}</th><th>${lang==='en'?'File':'الملف'}</th><th>${L.uploadDate}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${p.docs.map((d,i) => `<tr><td>${escapeHtml(d.name)}</td><td><span class="cat-tag">${escapeHtml(d.type)}</span></td><td>${d.url ? `<a href="${escapeHtml(d.url)}" download="${escapeHtml(d.file||d.name)}" style="color:var(--blue);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">${fileIcon}${escapeHtml(d.file)||(lang==='en'?'View':'عرض')}</a>` : '<span style="color:var(--text-3);">—</span>'}</td><td>${d.date}</td><td><div class="row-actions"><button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteProjectDoc(${idx},${i})">${ICONS.trash}</button></div></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">'+ICONS.inbox+'<div>'+L.noDocs+'</div></div>'}`;
+  const docs = Array.isArray(p.docs) ? p.docs : [];
+  return `<div style="margin-bottom:12px;"><button class="btn-mini" onclick="showAddDocModal(${idx})">+ ${L.addDocument}</button></div>${docs.length ? `<div class="table-card"><table><thead><tr><th>${L.documentName}</th><th>${L.docType}</th><th>${lang==='en'?'File':'الملف'}</th><th>${L.uploadDate}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${docs.map((d,i) => { const isImage=(d.mime||'').startsWith('image/')||d.type==='Image'||/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(d.file||''); return `<tr><td>${escapeHtml(d.name)}</td><td><span class="cat-tag">${escapeHtml(d.type)}</span></td><td>${d.url ? (isImage ? `<a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" title="${lang==='en'?'View image':'عرض الصورة'}" style="display:inline-flex;align-items:center;gap:7px;color:var(--blue);text-decoration:none;font-weight:600;"><img src="${escapeHtml(d.url)}" alt="" style="width:30px;height:30px;object-fit:cover;border-radius:5px;border:1px solid var(--border);">${escapeHtml(d.file||d.name)}</a>` : `<a href="${escapeHtml(d.url)}" download="${escapeHtml(d.file||d.name)}" style="color:var(--blue);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:600;">${fileIcon}${escapeHtml(d.file)||(lang==='en'?'View':'عرض')}</a>`) : '<span style="color:var(--text-3);">—</span>'}</td><td>${d.date}</td><td><div class="row-actions"><button title="${lang==='en'?'Delete':'حذف'}" onclick="deleteProjectDoc(${idx},${i})">${ICONS.trash}</button></div></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty-state">'+ICONS.inbox+'<div>'+L.noDocs+'</div></div>'}`;
 }
 
 /* ===================================================================
@@ -7362,27 +7363,45 @@ function showAddDocModal(idx){
   const p = projects[idx]; if(!p) return;
   const L = STR[lang].projects;
   const overlay = withModalOverlay(`<h3>${L.addDocument}</h3>
-    <div class="field"><label>${L.documentName}</label><input id="docName"></div>
-    <div class="field"><label>${L.docType}</label><select id="docType"><option value="PDF">PDF</option><option value="DWG">DWG</option><option value="XLSX">XLSX</option></select></div>
-    <div class="field"><label>${lang==='en'?'File':'الملف'}</label><input type="file" id="docFile"></div>
+    <div class="field"><label>${L.documentName}</label><input id="docName" placeholder="${lang==='en'?'Optional — uses the file name':'اختياري — سيُستخدم اسم الملف'}"></div>
+    <div class="field"><label>${L.docType}</label><select id="docType"><option value="PDF">PDF</option><option value="DWG">DWG</option><option value="XLSX">XLSX</option><option value="Image">${lang==='en'?'Image':'صورة'}</option></select></div>
+    <div class="field"><label>${lang==='en'?'File / image':'الملف أو الصورة'}</label><input type="file" id="docFile" accept=".pdf,.dwg,.xlsx,.xls,.doc,.docx,image/*"></div>
     <div class="field"><label>${L.uploadDate}</label><input type="date" id="docDate" value="${new Date().toISOString().split('T')[0]}"></div>
     <div class="modal-actions"><button class="btn" onclick="this.closest('.modal-overlay').remove()">${lang==='en'?'Cancel':'إلغاء'}</button><button class="btn btn-primary" id="docSave">${lang==='en'?'Add':'إضافة'}</button></div>`);
   setTimeout(()=>{
+    const fileInput = overlay.querySelector('#docFile');
+    const nameInput = overlay.querySelector('#docName');
+    const typeInput = overlay.querySelector('#docType');
+    fileInput?.addEventListener('change', ()=>{
+      const selected = fileInput.files?.[0];
+      if(!selected) return;
+      if(!nameInput.value.trim()) nameInput.value = selected.name.replace(/\.[^.]+$/, '');
+      if(selected.type?.startsWith('image/')) typeInput.value = 'Image';
+    });
     document.getElementById('docSave')?.addEventListener('click', async ()=>{
-      const name = document.getElementById('docName')?.value?.trim();
-      if(!name) return;
-      const fileInput = document.getElementById('docFile');
       const file = fileInput?.files?.[0];
+      const name = nameInput?.value?.trim() || file?.name?.replace(/\.[^.]+$/, '') || '';
+      if(!name){ showToast(lang==='en'?'Choose a file or enter a document name':'اختر ملفًا أو أدخل اسم المستند'); return; }
+      const saveBtn = overlay.querySelector('#docSave');
+      if(saveBtn) { saveBtn.disabled=true; saveBtn.textContent=lang==='en'?'Saving...':'جارٍ الحفظ...'; }
       if(file){
-        const { url } = await uploadFileOrFallback(file, 'projects');
-        p.docs.push({name, type:document.getElementById('docType')?.value||'PDF', date:document.getElementById('docDate')?.value||'', url, file:file.name});
+        try{
+          const { url, path } = await uploadFileOrFallback(file, 'projects');
+          p.docs = Array.isArray(p.docs) ? p.docs : [];
+          p.docs.push({name, type:typeInput?.value||'PDF', date:document.getElementById('docDate')?.value||'', url, path:path||'', file:file.name, mime:file.type||''});
+        }catch(err){
+          if(saveBtn) { saveBtn.disabled=false; saveBtn.textContent=lang==='en'?'Add':'إضافة'; }
+          showToast(lang==='en'?'Could not save this file. Please try again.':'تعذر حفظ الملف، حاول مرة أخرى.');
+          return;
+        }
         syncCurrentProject(idx);
         overlay.remove();
         const existing = document.getElementById('projDetailOverlay');
         if(existing) existing.remove();
         openProjectDetail(idx);
       } else {
-        p.docs.push({name, type:document.getElementById('docType')?.value||'PDF', date:document.getElementById('docDate')?.value||'', url:'', file:''});
+        p.docs = Array.isArray(p.docs) ? p.docs : [];
+        p.docs.push({name, type:typeInput?.value||'PDF', date:document.getElementById('docDate')?.value||'', url:'', path:'', file:'', mime:''});
         syncCurrentProject(idx);
         overlay.remove();
         const existing = document.getElementById('projDetailOverlay');
