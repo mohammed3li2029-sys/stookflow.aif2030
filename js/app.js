@@ -5395,6 +5395,10 @@ let projSearchValue = '';
    choice rather than data, so it is deliberately NOT persisted — a filter
    restored on the next visit would silently hide projects. */
 let projPlanStatus = 'all';
+/* Automation Plan card filters are view-only; they deliberately reset when
+   reopening the page so no projects disappear unexpectedly for a user. */
+let projPlanPeriod = 'all';
+let projPlanType = 'all';
 let currentProjectIdx = -1;
 
 function getPhaseLabel(id){
@@ -5475,6 +5479,49 @@ function projPlanSetStatus(v){
   projPlanStatus = v || 'all';
   navigate('projects');
 }
+function planPeriodOptions(){
+  return [
+    ['all', lang==='en' ? 'All periods' : 'كل الفترات'],
+    ['week', lang==='en' ? 'This week' : 'هذا الأسبوع'],
+    ['month', lang==='en' ? 'This month' : 'هذا الشهر'],
+    ['twoMonths', lang==='en' ? 'Last 2 months' : 'آخر شهرين']
+  ];
+}
+function planTypeOptions(){
+  const types = [...new Set(projects.map(p => String(p.type || p.typeAr || '').trim()).filter(Boolean))].sort();
+  return [['all', lang==='en' ? 'All types' : 'كل الأنواع'], ...types.map(type => [type, type])];
+}
+function projPlanSetPeriod(v){
+  projPlanPeriod = v || 'all';
+  navigate('projects');
+}
+function projPlanSetType(v){
+  projPlanType = v || 'all';
+  navigate('projects');
+}
+function projectPlanDate(project){
+  const raw = String(project?.startDate || project?.createdAt || '').slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const date = new Date(`${raw}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+function projectMatchesPlanPeriod(project){
+  if(projPlanPeriod === 'all') return true;
+  const date = projectPlanDate(project);
+  if(!date) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  if(projPlanPeriod === 'week'){
+    const start = new Date(today); start.setDate(today.getDate() - today.getDay());
+    const end = new Date(start); end.setDate(start.getDate()+7);
+    return date >= start && date < end;
+  }
+  if(projPlanPeriod === 'month') return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth();
+  if(projPlanPeriod === 'twoMonths'){
+    const start = new Date(today); start.setMonth(start.getMonth()-2);
+    return date >= start && date <= today;
+  }
+  return true;
+}
 function renderProjectsPlan(){
   const L = STR[lang].projects;
   const phaseColors = {notStarted:'var(--surface-2)',inProgress:'var(--blue)',completed:'var(--green)',delayed:'var(--red)'};
@@ -5484,14 +5531,24 @@ function renderProjectsPlan(){
      right project regardless of the active filter. */
   const cards = projects
     .map((p, idx) => ({p, idx}))
-    .filter(o => projPlanStatus === 'all' || o.p.status === projPlanStatus);
+    .filter(o => (projPlanStatus === 'all' || o.p.status === projPlanStatus)
+      && (projPlanType === 'all' || String(o.p.type || o.p.typeAr || '') === projPlanType)
+      && projectMatchesPlanPeriod(o.p));
   /* Drag-reorder only makes sense unfiltered: the drop handler splices by
      position in `projects`, and a filtered subset has no one-to-one mapping. */
-  const draggable = projPlanStatus === 'all' ? 'true' : 'false';
+  const draggable = projPlanStatus === 'all' && projPlanPeriod === 'all' && projPlanType === 'all' ? 'true' : 'false';
   return `<div class="plan-toolbar">
       <div class="plan-status-filter">
         ${selField({id:'projPlanStatusSelect', noLabel:true, value:projPlanStatus, hasClear:false,
           options:planStatusOptions(), onChange:projPlanSetStatus})}
+      </div>
+      <div class="plan-status-filter">
+        ${selField({id:'projPlanPeriodSelect', noLabel:true, value:projPlanPeriod, hasClear:false,
+          options:planPeriodOptions(), onChange:projPlanSetPeriod})}
+      </div>
+      <div class="plan-status-filter">
+        ${selField({id:'projPlanTypeSelect', noLabel:true, value:projPlanType, hasClear:false,
+          options:planTypeOptions(), onChange:projPlanSetType})}
       </div>
       <span class="plan-count">${cards.length} / ${projects.length}</span>
     </div>
@@ -8618,7 +8675,7 @@ function postRenderHooks(page){
     const nb = document.getElementById('newProjBtn');
     if(nb) nb.addEventListener('click', ()=> openProjectModal(null));
     const planGrid = document.getElementById('planGrid');
-    if(planGrid && projPlanStatus === 'all'){
+    if(planGrid && projPlanStatus === 'all' && projPlanPeriod === 'all' && projPlanType === 'all'){
       planGrid.ondrop = function(e){
         e.preventDefault();
         const from = parseInt(e.dataTransfer.getData('text/plain'));
