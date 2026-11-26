@@ -5723,6 +5723,7 @@ function openProjectDetail(idx){
           <span class="pill" style="background:rgba(255,255,255,.2);color:#fff;">${getProjStatusLabel(p.status)}</span>
         </div><p style="margin:6px 0 0;font-size:13px;opacity:.85;">${lang==='en'?p.client:p.clientAr} · ${lang==='en'?p.type:p.typeAr}</p></div>
         <div style=\"display:flex;align-items:center;gap:8px;\">
+          <button id=\"projPrintBtn\" title=\"${lang==='en'?'Print / Save PDF':'طباعة / حفظ PDF'}\" style=\"background:rgba(255,255,255,.2);border:none;color:#fff;padding:0 12px;height:32px;border-radius:16px;cursor:pointer;font-size:12px;font-weight:700;\">${lang==='en'?'Print':'طباعة'}</button>
           <button id=\"projSyncNowBtn\" title=\"Sync now / مزامنة الآن\" style=\"background:rgba(255,255,255,.2);border:none;color:#fff;padding:0 12px;height:32px;border-radius:16px;cursor:pointer;font-size:12px;font-weight:700;\">${lang==='en'?'Sync now':'مزامنة الآن'}</button>
           <button onclick="this.closest('.modal-overlay').remove();refreshProjectsPageIfNeeded()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;">✕</button>
         </div>
@@ -5734,6 +5735,8 @@ function openProjectDetail(idx){
     </div>`;
   document.body.appendChild(overlay);
   setTimeout(() => {
+    const printBtn = document.getElementById('projPrintBtn');
+    if(printBtn) printBtn.addEventListener('click', () => printProjectInfo(idx));
     const syncBtn = document.getElementById('projSyncNowBtn');
     if(syncBtn){
       syncBtn.addEventListener('click', function(){
@@ -5788,6 +5791,58 @@ function renderProjInfoTab(p, L, end, remain, idx){
     <div class="card" style="margin-bottom:12px;"><div class="card-head"><div class="card-title">${L.notes}</div></div><p style="font-size:13px;color:var(--text-2);margin:0;white-space:pre-wrap;">${lang==='en'?p.notes:p.notesAr||'—'}</p></div>
     ${renderProjectPaymentsCard(p, idx)}</div>
   </div>`;
+}
+
+function buildProjectPrintSheet(p){
+  const isEn = lang==='en';
+  const dir = isEn ? 'ltr' : 'rtl';
+  const L = STR[lang].projects;
+  const end = calcEndDate(p.startDate, p.duration);
+  const remain = calcDaysRemaining(end);
+  const total = Number(p.contractValue)||0;
+  const installments = projectPaymentInstallments(p.paymentPlan);
+  const paid = installments.reduce((sum, installment) => sum + projectPaymentPaid(installment), 0);
+  const paymentRows = installments.length ? installments.map((installment, index) => {
+    const paidValue = projectPaymentPaid(installment);
+    const state = projectPaymentStatus(installment);
+    const stateText = state==='paid' ? (isEn?'Paid':'مدفوعة') : state==='partial' ? (isEn?'Partial':'جزئية') : (isEn?'Pending':'بانتظار الدفع');
+    return `<tr><td>${index+1}</td><td>${installment.percent||0}%</td><td>${Number(installment.amount||0).toLocaleString('en',{minimumFractionDigits:2})}</td><td>${paidValue.toLocaleString('en',{minimumFractionDigits:2})}</td><td>${Math.max(0,Number(installment.amount||0)-paidValue).toLocaleString('en',{minimumFractionDigits:2})}</td><td class="pps-${state}">${stateText}</td></tr>`;
+  }).join('') : `<tr><td colspan="6" class="pps-empty">${isEn?'No payment plan added.':'لا توجد خطة دفعات مضافة.'}</td></tr>`;
+  const info = [
+    [isEn?'Quote number':'رقم العرض',p.id], [L.projectName,isEn?p.name:p.nameAr],
+    [L.client,isEn?p.client:p.clientAr], [isEn?'Client by':'العميل بواسطة',projectClientByLabel(p.clientBy,p.clientByOther)],
+    [isEn?'Client mobile':'رقم جوال العميل',p.clientPhone], [L.type,isEn?p.type:p.typeAr],
+    [L.contractNo,p.contractNo], [L.contractDate,p.contractDate], [L.contractValue,`${total.toLocaleString('en',{minimumFractionDigits:2})} ${isEn?'SAR':'ر.س'}`],
+    [L.startDate,p.startDate], [L.endDate,end], [L.duration,`${p.duration||'—'} ${isEn?'days':'يوم'}`],
+    [isEn?'Contractor':'اسم المقاول',p.manager], [L.engineer,p.engineer], [isEn?'Engineering tracking number':'رقم المتابعة الهندسي',p.engineeringTrackingNo],
+    [L.status,getProjStatusLabel(p.status)]
+  ];
+  const infoRows = info.map(([label,value]) => `<div class="pps-field"><span>${escapeHtml(label)}</span><b>${escapeHtml(String(value||'—'))}</b></div>`).join('');
+  const progressColor = remain!==null && remain<0 ? '#d9363e' : Number(p.progress)>=80 ? '#13834b' : '#0a66ff';
+  return `<section class="project-print-sheet" dir="${dir}">
+    <header class="pps-head"><div><b>${isEn?'ABU DUHAIR IRON FACTORY':'مصنع أبو ظهير للحديد'}</b><span>${isEn?'Project management':'إدارة المشاريع'}</span></div><div><h1>${isEn?'PROJECT SUMMARY':'ملخص معلومات المشروع'}</h1><small>${isEn?'Printed':'تاريخ الطباعة'}: ${new Date().toLocaleDateString(isEn?'en-GB':'ar-SA')}</small></div></header>
+    <div class="pps-title"><div><small>${isEn?'Project':'المشروع'}</small><h2>${escapeHtml(isEn?p.name:p.nameAr||p.name||'—')}</h2></div><div><small>${isEn?'Project / Quote No.':'رقم المشروع / العرض'}</small><b dir="ltr">${escapeHtml(p.id||'—')}</b></div></div>
+    <h3>${isEn?'Project information':'معلومات المشروع'}</h3><div class="pps-grid">${infoRows}</div>
+    <section class="pps-progress"><div class="pps-section-head"><h3>${isEn?'Progress':'نسبة الإنجاز'}</h3><b style="color:${progressColor}">${Number(p.progress)||0}%</b></div><div class="pps-bar"><span style="width:${Math.max(0,Math.min(100,Number(p.progress)||0))}%;background:${progressColor}"></span></div><div class="pps-progress-meta"><span>${getProjStatusLabel(p.status)}</span><span>${remain===null?'—':remain<0?(isEn?`${Math.abs(remain)} days overdue`:`متأخر ${Math.abs(remain)} يوم`):(isEn?`${remain} days remaining`:`متبقي ${remain} يوم`)}</span></div></section>
+    <section class="pps-notes"><h3>${isEn?'Notes':'الملاحظات'}</h3><p>${escapeHtml((isEn?p.notes:(p.notesAr||p.notes))||'—')}</p></section>
+    <section><div class="pps-section-head"><h3>${isEn?'Payment plan':'خطة الدفعات'}</h3><b>${isEn?'Paid':'المدفوع'}: ${paid.toLocaleString('en',{minimumFractionDigits:2})} / ${total.toLocaleString('en',{minimumFractionDigits:2})} ${isEn?'SAR':'ر.س'}</b></div><table class="pps-table"><thead><tr><th>#</th><th>${isEn?'Percent':'النسبة'}</th><th>${isEn?'Due':'المستحق'}</th><th>${isEn?'Paid':'المدفوع'}</th><th>${isEn?'Remaining':'المتبقي'}</th><th>${isEn?'Status':'الحالة'}</th></tr></thead><tbody>${paymentRows}</tbody></table>${p.payments?`<div class="pps-payment-note"><b>${isEn?'Payment notes':'ملاحظات الدفعات'}:</b> ${escapeHtml(p.payments)}</div>`:''}</section>
+    <footer>${isEn?'This document was generated from the project management system.':'تم إنشاء هذا المستند من نظام إدارة المشاريع.'}</footer>
+  </section>`;
+}
+function printProjectInfo(idx){
+  const project = projects[idx]; if(!project) return;
+  /* A dedicated print window avoids the app's modal/overlay styles being
+     inherited by the browser's print preview, which could leave a blank page. */
+  const printWindow = window.open('', '_blank', 'width=900,height=1050');
+  if(!printWindow){
+    showToast(lang==='en' ? 'Allow pop-ups to print this project.' : 'اسمح بالنوافذ المنبثقة لطباعة المشروع.');
+    return;
+  }
+  const printCss = `@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box}body{margin:0;background:#fff}.project-print-sheet{width:190mm;min-height:277mm;margin:0 auto;background:#fff;color:#172033;font-family:Arial,Tajawal,sans-serif;font-size:11px;line-height:1.45}.pps-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0A66FF;padding:0 0 10px;margin-bottom:12px}.pps-head>div:first-child b{display:block;font-size:15px;color:#062B68}.pps-head span,.pps-head small{display:block;color:#64748b;font-size:10px;margin-top:3px}.pps-head h1{font-size:18px;margin:0;color:#062B68;letter-spacing:.3px}.pps-head>div:last-child{text-align:end}.pps-title{display:flex;justify-content:space-between;gap:15px;padding:10px 12px;margin-bottom:12px;border:1px solid #cbd7e7;border-radius:8px;background:#f4f8ff}.pps-title small,.pps-field span{display:block;color:#64748b;font-size:9px;font-weight:700}.pps-title h2{margin:2px 0 0;font-size:15px;color:#16294d}.pps-title b{display:block;margin-top:3px;font-size:13px;color:#0A66FF}.project-print-sheet h3{font-size:12px;margin:12px 0 7px;color:#062B68}.pps-grid{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid #d6e0ec;border-radius:8px;overflow:hidden}.pps-field{min-height:37px;padding:6px 8px;border-bottom:1px solid #dfe7f0}.pps-field:nth-child(odd){border-inline-end:1px solid #dfe7f0;background:#f9fbfe}.pps-field b{display:block;margin-top:1px;font-size:11px;color:#172033;word-break:break-word}.pps-progress,.pps-notes{margin-top:12px;padding:10px 11px;border:1px solid #d6e0ec;border-radius:8px}.pps-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.pps-section-head h3{margin:0}.pps-section-head>b{font-size:11px;color:#0A66FF}.pps-bar{height:10px;margin-top:8px;background:#e5ebf3;border-radius:10px;overflow:hidden}.pps-bar span{display:block;height:100%;border-radius:inherit}.pps-progress-meta{display:flex;justify-content:space-between;margin-top:5px;color:#64748b;font-size:10px}.pps-notes p{white-space:pre-wrap;margin:0;color:#334155;min-height:18px}.pps-table{width:100%;border-collapse:collapse;border:1px solid #c9d7e6;font-size:10px}.pps-table th{padding:6px;background:#062B68;color:#fff;text-align:center;font-size:10px}.pps-table td{padding:6px;border-top:1px solid #d9e3ee;text-align:center}.pps-table tbody tr:nth-child(even){background:#f7faff}.pps-empty{color:#64748b}.pps-paid{color:#13834b;font-weight:800}.pps-partial{color:#0A66FF;font-weight:800}.pps-pending{color:#b7791f;font-weight:800}.pps-payment-note{margin-top:8px;padding:7px 8px;border-inline-start:3px solid #0A66FF;background:#f4f8ff;white-space:pre-wrap;color:#334155;font-size:10px}.project-print-sheet footer{margin-top:15px;padding-top:7px;border-top:1px solid #d6e0ec;text-align:center;color:#94a3b8;font-size:9px}`;
+  printWindow.onload = () => { printWindow.focus(); setTimeout(() => printWindow.print(), 250); };
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html><html dir="${lang==='en'?'ltr':'rtl'}"><head><meta charset="utf-8"><title>${escapeHtml(project.id||'Project')}</title><style>${printCss}</style></head><body>${buildProjectPrintSheet(project)}</body></html>`);
+  printWindow.document.close();
 }
 
 function renderProjPhasesTab(p, idx, L){
