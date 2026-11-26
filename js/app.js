@@ -9978,7 +9978,7 @@ function profileUploadFolder(){
   const userKey = normalizeUserEmail(profileData.userKey || profileData.email) || 'user';
   return `profiles/${userKey.replace(/[^a-z0-9._-]/g, '_')}`;
 }
-function saveCurrentUserProfile(){
+async function saveCurrentUserProfile(){
   const index = getCurrentProfileUserIndex();
   if(index < 0){
     showToast(lang==='en' ? 'Your user record could not be found.' : 'تعذر العثور على سجل المستخدم الخاص بك.');
@@ -9990,14 +9990,23 @@ function saveCurrentUserProfile(){
   usersData[index] = {...currentUser, name:profileData.name, init:profileData.initials, image:profileData.image || null};
   profileData.email = currentUser.email;
   profileData.userKey = normalizeUserEmail(currentUser.email);
-  if(typeof syncLoginUsers === 'function') syncLoginUsers();
-  /* A personal profile change must write only this person's row. Rewriting
-     the complete directory needs owner permissions and was why non-owner
-     photos appeared saved locally but never reached other users. */
+  /* Save directly to the existing row, then keep the visual change only when
+     the database confirms it. This prevents a photo from appearing saved
+     locally and disappearing after a refresh. */
   if(window.StockFlowBackend && window.StockFlowBackend.enabled){
     const {password, ...safeProfileRow} = usersData[index];
-    window.StockFlowBackend.syncRow('users', safeProfileRow, 'email');
+    const result = await window.StockFlowBackend.updateOwnUserProfile(safeProfileRow);
+    if(!result || !result.ok){
+      usersData[index] = currentUser;
+      profileData.name = currentUser.name || profileData.name;
+      profileData.image = currentUser.image || null;
+      profileData.initials = currentUser.init || getInitials(currentUser.name);
+      if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
+      showToast(lang==='en' ? 'Photo could not be saved. Please try again.' : 'تعذر حفظ الصورة. حاول مرة أخرى.');
+      return false;
+    }
   }
+  if(typeof syncLoginUsers === 'function') syncLoginUsers();
   if(typeof renderTopbarAvatars === 'function') renderTopbarAvatars();
   return true;
 }
@@ -10164,13 +10173,13 @@ document.getElementById('profileImgRemoveBtn').addEventListener('click',()=>{
   profileImgData=null;
   setProfilePreview(null);
 });
-document.getElementById('profileSave').addEventListener('click',()=>{
+document.getElementById('profileSave').addEventListener('click',async ()=>{
   const name=document.getElementById('profileName').value.trim();
   if(!name){document.getElementById('profileName').focus();return;}
   profileData.name=name;
   profileData.image=profileImgData;
   profileData.initials=getInitials(name);
-  if(!saveCurrentUserProfile()) return;
+  if(!await saveCurrentUserProfile()) return;
   closeProfileModal();
   refreshTopbarProfile();
   showToast(lang==='en'?'Profile updated successfully!':'تم تحديث الملف الشخصي بنجاح!');
@@ -10298,9 +10307,9 @@ document.getElementById('udPhotoInput').addEventListener('change', async functio
   udSetAvatar(document.getElementById('udAvatar'));
   udSetAvatar(document.getElementById('udEditAvatar'));
   refreshTopbarProfile();
-  saveCurrentUserProfile();
+  if(!await saveCurrentUserProfile()) refreshUserDropdown();
 });
-document.getElementById('udSave').addEventListener('click', function(e){
+document.getElementById('udSave').addEventListener('click', async function(e){
   e.stopPropagation();
   const ni = document.getElementById('udFullNameInput');
   const name = ni ? ni.value.trim() : '';
@@ -10308,7 +10317,7 @@ document.getElementById('udSave').addEventListener('click', function(e){
   profileData.name = name;
   profileData.image = profileImgData || null;
   profileData.initials = getInitials(name);
-  if(!saveCurrentUserProfile()) return;
+  if(!await saveCurrentUserProfile()) return;
   refreshTopbarProfile();
   refreshUserDropdown();
   showToast(lang==='en'?'Profile updated successfully!':'تم تحديث الملف الشخصي بنجاح!');

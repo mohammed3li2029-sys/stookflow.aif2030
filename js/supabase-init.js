@@ -210,6 +210,27 @@ function syncRow(table, item, idField) {
     if (run) run();
   }, 500);
 }
+
+/* Update the signed-in person's existing directory row directly. This avoids
+ * relying on the JSON row id (whose letter casing can differ from an email)
+ * and returns a real success/failure result for profile-photo saving. */
+async function updateOwnUserProfile(item) {
+  if (!supabase) return { ok: true, data: item };
+  const email = String(item && item.email || '').trim();
+  if (!email) return { ok: false, error: new Error('Missing profile email') };
+  const { data, error } = await supabase
+    .from('users')
+    .update({ data: item })
+    .eq('data->>email', email)
+    .select('data')
+    .maybeSingle();
+  if (error) {
+    console.error('[StockFlow] Failed to save own profile:', error);
+    return { ok: false, error };
+  }
+  if (!data) return { ok: false, error: new Error('Profile row was not found') };
+  return { ok: true, data: data.data };
+}
 /** Run every pending debounced write immediately. Called when the page is
     being hidden/unloaded so a refresh or navigation that happens inside
     the debounce window doesn't silently drop the last edit. */
@@ -298,6 +319,7 @@ window.StockFlowBackend = {
   loadSystemActivityLogs,
   syncCollection,
   syncRow,
+  updateOwnUserProfile,
   uploadFile,
   deleteFile,
   isLegacyDataUrl,
