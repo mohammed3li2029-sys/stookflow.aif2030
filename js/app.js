@@ -5655,7 +5655,7 @@ function openProjectDetail(idx){
   const tabs = [
     {key:'info',label:lang==='en'?'Project Info':'معلومات المشروع'},{key:'phases',label:L.phases},{key:'materials',label:L.materials},
     {key:'purchases',label:L.purchases},{key:'team',label:L.team},{key:'docs',label:L.documents},
-    {key:'gallery',label:L.gallery},{key:'notes',label:L.activityLog},{key:'risks',label:L.risks},
+    {key:'notes',label:L.activityLog},{key:'risks',label:L.risks},
   ];
   overlay.innerHTML = `
     <div class="modal" style="max-width:92vw;width:92vw;max-height:92vh;overflow-y:auto;margin:10px auto;padding:0;border-radius:16px;">
@@ -5699,7 +5699,6 @@ function openProjectDetail(idx){
           purchases: renderProjPurchasesTab(p, idx, L),
           team: renderProjTeamTab(p, idx, L),
           docs: renderProjDocsTab(p, idx, L),
-          gallery: renderProjGalleryTab(p, idx, L),
           notes: renderProjNotesTab(p, idx, L),
           risks: renderProjRisksTab(p, idx, L),
         };
@@ -5716,7 +5715,7 @@ function renderProjInfoTab(p, L, end, remain, idx){
     <div class="card" style="margin-bottom:0;"><div class="card-head"><div class="card-title">${lang==='en'?'General Info':'معلومات عامة'}</div></div>
       <div class="proj-info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">${[
         [lang==='en'?'Quote number':'رقم العرض', p.id],[L.projectName, lang==='en'?p.name:p.nameAr],
-        [L.client, lang==='en'?p.client:p.clientAr],[lang==='en'?'Client mobile number':'رقم جوال العميل', p.clientPhone],
+        [L.client, lang==='en'?p.client:p.clientAr],[lang==='en'?'Client by':'العميل بواسطة', projectClientByLabel(p.clientBy, p.clientByOther)],[lang==='en'?'Client mobile number':'رقم جوال العميل', p.clientPhone],
         [L.type, lang==='en'?p.type:p.typeAr],[lang==='en'?'Customer category':'فئة العميل', customerCategory],[L.location, lang==='en'?p.location:p.locationAr],
         [lang==='en'?'Engineering tracking number':'رقم المتابعة الهندسي', p.engineeringTrackingNo],[L.manager, p.manager],[L.engineer, p.engineer],
         [L.contractNo, p.contractNo],
@@ -7113,6 +7112,24 @@ function findQuotationByNumber(number){
   const index = quotations.findIndex(q => String(q.id||'').trim().toLowerCase() === normalized);
   return index === -1 ? null : {quote:quotations[index], index};
 }
+const PROJECT_CLIENT_BY_OPTIONS = [
+  ['abdulbasit','عبدالباسط غلام','Abdulbasit Ghulam'],
+  ['mohammed','محمد علي','Mohammed Ali'],
+  ['ahmed','أحمد لطفي','Ahmed Lotfi'],
+  ['saad','سعد البلوي','Saad Al-Balawi'],
+  ['nemer','نمر أبوظهير','Nemer Abu Dhahir'],
+  ['other','غير ذلك','Other']
+];
+function projectClientByLabel(value, otherName){
+  const option = PROJECT_CLIENT_BY_OPTIONS.find(([key]) => key === value);
+  if(value === 'other') return otherName || (lang==='en'?'Other':'غير ذلك');
+  return option ? (lang==='en' ? option[2] : option[1]) : '—';
+}
+function toggleProjectClientByOther(){
+  const select = document.getElementById('pmClientBy');
+  const other = document.getElementById('pmClientByOtherWrap');
+  if(other) other.style.display = select?.value === 'other' ? '' : 'none';
+}
 function quotePlainText(value){
   return String(value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
 }
@@ -7158,7 +7175,7 @@ function openProjectModal(idx=null){
   overlay.innerHTML = `
     <div class="modal modal-xl project-modal">
       <h3>${isEdit ? L.editProject : L.newProject}</h3>
-      <div class="field-row"><div class="field"><label>${lang==='en'?'Quote number':'رقم العرض'}</label><input id="pmId" value="${p?p.id:''}" placeholder="${isEdit?'':lang==='en'?'Auto: PRJ-00'+projCounter:'تلقائي: PRJ-00'+projCounter}"><input id="pmLinkedQuoteId" type="hidden" value="${p?.quoteId||''}"><div id="pmQuoteMatch"></div></div><div class="field"></div></div>
+      <div class="field-row"><div class="field"><label>${lang==='en'?'Quote number':'رقم العرض'}</label><input id="pmId" value="${p?p.id:''}" placeholder="${isEdit?'':lang==='en'?'Auto: PRJ-00'+projCounter:'تلقائي: PRJ-00'+projCounter}"><input id="pmLinkedQuoteId" type="hidden" value="${p?.quoteId||''}"><div id="pmQuoteMatch"></div></div><div class="field"><label>${lang==='en'?'Client by':'العميل بواسطة'}</label><select id="pmClientBy"><option value=""${!p?.clientBy?' selected':''}>${lang==='en'?'Select...':'اختر...'}</option>${PROJECT_CLIENT_BY_OPTIONS.map(([value,ar,en])=>`<option value="${value}"${(p?.clientBy||'')===value?' selected':''}>${lang==='en'?en:ar}</option>`).join('')}</select><div id="pmClientByOtherWrap" style="margin-top:7px;display:${p?.clientBy==='other'?'':'none'};"><input id="pmClientByOther" value="${escapeHtml(p?.clientByOther||'')}" placeholder="${lang==='en'?'Enter name':'اكتب الاسم'}"></div></div></div>
       <div class="project-identity-layout"><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.client} (EN)</label><input id="pmClient" value="${p?p.client:''}"></div><div class="field"><label>${L.client} (AR)</label><input id="pmClientAr" value="${p?p.clientAr:''}"></div></div></div><div class="project-identity-group"><div class="project-identity-row"><div class="field"><label>${L.projectName} (EN)</label><input id="pmName" value="${p?p.name:''}"></div><div class="field"><label>${L.projectName} (AR)</label><input id="pmNameAr" value="${p?p.nameAr:''}"></div></div></div></div>
       <div class="project-type-contact-row"><div class="field"><label>${lang==='en'?'Client mobile number':'رقم جوال العميل'}</label><input id="pmClientPhone" type="tel" inputmode="tel" dir="ltr" value="${p?p.clientPhone||'':''}" placeholder="05XXXXXXXX"></div><div class="field"><label>${lang==='en'?'Customer category':'فئة العميل'}</label><select id="pmCustomerCategory"><option value="company"${(!p||p.customerCategory==='company'||!p.customerCategory)?' selected':''}>${lang==='en'?'Company / Establishment':'مؤسسة أو شركة'}</option><option value="individual"${p?.customerCategory==='individual'?' selected':''}>${lang==='en'?'Individual':'فردي'}</option><option value="other"${p?.customerCategory==='other'?' selected':''}>${lang==='en'?'Other':'غير ذلك'}</option></select></div><div class="field"><label>${L.type}</label><div class="project-type-options">${['STW','HNG','TSP','FDT','PTC','CPS','MZN'].map(type=>`<label class="project-type-option"><input type="radio" name="pmProjectType" value="${type}"${p&&(p.type===type||p.typeAr===type)?' checked':''}><span>${type}</span></label>`).join('')}</div></div></div>
       <div class="field-row"><div class="field"><label>${L.location} (EN)</label><input id="pmLoc" value="${p?p.location:''}"></div><div class="field"><label>${L.location} (AR)</label><input id="pmLocAr" value="${p?p.locationAr:''}"></div></div>
@@ -7176,6 +7193,8 @@ function openProjectModal(idx=null){
     renderProjectPaymentPlanInputs(initialPaymentCount,initialPaymentPercents);
     document.getElementById('pmPaymentCount')?.addEventListener('change',e=>renderProjectPaymentPlanInputs(e.target.value));
     document.getElementById('pmContractValue')?.addEventListener('input',refreshProjectPaymentPlanAmounts);
+    document.getElementById('pmClientBy')?.addEventListener('change',toggleProjectClientByOther);
+    toggleProjectClientByOther();
     document.getElementById('pmId')?.addEventListener('input',()=>{ document.getElementById('pmLinkedQuoteId').value=''; renderProjectQuoteMatch(); });
     renderProjectQuoteMatch();
     document.getElementById('pmSaveBtn')?.addEventListener('click', ()=> saveProject(idx));
@@ -7214,6 +7233,7 @@ function saveProject(idx){
     p.name = name||p.name; p.nameAr = nameAr||p.nameAr;
     p.client = get('pmClient')||p.client; p.clientAr = get('pmClientAr')||p.clientAr;
     p.clientPhone = get('pmClientPhone')||p.clientPhone; p.customerCategory = get('pmCustomerCategory')||p.customerCategory||'company';
+    p.clientBy = get('pmClientBy'); p.clientByOther = p.clientBy==='other' ? get('pmClientByOther') : '';
     p.type = selectedType||p.type; p.typeAr = selectedType||p.typeAr;
     p.location = get('pmLoc')||p.location; p.locationAr = get('pmLocAr')||p.locationAr;
     p.engineeringTrackingNo = get('pmEngineeringTrackingNo')||p.engineeringTrackingNo; p.manager = get('pmManager')||p.manager;
@@ -7227,7 +7247,7 @@ function saveProject(idx){
   } else {
     projects.push({
       id: plannedProjectId, quoteId:quoteMatch?.quote.id||'',
-      name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'), clientPhone:get('pmClientPhone'), customerCategory:get('pmCustomerCategory')||'company',
+      name, nameAr, client:get('pmClient'), clientAr:get('pmClientAr'), clientPhone:get('pmClientPhone'), customerCategory:get('pmCustomerCategory')||'company', clientBy:get('pmClientBy'), clientByOther:get('pmClientBy')==='other'?get('pmClientByOther'):'',
       type:selectedType, typeAr:selectedType, location:get('pmLoc'), locationAr:get('pmLocAr'),
       engineeringTrackingNo:get('pmEngineeringTrackingNo'), manager:get('pmManager'), engineer:get('pmEngineer'),
       contractNo:get('pmContractNo'), contractFile:'', contractValue:parseFloat(get('pmContractValue'))||0,
