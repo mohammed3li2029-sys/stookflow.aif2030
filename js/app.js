@@ -2179,20 +2179,32 @@ function _qaTimeParts(iso){
 }
 
 const QA_AVATAR_PALETTE = ['#4F46E5','#D97706','#0EA5A5','#DB2777','#7C3AED','#0891B2'];
-function _qaAvatar(name, at){
+function userPhotoForActor(name, email){
+  const actorEmail = String(email||'').trim().toLowerCase();
+  const actorName = String(name||'').trim().toLowerCase();
+  const user = usersData.find(u => actorEmail && String(u.email||'').trim().toLowerCase() === actorEmail)
+    || usersData.find(u => actorName && String(u.name||'').trim().toLowerCase() === actorName);
+  return user && user.image ? user.image : '';
+}
+function currentActorStamp(name, at){
+  return {name:name || profileData.name, email:profileData.userKey || profileData.email || '', at:at || new Date().toISOString()};
+}
+function _qaAvatar(name, at, email){
   const s = String(name||'');
   let h = 0;
   for(let i=0;i<s.length;i++) h = (h*31 + s.codePointAt(i)) >>> 0;
   const color = QA_AVATAR_PALETTE[h % QA_AVATAR_PALETTE.length];
   const initial = escapeHtml(getInitials(s || '?'));
   const tip = s + (at ? ' — '+_qaTimeParts(at).dt : '');
-  return `<span class="p-avatar" style="background:${color}" data-name="${escapeHtml(tip)}">${initial}</span>`;
+  const photo = userPhotoForActor(s, email);
+  const content = photo ? `<img src="${escapeHtml(photo)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initial;
+  return `<span class="p-avatar" style="background:${photo ? 'none' : color}" data-name="${escapeHtml(tip)}">${content}</span>`;
 }
 
 function quoteActivityHtml(q){
   const ar = lang === 'ar';
   const quoteIdx = quotations.indexOf(q);
-  const created = q && q.createdBy ? {name:q.createdBy.name, at:q.createdBy.at} : null;
+  const created = q && q.createdBy ? q.createdBy : null;
   const edits = (q && Array.isArray(q.edits)) ? q.edits.filter(e => e && e.name) : [];
   const createdIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><path d="M12 5v14M5 12h14"/></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" width="9" height="9"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';
@@ -2204,7 +2216,7 @@ function quoteActivityHtml(q){
         <div>
           <div class="step-label">${ar?'أنشأ العرض':'Created the quote'}</div>
           <div class="person-list">
-            <div class="person-line">${_qaAvatar(created.name, created.at)}<span class="p-time">${escapeHtml(_qaTimeParts(created.at).dt)}</span></div>
+            <div class="person-line">${_qaAvatar(created.name, created.at, created.email)}<span class="p-time">${escapeHtml(_qaTimeParts(created.at).dt)}</span></div>
           </div>
         </div>
       </div>`
@@ -2224,7 +2236,7 @@ function quoteActivityHtml(q){
         <div>
           <div class="step-label">${ar?'التعديلات':'Edits'} (${edits.length})</div>
           <div class="edited-line">
-            <span class="avatar-stack">${edits.map(e => _qaAvatar(e.name, e.at)).join('')}</span>
+            <span class="avatar-stack">${edits.map(e => _qaAvatar(e.name, e.at, e.email)).join('')}</span>
             <span class="p-time">${ar?'آخر تعديل':'Last edited'}: ${escapeHtml(_qaTimeParts(last.at).dt)}</span>
           </div>
         </div>
@@ -2249,7 +2261,7 @@ function quoteActivityHtml(q){
         <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;">
           ${versions.map(v=>`<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 9px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);">
             <strong style="font-size:12px;letter-spacing:.4px;">${quoteVersionLabel(v.version)}</strong>
-            ${_qaAvatar((v.createdBy&&v.createdBy.name)||'', (v.createdBy&&v.createdBy.at)||v.createdAt)}
+            ${_qaAvatar((v.createdBy&&v.createdBy.name)||'', (v.createdBy&&v.createdBy.at)||v.createdAt, v.createdBy&&v.createdBy.email)}
             <span style="font-size:10px;max-width:135px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);" title="${escapeHtml((v.createdBy&&v.createdBy.name)||(ar?'غير معروف':'Unknown'))}">${escapeHtml((v.createdBy&&v.createdBy.name)||(ar?'غير معروف':'Unknown'))}</span>
             <button type="button" onclick="openQuoteView(${quoteIdx},'${quoteVersionLabel(v.version)}')" title="${ar?'عرض الإصدار':'View version'}" style="width:25px;height:25px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">${viewIcon}</button>
             <button type="button" onclick="openQuoteModal(${quoteIdx},'${quoteVersionLabel(v.version)}')" title="${ar?'تعديل الإصدار':'Edit version'}" style="width:25px;height:25px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">${versionEditIcon}</button>
@@ -2272,7 +2284,9 @@ const QA_TRACE_ICONS = {
 function traceTrailHtml(createdName, createdAt, edits, labels){
   const ar = lang === 'ar';
   const L = labels || {};
-  const created = createdName ? {name:String(createdName), at:createdAt} : null;
+  const created = createdName
+    ? (typeof createdName === 'object' ? createdName : {name:String(createdName), at:createdAt})
+    : null;
   const trail = (Array.isArray(edits) ? edits : []).filter(e => e && e.name);
   const last = trail.length ? trail[trail.length-1] : null;
   const seen = new Set(); const people = [];
@@ -2295,18 +2309,18 @@ function traceTrailHtml(createdName, createdAt, edits, labels){
     return `<span class="trace-empty" title="${escapeHtml(tip)}">—</span>`;
   }
   let html = `<span class="trace-wrap" title="${escapeHtml(tip)}">`;
-  if(created) html += _qaAvatar(created.name, created.at);
+  if(created) html += _qaAvatar(created.name, created.at, created.email);
   if(trail.length){
     const more = extraCount>0 ? `<span class="tr-more">+${extraCount}</span>` : '';
     html += `<span class="trace-dot">${QA_TRACE_ICONS.dot}</span>`
          + `<span class="trace-clock">${QA_TRACE_ICONS.clock}</span>`
-         + `<span class="avatar-stack trace-mods">${shown.map(e=>_qaAvatar(e.name,e.at)).join('')}${more}</span>`;
+         + `<span class="avatar-stack trace-mods">${shown.map(e=>_qaAvatar(e.name,e.at,e.email)).join('')}${more}</span>`;
   }
   return html+'</span>';
 }
 function quoteTraceHtml(q){
   return traceTrailHtml(
-    q && q.createdBy ? q.createdBy.name : '',
+    q && q.createdBy ? q.createdBy : '',
     q && q.createdBy ? q.createdBy.at : '',
     q && q.edits
   );
@@ -3474,14 +3488,14 @@ function saveQuotation(){
       ? JSON.parse(JSON.stringify(prev.attachments))
       : [],
     createdBy: prev && prev.createdBy && prev.createdBy.name
-      ? {name:prev.createdBy.name, at:prev.createdBy.at || prev.createdAt || now}
-      : {name:profileData.name, at:now},
+      ? {name:prev.createdBy.name, email:prev.createdBy.email || '', at:prev.createdBy.at || prev.createdAt || now}
+      : currentActorStamp(profileData.name, now),
     createdAt: prev && (prev.createdAt || (prev.createdBy && prev.createdBy.at)) ? (prev.createdAt || prev.createdBy.at) : now,
-    edits: prev && Array.isArray(prev.edits) ? prev.edits.map(e => ({name:e.name, at:e.at})) : []
+    edits: prev && Array.isArray(prev.edits) ? prev.edits.map(e => ({name:e.name, email:e.email || '', at:e.at})) : []
   };
 
   if(prev && !saveAsNewVersion){
-    q.edits.push({name: profileData.name, at: now});
+    q.edits.push(currentActorStamp(profileData.name, now));
   }
   
   if(parent){
@@ -3489,7 +3503,7 @@ function saveQuotation(){
     if(saveAsNewVersion){
       /* A new revision starts with its own creator record, while the source
          revision remains fully editable and unchanged. */
-      q.createdBy = {name:profileData.name, at:now};
+      q.createdBy = currentActorStamp(profileData.name, now);
       q.createdAt = now;
       q.edits = [];
       versions.push(q);
@@ -6043,7 +6057,7 @@ function projTraceHtml(p){
   if(!p) return '';
   const fallback = (Array.isArray(p.notesLog) && p.notesLog[0] && p.notesLog[0].user) ? p.notesLog[0].user : '';
   return traceTrailHtml(
-    (p.createdBy && p.createdBy.name) ? p.createdBy.name : fallback,
+    (p.createdBy && p.createdBy.name) ? p.createdBy : fallback,
     (p.createdBy && p.createdBy.at) ? p.createdBy.at : p.createdAt,
     p.edits,
     { created: lang==='en' ? 'Created' : 'أنشأ', edited: lang==='en' ? 'Last edited' : 'آخر تعديل' }
@@ -6064,7 +6078,7 @@ function cwCreatorOf(w){
    (createdBy + edits) with the legacy preparedBy text as a fallback. */
 function docsTraceHtml(w){
   const T = craneText();
-  return traceTrailHtml(cwCreatorOf(w), (w && (w.createdAt || (w.createdBy && w.createdBy.at))), w && w.edits, {
+  return traceTrailHtml((w && w.createdBy) || cwCreatorOf(w), (w && (w.createdAt || (w.createdBy && w.createdBy.at))), w && w.edits, {
     created: T.preparedBy,
     edited: T.editedBy
   });
@@ -6364,11 +6378,11 @@ function showCraneWorkModal(idx, wi){
       // Keep the original creator pinned and just append to the edit trail,
       // mirroring how quotations record `createdBy` + `edits` in Sales.
       editing.createdBy = (editing.createdBy && editing.createdBy.name)
-        ? {name:editing.createdBy.name, at:editing.createdBy.at || editing.createdAt || now}
-        : {name: cwCreatorOf(editing) || who, at: editing.createdAt || now};
+        ? {name:editing.createdBy.name, email:editing.createdBy.email || '', at:editing.createdBy.at || editing.createdAt || now}
+        : currentActorStamp(cwCreatorOf(editing) || who, editing.createdAt || now);
       editing.createdAt = editing.createdAt || now;
       editing.edits = Array.isArray(editing.edits) ? editing.edits : [];
-      if(who) editing.edits.push({name: who, at: now});
+      if(who) editing.edits.push(currentActorStamp(who, now));
       // the stamp always mirrors the real creator, never a typed value
       data.preparedBy = editing.createdBy.name;
       Object.assign(editing, data, { updatedAt: now });
@@ -6376,7 +6390,7 @@ function showCraneWorkModal(idx, wi){
       works.push(Object.assign({
         id:'CW-'+Date.now().toString(36).toUpperCase(),
         createdAt: now,
-        createdBy: {name: who, at: now},
+        createdBy: currentActorStamp(who, now),
         edits: []
       }, data, { preparedBy: who || data.preparedBy }));
     }
@@ -7190,11 +7204,11 @@ function saveProject(idx){
     // Pin the original creator and append to the edit trail, so the list can
     // show who added the project and who last touched it.
     p.createdBy = (p.createdBy && p.createdBy.name)
-      ? {name:p.createdBy.name, at:p.createdBy.at || p.createdAt || stampNow}
-      : {name: stampWho, at: p.createdAt || stampNow};
+      ? {name:p.createdBy.name, email:p.createdBy.email || '', at:p.createdBy.at || p.createdAt || stampNow}
+      : currentActorStamp(stampWho, p.createdAt || stampNow);
     p.createdAt = p.createdAt || p.createdBy.at;
     p.edits = Array.isArray(p.edits) ? p.edits : [];
-    if(stampWho) p.edits.push({name: stampWho, at: stampNow});
+    if(stampWho) p.edits.push(currentActorStamp(stampWho, stampNow));
     if(pid) p.id = pid;
     if(quoteMatch) p.quoteId = quoteMatch.quote.id;
     p.name = name||p.name; p.nameAr = nameAr||p.nameAr;
@@ -7219,7 +7233,7 @@ function saveProject(idx){
       contractNo:get('pmContractNo'), contractFile:'', contractValue:parseFloat(get('pmContractValue'))||0,
       contractDate:get('pmContractDate'), startDate:get('pmStartDate'), duration:parseInt(get('pmDuration'))||30,
       progress:0, status:get('pmStatus')||'active', priority:'medium',
-      createdAt: stampNow, createdBy:{name: stampWho, at: stampNow}, edits:[],
+      createdAt: stampNow, createdBy:currentActorStamp(stampWho, stampNow), edits:[],
       notes:get('pmNotes'), notesAr:get('pmNotesAr'), payments:get('pmPayments'), paymentPlan,
       phases: defaultPhases.map(dp => ({id:dp.id, name:dp.name, nameAr:dp.nameAr, status:'notStarted', start:'', end:'', resp:'', notes:'', notesAr:'', progress:0})),
       materials:[], team:[], docs:[], works:[], images:[], notesLog:[{text:'Project created',textAr:'تم إنشاء المشروع',user:'admin',date:new Date().toISOString().split('T')[0]}], risks:[], issueOrders:[], poRefs:[],
