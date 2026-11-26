@@ -4155,6 +4155,33 @@ function statusFor(item){
   return {label:STR[lang].table.inStock, cls:'pill-ok', dot:'var(--green)'};
 }
 
+function pendingProjectNeedsForInventoryItem(item){
+  const sku=String(item?.sku||'').trim();
+  if(!sku) return [];
+  const seen=new Set();
+  return reqsData.filter(request=>{
+    return request && request.status==='pending' && request.project && String(request.sku||'').trim()===sku;
+  }).map(request=>{
+    const project=projects.find(p=>p.id===request.project);
+    const projectName=project ? (lang==='en' ? (project.name||project.nameAr) : (project.nameAr||project.name)) : request.project;
+    return {key:`${request.project}-${request.id}`,name:projectName||request.project};
+  }).filter(need=>{
+    if(seen.has(need.key)) return false;
+    seen.add(need.key);
+    return true;
+  });
+}
+
+function inventoryProjectNeedBadge(item){
+  const needs=pendingProjectNeedsForInventoryItem(item);
+  if(!needs.length) return '';
+  const names=needs.map(need=>need.name).join('، ');
+  const visible=needs.slice(0,2).map(need=>escapeHtml(need.name)).join('، ');
+  const more=needs.length>2 ? ` +${needs.length-2}` : '';
+  const label=lang==='en' ? `Needed for: ${visible}${more}` : `مطلوب لمشروع: ${visible}${more}`;
+  return `<div class="inventory-project-need" title="${escapeHtml(names)}">${ICONS.alert||'!'}<span>${label}</span></div>`;
+}
+
 function renderInvRows(filter='', statusF='', catF=''){
   const tbody = document.getElementById('invTbody');
   if(!tbody) return;
@@ -4194,7 +4221,7 @@ function renderInvRows(filter='', statusF='', catF=''){
     const st = statusFor(i);
     return `<tr class="${selState.inv.has(idx)?'selected-row':''}" data-page-idx="${idx}">
       <td class="sel-check-col" style="display:${selMode.inv?'':'none'}"><input type="checkbox" class="row-check" data-idx="${idx}" ${selState.inv.has(idx)?'checked':''} onchange="toggleSel('inv',${idx},this)"></td>
-      <td><div class="item-cell"><div class="item-thumb">${i.image?`<img src="${i.image}" alt="">`:ICONS.box}</div><div><div class="item-name">${lang==='en'?i.name:i.nameAr}</div><div class="item-sku">${i.sku}</div></div></div></td>
+      <td><div class="item-cell"><div class="item-thumb">${i.image?`<img src="${i.image}" alt="">`:ICONS.box}</div><div><div class="item-name">${lang==='en'?i.name:i.nameAr}</div><div class="item-sku">${i.sku}</div>${inventoryProjectNeedBadge(i)}</div></div></td>
       <td>${i.sku}</td>
       <td><span class="cat-tag">${lang==='en'?i.cat:i.catAr}</span></td>
       <td>${i.stock}${i.unit?` <span style="color:var(--text-3);font-size:11px;">${i.unit}</span>`:''}</td>
@@ -7810,12 +7837,12 @@ function addProjectMaterial(idx, formIndex=null){
 function addProjectMaterialFromInventory(idx){
   const p = projects[idx];
   if(!p) return;
-  const items = inventoryData.filter(item => Number(item.stock) > 0);
+  const items = inventoryData;
   if(!items.length){
-    showToast(lang==='en'?'No available items in inventory':'لا توجد أصناف متاحة في المخزون');
+    showToast(lang==='en'?'No items in inventory':'لا توجد أصناف في المخزون');
     return;
   }
-  const options = items.map((item,i) => `<option value="${i}">${escapeHtml(lang==='en'?item.name:item.nameAr||item.name)} — ${item.stock} ${escapeHtml(item.unit||'')}</option>`).join('');
+  const options = items.map((item,i) => `<option value="${i}">${escapeHtml(lang==='en'?item.name:item.nameAr||item.name)} — ${item.stock} ${escapeHtml(item.unit||'')}${Number(item.stock)<=0 ? ` (${lang==='en'?'out of stock':'نفد المخزون'})` : ''}</option>`).join('');
   const overlay = withModalOverlay(`<h3>${lang==='en'?'Add material from inventory':'إضافة مادة من المخزون'}</h3>
     <div class="field"><label>${lang==='en'?'Inventory item':'صنف المخزون'}</label><select id="projectInventoryItem">${options}</select></div>
     <div class="field"><label>${lang==='en'?'Required quantity':'الكمية المطلوبة'}</label><input id="projectInventoryQty" type="number" min="0.01" step="0.01" value="1" dir="ltr"></div>
