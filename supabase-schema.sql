@@ -255,6 +255,49 @@ create policy "Staff read users" on users for select
 create policy "Root write users" on users for all
   using (public.is_root()) with check (public.is_root());
 
+-- A staff member may update only their own display profile. The trigger below
+-- allows only the harmless name/initials/photo fields to change; role,
+-- permissions, department and every other staff field stay owner-only.
+drop policy if exists "Staff update own profile" on users;
+create policy "Staff update own profile" on users for update
+  using (
+    public.is_staff()
+    and lower(coalesce(data ->> 'email', '')) = lower(coalesce(auth.email(), ''))
+  )
+  with check (
+    public.is_staff()
+    and lower(coalesce(data ->> 'email', '')) = lower(coalesce(auth.email(), ''))
+  );
+
+create or replace function public.enforce_own_profile_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Root administrators retain full directory management.
+  if public.is_root() then return new; end if;
+
+  if lower(coalesce(old.data ->> 'email', '')) <> lower(coalesce(auth.email(), ''))
+     or lower(coalesce(new.data ->> 'email', '')) <> lower(coalesce(auth.email(), '')) then
+    raise exception 'You can only update your own profile';
+  end if;
+
+  if (new.data - 'name' - 'init' - 'image')
+     is distinct from
+     (old.data - 'name' - 'init' - 'image') then
+    raise exception 'Only personal profile fields may be updated';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_enforce_own_profile_update on users;
+create trigger trg_enforce_own_profile_update
+before update on users
+for each row execute function public.enforce_own_profile_update();
+
 -- The root admins list itself is only visible to root admins.
 alter table root_admins enable row level security;
 drop policy if exists "Root read root_admins" on root_admins;

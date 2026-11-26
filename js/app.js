@@ -9991,7 +9991,14 @@ function saveCurrentUserProfile(){
   profileData.email = currentUser.email;
   profileData.userKey = normalizeUserEmail(currentUser.email);
   if(typeof syncLoginUsers === 'function') syncLoginUsers();
-  if(typeof syncUsers === 'function') syncUsers();
+  /* A personal profile change must write only this person's row. Rewriting
+     the complete directory needs owner permissions and was why non-owner
+     photos appeared saved locally but never reached other users. */
+  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
+    const {password, ...safeProfileRow} = usersData[index];
+    window.StockFlowBackend.syncRow('users', safeProfileRow, 'email');
+  }
+  if(typeof renderTopbarAvatars === 'function') renderTopbarAvatars();
   return true;
 }
 
