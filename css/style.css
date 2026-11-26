@@ -730,6 +730,12 @@ html[dir="rtl"] .sidebar-toggle svg{ transform:rotate(180deg); }
 .sort-control select{border:none;background:transparent;color:var(--text);font-size:12.8px;font-weight:600;font-family:inherit;outline:none;cursor:pointer;padding:0;}
 .sort-control select option{background:var(--surface);color:var(--text);}
 .phase-inline{font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);width:100%;max-width:130px;}
+.phase-date-control{position:relative;display:flex;align-items:center;width:100%;max-width:130px;min-width:118px;}
+.phase-date-control .phase-inline,.phase-date-control>input[type="text"]{width:100%;max-width:none;box-sizing:border-box;padding-inline-end:29px;}
+html[dir="rtl"] .phase-date-control .phase-inline,html[dir="rtl"] .phase-date-control>input[type="text"]{padding-left:29px;padding-right:6px;}
+.phase-calendar-btn{position:absolute;inset-inline-end:4px;top:50%;transform:translateY(-50%);width:23px;height:23px;padding:0;border:0;background:transparent;color:var(--text-2);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:5px;z-index:1;}
+.phase-calendar-btn:hover{background:var(--surface-2);color:var(--text);}
+.phase-native-picker{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;inset-inline-end:0;}
 
 .activity-row{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--border);}
 .activity-row:last-child{border-bottom:none;}

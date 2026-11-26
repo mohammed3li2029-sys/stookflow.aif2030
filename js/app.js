@@ -165,15 +165,17 @@ async function loadAllStockFlowData(skipRender){
     // User Management), not the shared `profile` row — every user would
     // otherwise see the same name/role. Look the current account up in the
     // freshly-loaded staff list and apply its name/role/initials.
-    if(users && users.length && profileData.email){
-      const myEmail = String(profileData.email||'').trim().toLowerCase();
+    if(users && users.length && (profileData.userKey || profileData.email)){
+      const myEmail = String(profileData.userKey || profileData.email || '').trim().toLowerCase();
       const me = users.find(u => String(u.email||'').trim().toLowerCase() === myEmail);
       if(me){
         profileData.name = me.name || profileData.name;
+        profileData.email = me.email || profileData.email;
         profileData.role = me.role || profileData.role;
         const rk = ['admin','manager','supervisor','employee'].includes(me.role) ? me.role : 'employee';
         profileData.roleAr = getRoleInfo(rk).labelAr;
         profileData.initials = getInitials(me.name || profileData.name);
+        profileData.image = me.image || null;
         if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
       }
     }
@@ -287,23 +289,22 @@ async function setupRealtimeSync(){
   });
 
   _realtimeUnsubscribers.push(
-    window.StockFlowBackend.subscribeToTable('profile', () => {
-      _debouncedReload('profile', async () => {
-        const items = await window.StockFlowBackend.loadCollection('profile');
-        if(items && items.length){
-          Object.assign(profileData, items[0]);
-          if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
-        }
-      });
-    })
-  );
-
-  _realtimeUnsubscribers.push(
     window.StockFlowBackend.subscribeToTable('users', () => {
       _debouncedReload('users', async () => {
         const items = await window.StockFlowBackend.loadCollection('users');
         if(items){
           silentReplace(usersData, items.map(u => ({...u, password: encodePW('')})));
+          const myEmail = String(profileData.userKey || profileData.email || '').trim().toLowerCase();
+          const me = usersData.find(u => String(u.email||'').trim().toLowerCase() === myEmail);
+          if(me){
+            profileData.name = me.name || profileData.name;
+            profileData.email = me.email || profileData.email;
+            profileData.role = me.role || profileData.role;
+            profileData.roleAr = getRoleInfo(['admin','manager','supervisor','employee'].includes(me.role) ? me.role : 'employee').labelAr;
+            profileData.initials = getInitials(me.name || profileData.name);
+            profileData.image = me.image || null;
+            if(typeof refreshTopbarProfile === 'function') refreshTopbarProfile();
+          } else if(typeof renderTopbarAvatars === 'function') renderTopbarAvatars();
           if(typeof syncLoginUsers === 'function') syncLoginUsers();
           if(currentPage === 'users' && typeof navigate === 'function') _realtimeNavigate(currentPage);
         }
@@ -383,6 +384,7 @@ window.addEventListener('stockflow-backend-ready', async ()=>{
     }
     profileData.name = auth.name;
     profileData.email = email;
+    profileData.userKey = String(email||'').trim().toLowerCase();
     profileData.role = auth.role;
     profileData.roleAr = auth.roleAr;
     profileData.initials = getInitials(auth.name);
@@ -5039,7 +5041,7 @@ function renderUsersRows(){
         <button title="${lang==='en'?'Delete':'حذف'}" data-action="deleteuser" data-idx="${idx}">${ICONS.trash}</button>
       </div>` : '<span class="text-3" style="font-size:12px;">—</span>';
     return `<tr>
-      <td><div class="item-cell"><div class="avatar" style="width:32px;height:32px;font-size:11px;">${u.init}</div><div class="item-name">${u.name}</div><div class="item-sku">${u.email}</div></div></td>
+      <td><div class="item-cell"><div class="avatar" style="width:32px;height:32px;font-size:11px;${u.image ? 'background:none;' : ''}">${u.image ? `<img src="${escapeHtml(u.image)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : escapeHtml(u.init || getInitials(u.name))}</div><div class="item-name">${u.name}</div><div class="item-sku">${u.email}</div></div></td>
       <td><span class="cat-tag">${getRoleLabel(u.role)}</span></td><td>${lang==='en'?u.dept:u.deptAr}</td><td>${time}</td>
       <td>${actions}</td>
     </tr>`;
@@ -5721,8 +5723,8 @@ function renderProjInfoTab(p, L, end, remain, idx){
 function renderProjPhasesTab(p, idx, L){
   return `<div class="table-card"><table><thead><tr><th>${L.phase}</th><th>${L.startDatePhase}</th><th>${L.endDatePhase}</th><th>${L.responsible}</th><th>${L.progress}</th><th>${L.phaseStatus}</th><th>${lang==='en'?'Notes':'ملاحظات'}</th><th>${lang==='en'?'Actions':'إجراءات'}</th></tr></thead><tbody>${p.phases.map((ph, pi) => `<tr style="${ph.status==='inProgress'?'background:var(--blue-soft);':''}">
     <td><input class="phase-inline" value="${ph.name||getPhaseLabel(ph.id)}" placeholder="${lang==='en'?'Phase Name':'اسم المرحلة'}" onchange="updatePhaseField(${idx},${pi},'name',this.value)" style="font-weight:700;max-width:120px;width:80px;"></td>
-    <td><input type="date" class="phase-inline" value="${ph.start||''}" onchange="updatePhaseField(${idx},${pi},'start',this.value)"></td>
-    <td><input type="date" class="phase-inline" value="${ph.end||''}" onchange="updatePhaseField(${idx},${pi},'end',this.value)"></td>
+    <td>${phaseDateField(idx,pi,'start',ph.start)}</td>
+    <td>${phaseDateField(idx,pi,'end',ph.end)}</td>
     <td><input class="phase-inline" value="${ph.resp||''}" placeholder="${lang==='en'?'Name':'الاسم'}" onchange="updatePhaseField(${idx},${pi},'resp',this.value)" style="max-width:120px;width:80px;"></td>
     <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:5px;background:var(--surface-2);border-radius:3px;"><div style="width:${getPhaseProgressFromStatus(ph.status)}%;height:100%;background:${ph.status==='completed'?'var(--green)':ph.status==='inProgress'||ph.status==='delayed'?'var(--blue)':'var(--surface-2)'};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:700;">${getPhaseProgressFromStatus(ph.status)}%</span></div></td>
     <td><select class="phase-inline" onchange="updatePhaseField(${idx},${pi},'status',this.value)">${['notStarted','inProgress','completed','delayed'].map(s => `<option value="${s}"${ph.status===s?' selected':''}>${getPhaseStatusLabel(s)}</option>`).join('')}</select></td>
@@ -7460,8 +7462,8 @@ function showAddPhaseModal(idx){
     <div class="phase-form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <label>${L.phase} (EN)<input id="addPhaseName" style="margin-top:4px;" placeholder="${lang==='en'?'Phase Name':'اسم المرحلة'}"></label>
       <label>${L.phase} (AR)<input id="addPhaseNameAr" style="margin-top:4px;" placeholder="${lang==='ar'?'اسم المرحلة':'Phase Name'}"></label>
-      <label>${L.startDatePhase}<input type="date" id="addPhaseStart" style="margin-top:4px;"></label>
-      <label>${L.endDatePhase}<input type="date" id="addPhaseEnd" style="margin-top:4px;"></label>
+      <label>${L.startDatePhase}${standalonePhaseDateField('addPhaseStart')}</label>
+      <label>${L.endDatePhase}${standalonePhaseDateField('addPhaseEnd')}</label>
       <label>${L.responsible}<input id="addPhaseResp" style="margin-top:4px;" placeholder="${lang==='en'?'Responsible':'المسؤول'}"></label>
       <label>${L.phaseStatus}<select id="addPhaseStatus" style="margin-top:4px;">${['notStarted','inProgress','completed','delayed'].map(s => `<option value="${s}">${getPhaseStatusLabel(s)}</option>`).join('')}</select></label>
     </div>
@@ -7479,8 +7481,8 @@ function saveNewPhase(idx){
     id: 'P'+Date.now(),
     name: name,
     nameAr: document.getElementById('addPhaseNameAr').value.trim(),
-    start: document.getElementById('addPhaseStart').value,
-    end: document.getElementById('addPhaseEnd').value,
+    start: phaseDateToIso(document.getElementById('addPhaseStart').value),
+    end: phaseDateToIso(document.getElementById('addPhaseEnd').value),
     resp: document.getElementById('addPhaseResp').value.trim(),
     status: document.getElementById('addPhaseStatus').value,
     notes: '', notesAr: '', progress: getPhaseProgressFromStatus(document.getElementById('addPhaseStatus').value),
@@ -7491,6 +7493,56 @@ function saveNewPhase(idx){
 }
 function getPhaseProgressFromStatus(status){
   return status==='completed' ? 100 : status==='inProgress'||status==='delayed' ? 50 : 0;
+}
+function formatPhaseDate(value){
+  const iso = phaseDateToIso(value);
+  return iso ? `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.slice(0,4)}` : '';
+}
+function calendarIcon(){ return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'; }
+function phaseDateField(idx, pi, field, value){
+  const pickerId=`phaseDatePicker-${idx}-${pi}-${field}`, textId=`phaseDateText-${idx}-${pi}-${field}`;
+  const iso=phaseDateToIso(value);
+  return `<div class="phase-date-control"><input id="${textId}" type="text" inputmode="numeric" class="phase-inline" value="${formatPhaseDate(iso)}" placeholder="dd/mm/yyyy" dir="ltr" onchange="updatePhaseDateField(${idx},${pi},'${field}',this)"><button type="button" class="phase-calendar-btn" title="${lang==='en'?'Choose date':'اختيار تاريخ'}" onclick="openNativeDatePicker('${pickerId}')">${calendarIcon()}</button><input id="${pickerId}" class="phase-native-picker" type="date" value="${iso}" onchange="applyPhaseDatePicker(${idx},${pi},'${field}',this,'${textId}')"></div>`;
+}
+function standalonePhaseDateField(textId){
+  const pickerId=`${textId}Picker`;
+  return `<div class="phase-date-control" style="margin-top:4px;"><input id="${textId}" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" dir="ltr"><button type="button" class="phase-calendar-btn" title="${lang==='en'?'Choose date':'اختيار تاريخ'}" onclick="openNativeDatePicker('${pickerId}')">${calendarIcon()}</button><input id="${pickerId}" class="phase-native-picker" type="date" onchange="applyStandalonePhaseDatePicker('${textId}',this)"></div>`;
+}
+function openNativeDatePicker(pickerId){
+  const picker=document.getElementById(pickerId); if(!picker) return;
+  try{ if(typeof picker.showPicker==='function') picker.showPicker(); else { picker.focus(); picker.click(); } }catch(e){ picker.focus(); }
+}
+function applyPhaseDatePicker(idx, pi, field, picker, textId){
+  updatePhaseField(idx, pi, field, picker.value||'');
+  const text=document.getElementById(textId); if(text) text.value=formatPhaseDate(picker.value);
+}
+function applyStandalonePhaseDatePicker(textId, picker){
+  const text=document.getElementById(textId); if(text) text.value=formatPhaseDate(picker.value);
+}
+function phaseDateToIso(value){
+  const raw = String(value||'').trim();
+  if(!raw) return '';
+  let year, month, day;
+  let match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(match){ [,year,month,day] = match; }
+  else {
+    match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(!match) return '';
+    [,day,month,year] = match;
+  }
+  const date = new Date(`${year}-${month}-${day}T00:00:00`);
+  if(date.getFullYear() !== Number(year) || date.getMonth()+1 !== Number(month) || date.getDate() !== Number(day)) return '';
+  return `${year}-${month}-${day}`;
+}
+function updatePhaseDateField(idx, pi, field, input){
+  const iso = phaseDateToIso(input.value);
+  if(input.value.trim() && !iso){
+    showToast(lang==='en'?'Use the format dd/mm/yyyy':'استخدم تنسيق dd/mm/yyyy');
+    input.value = formatPhaseDate(projects[idx]?.phases?.[pi]?.[field]);
+    return;
+  }
+  updatePhaseField(idx, pi, field, iso);
+  input.value = formatPhaseDate(iso);
 }
 function updatePhaseField(idx, pi, field, value){
   const p = projects[idx]; if(!p) return;
@@ -9742,12 +9794,42 @@ document.getElementById('whSave').addEventListener('click',()=>{
 /* ===================================================================
    PROFILE MODAL
 =================================================================== */
-const profileData={id:'profile',name:'Sarah Chen',role:'Administrator',roleAr:'مدير النظام',email:'sarah@factorylogix.com',image:null,initials:'SC'};
+/* userKey is the signed-in account identity. Unlike display fields, it is
+   never shared between users and ties the photo to its exact staff row. */
+const profileData={id:'profile',userKey:'',name:'Sarah Chen',role:'Administrator',roleAr:'مدير النظام',email:'sarah@factorylogix.com',image:null,initials:'SC'};
 let profileImgData=null;
 
 function getInitials(name){
-  const p=name.trim().split(/\s+/);
+  const p=String(name||'').trim().split(/\s+/);
   return((p[0]?p[0][0]:'')+(p[1]?p[1][0]:'')).toUpperCase()||'?';
+}
+
+function normalizeUserEmail(email){
+  return String(email||'').trim().toLowerCase();
+}
+function getCurrentProfileUserIndex(){
+  const userKey = normalizeUserEmail(profileData.userKey || profileData.email);
+  return usersData.findIndex(u => normalizeUserEmail(u && u.email) === userKey);
+}
+function profileUploadFolder(){
+  const userKey = normalizeUserEmail(profileData.userKey || profileData.email) || 'user';
+  return `profiles/${userKey.replace(/[^a-z0-9._-]/g, '_')}`;
+}
+function saveCurrentUserProfile(){
+  const index = getCurrentProfileUserIndex();
+  if(index < 0){
+    showToast(lang==='en' ? 'Your user record could not be found.' : 'تعذر العثور على سجل المستخدم الخاص بك.');
+    return false;
+  }
+  const currentUser = usersData[index];
+  /* Email/account identity remains controlled from User Management, so a
+     personal edit cannot move a photo to another account. */
+  usersData[index] = {...currentUser, name:profileData.name, init:profileData.initials, image:profileData.image || null};
+  profileData.email = currentUser.email;
+  profileData.userKey = normalizeUserEmail(currentUser.email);
+  if(typeof syncLoginUsers === 'function') syncLoginUsers();
+  if(typeof syncUsers === 'function') syncUsers();
+  return true;
 }
 
 /* ---- Topbar team avatars -------------------------------------------
@@ -9767,7 +9849,7 @@ function topbarAvatarColor(seed){
 function renderTopbarAvatars(){
   const host = document.getElementById('topbarAvatars');
   if(!host) return;
-  const meEmail = String((profileData && profileData.email) || '').trim().toLowerCase();
+  const meEmail = String((profileData && (profileData.userKey || profileData.email)) || '').trim().toLowerCase();
   const isMe = u => String(u.email||'').trim().toLowerCase() === meEmail && meEmail !== '';
   // signed-in account first, everyone else alphabetically
   const members = usersData.filter(u => u && u.name)
@@ -9784,8 +9866,11 @@ function renderTopbarAvatars(){
   };
   host.innerHTML = shown.map(u => {
     const ini = String(u.init || getInitials(String(u.name))).toUpperCase();
+    const avatarContent = u.image
+      ? `<img src="${escapeHtml(u.image)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+      : escapeHtml(ini);
     return `<div class="t-avatar${isMe(u) ? ' is-online' : ''}">
-      <div class="avatar-item" style="background:${topbarAvatarColor(String(u.name||u.email||''))}">${escapeHtml(ini)}</div>
+      <div class="avatar-item" style="background:${u.image ? 'none' : topbarAvatarColor(String(u.name||u.email||''))}">${avatarContent}</div>
       <div class="status-dot"></div>
       <div class="avatar-tip"><strong>${escapeHtml(u.name)}</strong><span>${escapeHtml(roleOf(u))}</span></div>
     </div>`;
@@ -9888,6 +9973,7 @@ function openProfileModal(){
   document.getElementById('profileName').value=profileData.name;
   document.getElementById('profileRole').value=lang==='en'?profileData.role:profileData.roleAr;
   document.getElementById('profileEmail').value=profileData.email;
+  document.getElementById('profileEmail').readOnly=true;
   profileImgData=profileData.image;
   setProfilePreview(profileImgData);
   document.getElementById('profileModalOverlay').classList.add('show');
@@ -9900,7 +9986,7 @@ document.getElementById('profileImgFile').addEventListener('change', async e=>{
   const file=e.target.files[0];
   if(!file||!file.type.startsWith('image/')) return;
   e.target.value='';
-  const { url } = await uploadFileOrFallback(file, 'profile');
+  const { url } = await uploadFileOrFallback(file, profileUploadFolder());
   profileImgData = url;
   setProfilePreview(profileImgData);
 });
@@ -9912,12 +9998,9 @@ document.getElementById('profileSave').addEventListener('click',()=>{
   const name=document.getElementById('profileName').value.trim();
   if(!name){document.getElementById('profileName').focus();return;}
   profileData.name=name;
-  profileData.email=document.getElementById('profileEmail').value.trim();
   profileData.image=profileImgData;
   profileData.initials=getInitials(name);
-  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
-    window.StockFlowBackend.syncCollection('profile', [profileData], 'id');
-  }
+  if(!saveCurrentUserProfile()) return;
   closeProfileModal();
   refreshTopbarProfile();
   showToast(lang==='en'?'Profile updated successfully!':'تم تحديث الملف الشخصي بنجاح!');
@@ -9994,7 +10077,7 @@ function refreshUserDropdown(){
   const ri2 = document.getElementById('udRoleInput');
   if(ri2) ri2.value = udRoleLabel();
   const ei = document.getElementById('udEmailInput');
-  if(ei) ei.value = profileData.email || '';
+  if(ei){ ei.value = profileData.email || ''; ei.readOnly = true; }
   udSwitchView('menu');
 }
 function closeUserDropdown(){
@@ -10039,15 +10122,13 @@ document.getElementById('udPhotoInput').addEventListener('change', async functio
   const file = e.target.files[0];
   if(!file || !file.type.startsWith('image/')) return;
   e.target.value='';
-  const { url } = await uploadFileOrFallback(file, 'profile');
+  const { url } = await uploadFileOrFallback(file, profileUploadFolder());
   profileImgData = url;
   profileData.image = url;
   udSetAvatar(document.getElementById('udAvatar'));
   udSetAvatar(document.getElementById('udEditAvatar'));
   refreshTopbarProfile();
-  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
-    window.StockFlowBackend.syncCollection('profile', [profileData], 'id');
-  }
+  saveCurrentUserProfile();
 });
 document.getElementById('udSave').addEventListener('click', function(e){
   e.stopPropagation();
@@ -10055,12 +10136,9 @@ document.getElementById('udSave').addEventListener('click', function(e){
   const name = ni ? ni.value.trim() : '';
   if(!name){ if(ni) ni.focus(); return; }
   profileData.name = name;
-  profileData.email = document.getElementById('udEmailInput') ? document.getElementById('udEmailInput').value.trim() : profileData.email;
-  if(profileImgData) profileData.image = profileImgData;
+  profileData.image = profileImgData || null;
   profileData.initials = getInitials(name);
-  if(window.StockFlowBackend && window.StockFlowBackend.enabled){
-    window.StockFlowBackend.syncCollection('profile', [profileData], 'id');
-  }
+  if(!saveCurrentUserProfile()) return;
   refreshTopbarProfile();
   refreshUserDropdown();
   showToast(lang==='en'?'Profile updated successfully!':'تم تحديث الملف الشخصي بنجاح!');
@@ -11149,6 +11227,9 @@ function doLogin(){
         // but a fresh manual login needs it too.
         if(backendOn){
           applyCurrentUserPerms(user);
+          // Set the account key before loading staff rows, so the initial
+          // load also selects this user's own image (never a shared profile).
+          profileData.userKey = normalizeUserEmail(user.email || profileData.email);
           loadAllStockFlowData(); setupRealtimeSync();
         }
         // update profile with logged-in user
@@ -11156,6 +11237,8 @@ function doLogin(){
         profileData.role = user.role;
         profileData.roleAr = user.roleAr;
         profileData.email = user.email || profileData.email;
+        profileData.userKey = normalizeUserEmail(user.email || profileData.email);
+        profileData.image = user.image || null;
         profileData.initials = (user.name.split(' ').map(w=>w[0]).join('').slice(0,2)).toUpperCase();
         // hide login, show loading
         const ls = document.getElementById('loginScreen');
