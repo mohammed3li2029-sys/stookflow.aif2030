@@ -5722,10 +5722,10 @@ function openProjectDetail(idx){
           <span class="pill" style="background:rgba(255,255,255,.2);color:#fff;">${p.id}</span>
           <span class="pill" style="background:rgba(255,255,255,.2);color:#fff;">${getProjStatusLabel(p.status)}</span>
         </div><p style="margin:6px 0 0;font-size:13px;opacity:.85;">${lang==='en'?p.client:p.clientAr} · ${lang==='en'?p.type:p.typeAr}</p></div>
-        <div style=\"display:flex;align-items:center;gap:8px;\">
-          <button id=\"projPrintBtn\" title=\"${lang==='en'?'Print / Save PDF':'طباعة / حفظ PDF'}\" style=\"background:rgba(255,255,255,.2);border:none;color:#fff;padding:0 12px;height:32px;border-radius:16px;cursor:pointer;font-size:12px;font-weight:700;\">${lang==='en'?'Print':'طباعة'}</button>
-          <button id=\"projSyncNowBtn\" title=\"Sync now / مزامنة الآن\" style=\"background:rgba(255,255,255,.2);border:none;color:#fff;padding:0 12px;height:32px;border-radius:16px;cursor:pointer;font-size:12px;font-weight:700;\">${lang==='en'?'Sync now':'مزامنة الآن'}</button>
-          <button onclick="this.closest('.modal-overlay').remove();refreshProjectsPageIfNeeded()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;">✕</button>
+        <div class=\"project-quick-actions\" role=\"toolbar\" aria-label=\"${lang==='en'?'Project actions':'إجراءات المشروع'}\">
+          <button id=\"projPrintBtn\" class=\"project-quick-act\" type=\"button\" aria-expanded=\"false\" title=\"${lang==='en'?'Print / Save PDF':'طباعة / حفظ PDF'}\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><path d=\"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6\"/><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\" rx=\"1\"/></svg><span class=\"project-quick-label\">${lang==='en'?'Print':'طباعة'}</span></button>
+          <button id=\"projSyncNowBtn\" class=\"project-quick-act\" type=\"button\" aria-expanded=\"true\" title=\"${lang==='en'?'Sync now':'مزامنة الآن'}\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M8 16H3v5\"/></svg><span class=\"project-quick-label\">${lang==='en'?'Sync':'مزامنة'}</span></button>
+          <button id=\"projCloseBtn\" class=\"project-quick-act is-danger\" type=\"button\" aria-expanded=\"false\" title=\"${lang==='en'?'Close':'إغلاق'}\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg><span class=\"project-quick-label\">${lang==='en'?'Close':'إغلاق'}</span></button>
         </div>
       </div>
       <div style="padding:20px 28px;">
@@ -5735,8 +5735,22 @@ function openProjectDetail(idx){
     </div>`;
   document.body.appendChild(overlay);
   setTimeout(() => {
+    const quickActions = [...overlay.querySelectorAll('.project-quick-act')];
+    const setQuickExpanded = button => quickActions.forEach(action => action.setAttribute('aria-expanded', action === button ? 'true' : 'false'));
+    quickActions.forEach(button => {
+      button.addEventListener('pointerenter', event => { if(event.pointerType === 'mouse') setQuickExpanded(button); });
+      button.addEventListener('focus', () => setQuickExpanded(button));
+    });
+    overlay.querySelector('.project-quick-actions')?.addEventListener('pointerleave', event => {
+      if(event.pointerType === 'mouse') setQuickExpanded(document.getElementById('projSyncNowBtn'));
+    });
+    const markQuickDone = (button, spinning=false) => {
+      if(!button) return;
+      if(spinning) button.dataset.spin='1';
+      setTimeout(() => { button.removeAttribute('data-spin'); button.dataset.state='done'; setTimeout(() => delete button.dataset.state, 1300); }, spinning ? 650 : 0);
+    };
     const printBtn = document.getElementById('projPrintBtn');
-    if(printBtn) printBtn.addEventListener('click', () => printProjectInfo(idx));
+    if(printBtn) printBtn.addEventListener('click', () => { markQuickDone(printBtn); printProjectInfo(idx); });
     const syncBtn = document.getElementById('projSyncNowBtn');
     if(syncBtn){
       syncBtn.addEventListener('click', function(){
@@ -5745,9 +5759,12 @@ function openProjectDetail(idx){
           return;
         }
         syncCurrentProject(idx);
+        markQuickDone(syncBtn, true);
         showToast(lang==='en'?'Project synced!':'تمت مزامنة المشروع!');
       });
     }
+    const closeBtn = document.getElementById('projCloseBtn');
+    if(closeBtn) closeBtn.addEventListener('click', () => { overlay.remove(); refreshProjectsPageIfNeeded(); });
     overlay.querySelectorAll('[data-dtab]').forEach(tab => {
       tab.addEventListener('click', function(){
         detailTab = this.dataset.dtab;
