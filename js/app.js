@@ -2519,6 +2519,48 @@ function qSetRich(el, str){
   el.dispatchEvent(new Event('input',{bubbles:true}));
 }
 
+/* Dedicated Terms editor: compact toggle groups keep the formatting controls
+   easy to scan without changing the Payments or Notes editors. */
+function quoteTermsToolbarHTML(fieldId, ph, locale){
+  const t=(en,ar)=>locale==='en'?en:ar;
+  const ul='<svg viewBox="0 0 24 24"><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/><path d="M9 6h11M9 12h11M9 18h11"/></svg>';
+  const ol='<svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5l1.5-1V9M3.7 12.2a1.3 1.3 0 012.3.7c0 .9-2.3 2.1-2.3 2.1H6"/></svg>';
+  const link='<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11 5"/><path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07L13 19"/></svg>';
+  const table='<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg>';
+  const aligns={right:'<svg viewBox="0 0 24 24"><path d="M4 6h16M9 12h11M6 18h14"/></svg>',center:'<svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M5 18h14"/></svg>',left:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h11M4 18h14"/></svg>',full:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'};
+  const alignCommands={right:'justifyRight',center:'justifyCenter',left:'justifyLeft',full:'justifyFull'};
+  const alignLabels={right:['Right','يمين'],center:['Center','توسيط'],left:['Left','يسار'],full:['Justify','ضبط']};
+  const colors=[['default','var(--text)',t('Default','الافتراضي')],['#e5484d','#e5484d',t('Red','أحمر')],['#f76b15','#f76b15',t('Orange','برتقالي')],['#30a46c','#30a46c',t('Green','أخضر')],['#0090ff','#0090ff',t('Blue','أزرق')],['#8e4ec6','#8e4ec6',t('Purple','بنفسجي')]];
+  return `<div class="q-rich-wrap q-terms-rich-wrap"><div class="q-terms-tb" role="toolbar" aria-label="${t('Terms text formatting','تنسيق نص الشروط')}">
+    <div class="q-terms-tg" data-mode="multiple" aria-label="${t('Text style','نمط النص')}"><button type="button" data-cmd="bold" title="${t('Bold','عريض')}"><b>B</b></button><button type="button" data-cmd="italic" title="${t('Italic','مائل')}"><i>I</i></button><button type="button" data-cmd="underline" title="${t('Underline','تسطير')}"><u>U</u></button><button type="button" data-cmd="strikeThrough" title="${t('Strikethrough','يتوسطه خط')}"><s>S</s></button></div><span class="q-terms-sep"></span>
+    <div class="q-terms-tg" data-mode="multiple" aria-label="${t('Lists and link','القوائم والربط')}"><button type="button" data-cmd="insertUnorderedList" title="${t('Bullet list','قائمة نقطية')}">${ul}</button><button type="button" data-cmd="insertOrderedList" title="${t('Numbered list','قائمة مرقمة')}">${ol}</button><button type="button" data-action="link" title="${t('Add link','إضافة رابط')}">${link}</button></div><span class="q-terms-sep"></span>
+    <div class="q-terms-tg" data-mode="single" aria-label="${t('Alignment','المحاذاة')}">${Object.entries(aligns).map(([key,svg])=>`<button type="button" data-align="${key}" data-cmd="${alignCommands[key]}" title="${t(...alignLabels[key])}">${svg}</button>`).join('')}</div><span class="q-terms-sep"></span>
+    <div class="q-terms-tg q-terms-colors" data-mode="single" aria-label="${t('Text color','لون النص')}">${colors.map(([value,color,label])=>`<button type="button" data-color="${value}" title="${label}"><span style="background:${color}"></span></button>`).join('')}</div>${fieldId==='qPayments'?`<span class="q-terms-sep"></span><div class="q-terms-tg q-terms-table-group" data-mode="single" aria-label="${t('Insert table','إدراج جدول')}"><button type="button" data-table="2x2" title="2 × 2">${table}</button><button type="button" data-table="3x3" title="3 × 3">3×3</button><button type="button" data-table="4x4" title="4 × 4">4×4</button></div>`:''}
+  </div><div class="q-rich" id="${fieldId}" contenteditable="true" spellcheck="false" data-ph="${ph}"></div></div>`;
+}
+
+function wireQuoteTermsEditor(fieldId){
+  const field=document.getElementById(fieldId); if(!field) return;
+  const toolbar=field.parentElement.querySelector('.q-terms-tb'); if(!toolbar) return;
+  const refreshBlank=()=>{if(!field.textContent.trim())field.textContent='';};
+  const insertTable=(rows,cols)=>{const cell='<td style="border:1px solid #cbd5e1;padding:6px;min-width:62px;height:22px;"><br></td>';field.insertAdjacentHTML('beforeend',`<table style="border-collapse:collapse;width:100%;margin:7px 0;"><tbody>${Array.from({length:rows},()=>`<tr>${cell.repeat(cols)}</tr>`).join('')}</tbody></table><p><br></p>`);const firstCell=field.querySelector('table:last-of-type td');if(firstCell){const range=document.createRange();range.selectNodeContents(firstCell);range.collapse(true);const selection=window.getSelection();selection?.removeAllRanges();selection?.addRange(range);}field.focus();field.dispatchEvent(new Event('input',{bubbles:true}));};
+  const refreshActive=()=>toolbar.querySelectorAll('[data-cmd]').forEach(button=>button.classList.toggle('is-active',!!document.queryCommandState(button.dataset.cmd)));
+  const runCmd=(cmd,value)=>{field.focus();document.execCommand('styleWithCSS',false,cmd==='foreColor');document.execCommand(cmd,false,value);refreshBlank();refreshActive();};
+  toolbar.querySelectorAll('button').forEach(button=>{
+    button.addEventListener('mousedown',event=>event.preventDefault());
+    button.addEventListener('click',()=>{
+      if(button.dataset.action==='link'){const url=window.prompt(lang==='en'?'Link URL':'رابط الرابط');if(url)runCmd('createLink',url);return;}
+      if(button.dataset.table){const [rows,cols]=button.dataset.table.split('x').map(Number);insertTable(rows,cols);return;}
+      if(button.dataset.color){runCmd('foreColor',button.dataset.color==='default'?getComputedStyle(field).color:button.dataset.color);toolbar.querySelectorAll('[data-color]').forEach(item=>item.classList.toggle('is-active',item===button));}
+      else if(button.dataset.cmd) runCmd(button.dataset.cmd);
+    });
+  });
+  field.addEventListener('input',()=>{refreshBlank();refreshActive();});
+  field.addEventListener('blur',refreshBlank);
+  document.addEventListener('selectionchange',()=>{const selection=window.getSelection();if(selection?.rangeCount&&selection.anchorNode&&field.contains(selection.anchorNode))refreshActive();});
+  refreshActive();
+}
+
 /* static formatting toolbar HTML for a quote rich-text field */
 function quoteRichToolbarHTML(fieldId, ph, lang){
   const _t=(en,ar)=>lang==='en'?en:ar;
@@ -2826,15 +2868,15 @@ function openQuoteModal(idx=null, version=null){
       </div>
       <div class="field" style="margin-top:15px;">
         <label>${lang==='en'?'Terms & Conditions':'الشروط والأحكام'}</label>
-        ${quoteRichToolbarHTML('qTerms', lang==='en'?'Type terms & conditions...':'اكتب الشروط والأحكام...', lang)}
+        ${quoteTermsToolbarHTML('qTerms', lang==='en'?'Type terms & conditions...':'اكتب الشروط والأحكام...', lang)}
       </div>
       <div class="field" style="margin-top:10px;">
         <label>${lang==='en'?'Payments':'الدفعات'}</label>
-        ${quoteRichToolbarHTML('qPayments', lang==='en'?'Type payment terms...':'اكتب بنود الدفعات...', lang)}
+        ${quoteTermsToolbarHTML('qPayments', lang==='en'?'Type payment terms...':'اكتب بنود الدفعات...', lang)}
       </div>
       <div class="field" style="margin-top:10px;">
         <label>${lang==='en'?'Notes':'ملاحظات'}</label>
-        ${quoteRichToolbarHTML('qNotes', lang==='en'?'Type notes...':'اكتب الملاحظات...', lang)}
+        ${quoteTermsToolbarHTML('qNotes', lang==='en'?'Type notes...':'اكتب الملاحظات...', lang)}
       </div>
       <div class="modal-actions" style="gap:10px;flex-wrap:wrap;align-items:center;">
         ${isEdit ? `<div style="display:flex;align-items:center;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;margin-inline-end:auto;">
@@ -2862,9 +2904,9 @@ function openQuoteModal(idx=null, version=null){
   wireQuoteValidityDays();
   wireQuoteSalespersonOptions();
   wireQuoteDatePicker();
-  wireQuoteRichEditor('qTerms');
-  wireQuoteRichEditor('qPayments');
-  wireQuoteRichEditor('qNotes');
+  wireQuoteTermsEditor('qTerms');
+  wireQuoteTermsEditor('qPayments');
+  wireQuoteTermsEditor('qNotes');
 }
 
 /* Arrange the quotation header as two clear vertical columns. The DOM fields
